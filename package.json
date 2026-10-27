@@ -6,7 +6,7 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "seed": "npm run seed -w @eday/seed",
-    "check": "npm run check -w @eday/seed"
+    "check": "npm run check --workspaces"
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^13.1.0",

@@ -10,8 +10,8 @@ Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its
 
 | Week | Focus | State |
 | --- | --- | --- |
-| 0 | Case, data and API contract | In progress |
-| 1 | Visual system and prototype | Not started |
+| 0 | Case, data and API contract | Done |
+| 1 | Visual system and prototype | In progress |
 | 2–5 | App and simulated backend | Not started |
 | 6 | Polish, demo video, case study | Not started |
 
@@ -20,10 +20,12 @@ Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its
 ```
 contract/openapi.yaml    API contract (OpenAPI 3.1), written before any code
 packages/seed            Deterministic simulated data + checks against the contract
+packages/tokens          Design tokens (direction A) + WCAG contrast checks
 apps/mobile              Expo app (iOS, Android, web) — week 2
 apps/api-mock            Simulated backend serving the contract — week 2
 docs/adr                 Architecture decision records
 docs/case-study.md       Case study draft
+docs/information-architecture.md  Tabs, screens and the contract operations behind them
 ```
 
 ## Run it
@@ -33,7 +35,7 @@ Requires Node 22.
 ```bash
 npm install
 npm run seed    # writes packages/seed/out/*.json
-npm run check   # validates the contract, determinism, schemas and the demo story
+npm run check   # contract, determinism, schemas, demo story and color contrast
 ```
 
 ## Decisions

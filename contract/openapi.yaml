@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.1.0
+  version: 0.2.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -21,6 +21,7 @@ tags:
   - name: Eventos
   - name: Escuadras
   - name: Clanes
+  - name: Notificaciones
 paths:
   /me:
     get:
@@ -46,6 +47,22 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/WeeklyReport' }
+  /me/notifications:
+    get:
+      tags: [Notificaciones]
+      summary: Avisos del jugador (sesión cerca, objeto deseado en tienda, evento por terminar, rival)
+      operationId: listMyNotifications
+      description: En la demo se derivan del informe semanal, la lista de deseos y las sesiones; no hay datos sembrados propios.
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Avisos, el más reciente primero
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Notification' }
   /me/matches:
     get:
       tags: [Partidas]
@@ -239,6 +256,19 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SquadSession' }
+  /sessions/{sessionId}:
+    get:
+      tags: [Escuadras]
+      summary: Detalle de una sesión (planificador de escuadras)
+      operationId: getSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Sesión
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SquadSession' }
   /sessions/{sessionId}/join:
     post:
       tags: [Escuadras]
@@ -371,7 +401,9 @@ components:
         platform: { $ref: '#/components/schemas/Platform' }
         country: { type: string, description: ISO 3166-1 alfa-2 }
         level: { type: integer }
-        rank: { $ref: '#/components/schemas/Rank' }
+        rank:
+          description: Null hasta jugar la primera partida de Ranked
+          anyOf: [{ $ref: '#/components/schemas/Rank' }, { type: 'null' }]
         clanId: { type: [string, 'null'] }
         accessType: { type: string, enum: [purchase, game_pass, game_pass_premium_upgrade] }
     WeeklyReport:
@@ -384,12 +416,14 @@ components:
         challengesDone: { type: integer }
         challengesTotal: { type: integer }
         seasonProgress: { type: number, minimum: 0, maximum: 1 }
+        daysSinceLastMatch: { type: [integer, 'null'], minimum: 0 }
         rival:
           type: object
           description: Rival de la semana, con rango cercano al del jugador
           properties:
             gamertag: { type: string }
             pointsAhead: { type: integer }
+            rank: { type: [string, 'null'], examples: ['Plata 2'] }
         nextMission:
           type: object
           required: [title, estimatedMinutes, mode]
@@ -398,6 +432,18 @@ components:
             estimatedMinutes: { type: integer }
             mode: { $ref: '#/components/schemas/Mode' }
             reward: { type: string }
+            launchUrl: { type: string, description: Deep link simulado que abre el juego en el modo de la misión }
+    Notification:
+      type: object
+      required: [id, kind, title, createdAt, read]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [mission, session, wishlist, event, rival] }
+        title: { type: string }
+        body: { type: string }
+        createdAt: { type: string, format: date-time }
+        read: { type: boolean }
+        link: { type: string, description: Ruta dentro de la app, por ejemplo /escuadra/sess_friday }
     MatchSummary:
       type: object
       required: [id, mode, map, endedAt, result]

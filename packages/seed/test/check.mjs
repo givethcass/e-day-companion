@@ -67,6 +67,12 @@ check('Delta_Rojo stopped playing before Ranked opened', () => {
   assert.ok(demoMatches.length > 10, `only ${demoMatches.length} matches`);
   assert.ok(Date.parse(demoMatches.at(-1).endedAt) < RANKED_START);
 });
+check('Delta_Rojo is unranked and has a ranked friend to chase', () => {
+  const byId = new Map(data.players.map((p) => [p.id, p]));
+  assert.equal(byId.get('p_demo').rank, null);
+  const friends = data.friendships.filter((f) => f.playerId === 'p_demo').map((f) => byId.get(f.friendId));
+  assert.ok(friends.some((f) => f.rank), 'no ranked friend');
+});
 check('Friday Horde Siege has 9 of 12, Delta_Rojo in squad 2', () => {
   const friday = data.sessions.find((s) => s.id === 'sess_friday');
   assert.equal(friday.members.length, 9);

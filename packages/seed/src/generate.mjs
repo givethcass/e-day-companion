@@ -183,10 +183,13 @@ export function generate({ seed = SEED } = {}) {
 
   // Rank as of the demo date, replaying ranked deltas up to then.
   const demoNowMs = Date.parse(DEMO_NOW);
+  // Players with no ranked match by then are unranked (rank null).
   const pointsAtDemo = new Map(startPoints);
+  const rankedPlayers = new Set();
   for (const m of matches) {
     if (m.rankDelta !== null && Date.parse(m.endedAt) <= demoNowMs) {
       pointsAtDemo.set(m.playerId, Math.max(0, pointsAtDemo.get(m.playerId) + m.rankDelta));
+      rankedPlayers.add(m.playerId);
     }
   }
   const matchCount = new Map();
@@ -194,7 +197,7 @@ export function generate({ seed = SEED } = {}) {
   for (const p of players) {
     p.level = clamp(1 + Math.floor((matchCount.get(p.id) ?? 0) / 3), 1, 100);
     p.rankStartPoints = startPoints.get(p.id);
-    p.rank = rankFromPoints(pointsAtDemo.get(p.id));
+    p.rank = rankedPlayers.has(p.id) ? rankFromPoints(pointsAtDemo.get(p.id)) : null;
   }
 
   // ---------- Friends ----------
