@@ -1,0 +1,4 @@
+node_modules/
+packages/seed/out/
+.DS_Store
+.env

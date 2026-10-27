@@ -1,0 +1,10 @@
+{
+  "name": "@eday/seed",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic simulated data for the E-Day Companion demo.",
+  "scripts": {
+    "seed": "node src/index.mjs",
+    "check": "node test/check.mjs"
+  }
+}

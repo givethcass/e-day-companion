@@ -1,0 +1,556 @@
+openapi: 3.1.0
+info:
+  title: E-Day Companion API (simulada)
+  version: 0.1.0
+  description: |
+    Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
+    Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
+    PlayFab). Todo dato es simulado. Concepto no oficial: no afiliado a Microsoft,
+    Xbox ni The Coalition.
+servers:
+  - url: https://api.example.com/v0
+    description: Backend simulado (Supabase Edge Functions)
+security:
+  - bearerAuth: []
+tags:
+  - name: Jugador
+  - name: Partidas
+  - name: Clasificaciones
+  - name: Temporada
+  - name: Tienda
+  - name: Eventos
+  - name: Escuadras
+  - name: Clanes
+paths:
+  /me:
+    get:
+      tags: [Jugador]
+      summary: Perfil del jugador autenticado
+      operationId: getMe
+      responses:
+        '200':
+          description: Perfil
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Player' }
+  /me/week:
+    get:
+      tags: [Jugador]
+      summary: Informe de despliegue (resumen semanal personalizado)
+      operationId: getMyWeek
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Resumen de la semana
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WeeklyReport' }
+  /me/matches:
+    get:
+      tags: [Partidas]
+      summary: Historial de partidas del jugador
+      operationId: listMyMatches
+      parameters:
+        - name: mode
+          in: query
+          schema: { $ref: '#/components/schemas/Mode' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Página de partidas, más recientes primero
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/MatchSummary' }
+                  nextCursor: { type: [string, 'null'] }
+  /matches/{matchId}:
+    get:
+      tags: [Partidas]
+      summary: Reporte detallado de una partida
+      operationId: getMatch
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Reporte de partida
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MatchReport' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /leaderboards/{mode}:
+    get:
+      tags: [Clasificaciones]
+      summary: Clasificación por modo
+      operationId: getLeaderboard
+      parameters:
+        - name: mode
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/Mode' }
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [global, country, friends, clan]
+            default: global
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Clasificación con la posición del jugador
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Leaderboard' }
+  /season/current:
+    get:
+      tags: [Temporada]
+      summary: Temporada actual
+      operationId: getCurrentSeason
+      responses:
+        '200':
+          description: Temporada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Season' }
+  /me/challenges:
+    get:
+      tags: [Temporada]
+      summary: Desafíos semanales del jugador y su progreso
+      operationId: listMyChallenges
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Desafíos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Challenge' }
+  /store/rotation:
+    get:
+      tags: [Tienda]
+      summary: Rotación vigente de la tienda (cambia cada martes)
+      operationId: getStoreRotation
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Rotación
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoreRotation' }
+  /me/wishlist:
+    get:
+      tags: [Tienda]
+      summary: Lista de deseos
+      operationId: getWishlist
+      responses:
+        '200':
+          description: Objetos deseados
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/StoreItem' }
+    post:
+      tags: [Tienda]
+      summary: Agregar un objeto a la lista de deseos
+      operationId: addToWishlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId: { type: string }
+      responses:
+        '204': { description: Agregado }
+  /me/wishlist/{itemId}:
+    delete:
+      tags: [Tienda]
+      summary: Quitar un objeto de la lista de deseos
+      operationId: removeFromWishlist
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Quitado }
+  /events:
+    get:
+      tags: [Eventos]
+      summary: Eventos de la temporada (activos y próximos)
+      operationId: listEvents
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Eventos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Event' }
+  /sessions:
+    get:
+      tags: [Escuadras]
+      summary: Sesiones de escuadra abiertas
+      operationId: listSessions
+      parameters:
+        - name: mode
+          in: query
+          schema: { $ref: '#/components/schemas/Mode' }
+        - name: language
+          in: query
+          schema: { type: string, examples: [es, en] }
+      responses:
+        '200':
+          description: Sesiones
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SquadSession' }
+    post:
+      tags: [Escuadras]
+      summary: Crear una sesión
+      operationId: createSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewSquadSession' }
+      responses:
+        '201':
+          description: Sesión creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SquadSession' }
+  /sessions/{sessionId}/join:
+    post:
+      tags: [Escuadras]
+      summary: Unirse a una sesión con un rol
+      operationId: joinSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                squad: { type: integer, minimum: 1, maximum: 3 }
+                role: { $ref: '#/components/schemas/HordeRole' }
+      responses:
+        '200':
+          description: Sesión actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SquadSession' }
+  /sessions/{sessionId}/deploy:
+    post:
+      tags: [Escuadras]
+      summary: Desplegar (en la demo devuelve un deep link simulado al juego)
+      operationId: deploySession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Enlace para abrir el juego
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [launchUrl]
+                properties:
+                  launchUrl: { type: string, examples: ['edaycompanion://launch?session=abc'] }
+  /clans/{clanId}:
+    get:
+      tags: [Clanes]
+      summary: Página del clan
+      operationId: getClan
+      parameters:
+        - $ref: '#/components/parameters/ClanId'
+      responses:
+        '200':
+          description: Clan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Clan' }
+  /clans/{clanId}/leaderboard:
+    get:
+      tags: [Clanes]
+      summary: Clasificación interna del clan
+      operationId: getClanLeaderboard
+      parameters:
+        - $ref: '#/components/parameters/ClanId'
+      responses:
+        '200':
+          description: Clasificación
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Leaderboard' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Token de la sesión simulada "Iniciar sesión con Xbox".
+  parameters:
+    AsOf:
+      name: asOf
+      in: query
+      description: Fecha simulada (reloj de demo). Si falta, se usa la fecha actual.
+      schema: { type: string, format: date-time }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: { type: string }
+    ClanId:
+      name: clanId
+      in: path
+      required: true
+      schema: { type: string }
+  responses:
+    NotFound:
+      description: No encontrado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+    Mode:
+      type: string
+      enum: [versus_tdm, versus_conquest, versus_ranked, horde_siege, campaign]
+    HordeRole:
+      type: string
+      enum: [assault, support, engineer, marksman]
+    Platform:
+      type: string
+      enum: [xbox, pc]
+    Rank:
+      type: object
+      required: [tier, division, points]
+      properties:
+        tier: { type: string, examples: [bronze, silver, gold, onyx] }
+        division: { type: integer, minimum: 1, maximum: 3 }
+        points: { type: integer }
+    Player:
+      type: object
+      required: [id, gamertag, platform, country, level]
+      properties:
+        id: { type: string }
+        gamertag: { type: string }
+        platform: { $ref: '#/components/schemas/Platform' }
+        country: { type: string, description: ISO 3166-1 alfa-2 }
+        level: { type: integer }
+        rank: { $ref: '#/components/schemas/Rank' }
+        clanId: { type: [string, 'null'] }
+        accessType: { type: string, enum: [purchase, game_pass, game_pass_premium_upgrade] }
+    WeeklyReport:
+      type: object
+      required: [weekStart, hoursPlayed, matchesPlayed, challengesDone, challengesTotal, nextMission]
+      properties:
+        weekStart: { type: string, format: date }
+        hoursPlayed: { type: number }
+        matchesPlayed: { type: integer }
+        challengesDone: { type: integer }
+        challengesTotal: { type: integer }
+        seasonProgress: { type: number, minimum: 0, maximum: 1 }
+        rival:
+          type: object
+          description: Rival de la semana, con rango cercano al del jugador
+          properties:
+            gamertag: { type: string }
+            pointsAhead: { type: integer }
+        nextMission:
+          type: object
+          required: [title, estimatedMinutes, mode]
+          properties:
+            title: { type: string }
+            estimatedMinutes: { type: integer }
+            mode: { $ref: '#/components/schemas/Mode' }
+            reward: { type: string }
+    MatchSummary:
+      type: object
+      required: [id, mode, map, endedAt, result]
+      properties:
+        id: { type: string }
+        mode: { $ref: '#/components/schemas/Mode' }
+        map: { type: string }
+        endedAt: { type: string, format: date-time }
+        result: { type: string, enum: [win, loss, draw, completed, failed] }
+        kills: { type: integer }
+        deaths: { type: integer }
+        rankDelta: { type: [integer, 'null'] }
+    MatchReport:
+      allOf:
+        - $ref: '#/components/schemas/MatchSummary'
+        - type: object
+          properties:
+            durationSeconds: { type: integer }
+            accuracy: { type: number, minimum: 0, maximum: 1 }
+            medals:
+              type: array
+              items: { type: string }
+            wavesCleared: { type: [integer, 'null'], description: Solo Horde Siege }
+            scoreboard:
+              type: array
+              items:
+                type: object
+                required: [gamertag, team, score]
+                properties:
+                  gamertag: { type: string }
+                  team: { type: string }
+                  score: { type: integer }
+                  kills: { type: integer }
+                  deaths: { type: integer }
+    Leaderboard:
+      type: object
+      required: [mode, scope, entries]
+      properties:
+        mode: { $ref: '#/components/schemas/Mode' }
+        scope: { type: string }
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/LeaderboardEntry' }
+        me: { $ref: '#/components/schemas/LeaderboardEntry' }
+    LeaderboardEntry:
+      type: object
+      required: [position, gamertag, points]
+      properties:
+        position: { type: integer }
+        gamertag: { type: string }
+        points: { type: integer }
+        country: { type: string }
+        clanTag: { type: [string, 'null'] }
+    Season:
+      type: object
+      required: [id, number, name, startsAt, endsAt]
+      properties:
+        id: { type: string }
+        number: { type: integer }
+        name: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+    Challenge:
+      type: object
+      required: [id, title, progress, goal, expiresAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        mode:
+          description: Modo al que aplica; null si cuenta cualquier modo
+          anyOf:
+            - $ref: '#/components/schemas/Mode'
+            - type: 'null'
+        progress: { type: integer }
+        goal: { type: integer }
+        reward: { type: string }
+        expiresAt: { type: string, format: date-time }
+    StoreItem:
+      type: object
+      required: [id, name, type, price]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [character_skin, weapon_skin, banner, emblem, bundle] }
+        price:
+          type: object
+          required: [amount, currency]
+          properties:
+            amount: { type: integer }
+            currency: { type: string, enum: [iron, coins] }
+        imageUrl: { type: string }
+        wishlisted: { type: boolean }
+    StoreRotation:
+      type: object
+      required: [startsAt, endsAt, items]
+      properties:
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time, description: Siguiente martes }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/StoreItem' }
+    Event:
+      type: object
+      required: [id, name, startsAt, endsAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        modes:
+          type: array
+          items: { $ref: '#/components/schemas/Mode' }
+        rewards:
+          type: array
+          items: { type: string }
+    NewSquadSession:
+      type: object
+      required: [mode, startsAt, slots]
+      properties:
+        mode: { $ref: '#/components/schemas/Mode' }
+        startsAt: { type: string, format: date-time }
+        slots: { type: integer, minimum: 2, maximum: 12 }
+        language: { type: string }
+        micRequired: { type: boolean, default: false }
+        clanId: { type: [string, 'null'] }
+    SquadSession:
+      allOf:
+        - $ref: '#/components/schemas/NewSquadSession'
+        - type: object
+          required: [id, hostGamertag, members, status]
+          properties:
+            id: { type: string }
+            hostGamertag: { type: string }
+            status: { type: string, enum: [open, full, in_progress, finished] }
+            shareUrl: { type: string }
+            members:
+              type: array
+              items:
+                type: object
+                required: [gamertag]
+                properties:
+                  gamertag: { type: string }
+                  squad: { type: integer, minimum: 1, maximum: 3 }
+                  role: { $ref: '#/components/schemas/HordeRole' }
+    Clan:
+      type: object
+      required: [id, name, tag, memberCount]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        tag: { type: string }
+        memberCount: { type: integer }
+        language: { type: string }
+        upcomingSessions:
+          type: array
+          items: { $ref: '#/components/schemas/SquadSession' }
