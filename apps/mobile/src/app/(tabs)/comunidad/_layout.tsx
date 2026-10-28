@@ -1,9 +1,9 @@
 import { Stack } from 'expo-router';
 import { color } from '@/ui/theme';
 
-// Links from Tu semana land on a report with the list underneath, so Volver goes to the list.
+// Deep links (from Avisos or Inicio) land on a detail with the list underneath, so Volver goes to the list.
 export const unstable_settings = { initialRouteName: 'index' };
 
-export default function PartidasLayout() {
+export default function ComunidadLayout() {
   return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.bg } }} />;
 }

@@ -1,5 +1,7 @@
 # Information architecture
 
+> **Current structure (v0.6.0, week 4).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060).
+
 Week 1. Five tabs, each one answering a single question, plus the profile in the top corner. Every screen ends in an action, and the main one is **Deploy** (open the game).
 
 | Tab | Question it answers | P0 screens | Contract operations |
@@ -65,3 +67,20 @@ Player research on 2026-10-28 (Steam, Pure Xbox, PC Gamer, Game8) showed two pla
 2. The weekly Coin cap is 50,000 and coin items cost thousands. Coins per match, the cap, coin prices and wallets are scaled to match.
 
 Map names stay invented on purpose.
+
+## Waypoint-style structure (v0.6.0)
+
+Player research (2026-10-28) showed that what players look for outside the game is news, patch notes and guides, and that squad coordination is a real but secondary need. The app now has five tabs:
+
+| Tab | Question it answers | Screens | Contract operations |
+| --- | --- | --- | --- |
+| Inicio | "What matters to me this week?" | Mission, figures, latest news, squad and store cards, season calendar, recap | `getMyWeek`, `listNews`, `listCalendar`, `getStoreRotation`, `listSessions` |
+| Noticias | "What changed in the game?" | News list with filters, story with known issues and a link into the app | `listNews`, `getNews` |
+| Guías | "How do I play this better?" | Placeholder listing the sections (week 5) | – |
+| Servicio | "How did I do?" | Service record with history, match report, leaderboards | `listMyMatches`, `getMatch`, `getLeaderboard` |
+| Comunidad | "Who am I playing with?" | Squad sessions, Horde planner (clan and creators in week 5) | `listSessions`, `getSession`, `joinSession`, `deploySession` |
+
+The store is no longer a tab: it opens over the tabs from Inicio and from news stories (`/tienda`). Routes moved with the tabs, and every in-app `link` the API returns follows them: `/comunidad/escuadra/{id}`, `/servicio/partidas/{id}`, `/servicio/clasificacion`, `/noticias/{id}`.
+
+Contract additions: `listNews` and `getNews` (official posts tagged patch, event, season, store or community; a story is visible only once `publishedAt` is past the demo clock, so the Oct 29 patch appears when the clock moves to Friday) and `listCalendar` (event starts and ends, the Tuesday store and challenge rotation, the Nov 7 anniversary gift and the end of the season).
+

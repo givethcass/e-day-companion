@@ -1,7 +1,7 @@
 // The demo story and the six fixes from the synthetic test hold in the simulated backend.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import type { Leaderboard, MatchPage, MatchReport, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
+import type { CalendarEntry, Leaderboard, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
 import { generate } from '@eday/seed';
 import { createApi } from '../src/index.ts';
 
@@ -90,7 +90,7 @@ test('a Horde report names the missing role and points at the next session', () 
   const reports = horde.map((m) => call<MatchReport>('GET', `/matches/${m.id}`));
   const lesson = reports.find((r) => r.takeaway?.text.startsWith('Sin Irruptor'));
   assert.ok(lesson, 'no Horde match without a Breacher');
-  assert.equal(lesson.takeaway!.link, '/escuadra/sess_friday');
+  assert.equal(lesson.takeaway!.link, '/comunidad/escuadra/sess_friday');
   assert.match(lesson.takeaway!.text, /El viernes tu escuadra ya tiene uno/);
   for (const r of reports) {
     assert.equal(r.waveGoal, 30);
@@ -107,4 +107,25 @@ test('on Friday evening the booked Horde session becomes the mission', () => {
   assert.equal(week.nextMission.title, 'Tu Horde de hoy, 21:00');
   assert.equal(week.nextMission.launchUrl, 'edaycompanion://launch?session=sess_friday');
   assert.deepEqual(week.nextMission.alternatives!.map((a) => a.mode), ['versus_ranked', 'campaign']);
+});
+
+test('news follow the demo clock: the Oct 29 patch only exists from Oct 29', () => {
+  const tuesday = call<NewsSummary[]>('GET', '/news');
+  assert.equal(tuesday[0].id, 'n_community_1024');
+  assert.ok(!tuesday.some((n) => n.id === 'n_patch_1029'));
+  assert.equal(fresh().api.handle({ method: 'GET', path: '/news/n_patch_1029', playerId: 'p_demo' }).status, 404);
+  const friday = call<NewsSummary[]>('GET', '/news', { query: { asOf: '2026-10-31T02:00:00.000Z', tag: 'patch' } });
+  assert.equal(friday[0].id, 'n_patch_1029');
+  assert.ok(friday.every((n) => n.tag === 'patch'));
+  assert.equal((friday[0] as { sections?: unknown }).sections, undefined, 'the list carries summaries only');
+});
+
+test('the calendar lists what comes next, in order', () => {
+  const entries = call<CalendarEntry[]>('GET', '/calendar');
+  assert.deepEqual(entries.slice(0, 3).map((e) => e.title), ['Termina Halloween', 'Empieza 20 Years of Gears', 'Rota la tienda y los retos']);
+  assert.equal(entries[0].link, '/noticias/n_halloween');
+  assert.ok(entries.some((e) => e.kind === 'gift'));
+  assert.equal(entries.at(-1)!.title, 'Termina la Temporada 1');
+  const after = call<CalendarEntry[]>('GET', '/calendar', { query: { asOf: '2026-11-08T12:00:00.000Z' } });
+  assert.ok(!after.some((e) => e.kind === 'gift' || e.title.includes('Halloween')));
 });

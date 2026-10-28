@@ -26,6 +26,10 @@ export type Event = S['Event'];
 export type NewSquadSession = S['NewSquadSession'];
 export type SquadSession = S['SquadSession'];
 export type Clan = S['Clan'];
+export type NewsTag = S['NewsTag'];
+export type NewsSummary = S['NewsSummary'];
+export type NewsArticle = S['NewsArticle'];
+export type CalendarEntry = S['CalendarEntry'];
 export type ApiError = S['Error'];
 
 export type MatchPage = operations['listMyMatches']['responses']['200']['content']['application/json'];

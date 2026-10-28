@@ -4,13 +4,14 @@ import {
   PLAYTIME_BUCKETS, COUNTRIES, SPANISH_COUNTRIES, TIMEZONES, COINS, HORDE_DIFFICULTIES, VERSUS_MAPS, HORDE_MAPS, HORDE_WAVE_GOAL, MATCH_MINUTES,
   MEDALS, HORDE_ROLES, GAMERTAG_PARTS, CLAN_WORDS, STORE, CHALLENGE_TEMPLATES,
 } from './constants.mjs';
+import { NEWS, GIFT_AT } from './news.mjs';
 
 const iso = (ms) => new Date(ms).toISOString();
 const round = (x, digits = 0) => Number(x.toFixed(digits));
 
 // Rank tiers by points; each tier has 3 divisions (1 = highest).
 const TIERS = [['bronze', 0], ['silver', 1000], ['gold', 1500], ['onyx', 2000]];
-export { HORDE_WAVE_GOAL };
+export { HORDE_WAVE_GOAL, GIFT_AT };
 
 export function rankFromPoints(points) {
   let index = 0;
@@ -444,5 +445,6 @@ export function generate({ seed = SEED } = {}) {
     wishlists,
     sessions,
     wallets,
+    news: NEWS,
   };
 }

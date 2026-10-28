@@ -1,7 +1,7 @@
 // Building blocks for direction C, the look of the official site: black pages, solid red buttons, condensed
 // uppercase titles, a red band that fades to black, square corners and hairlines between rows.
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text as RNText, View, type StyleProp, type TextProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
@@ -116,19 +116,24 @@ export function Section({ title, children }: { title: string; children: ReactNod
   );
 }
 
+// SVG ids are document-wide on web, and stacked screens stay in the DOM hidden: a shared id would make
+// a visible gradient point at a hidden one and paint nothing. Each instance gets its own.
+const useSvgId = (name: string) => `${name}${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+
 /** The site's section header: deep red fading to black, centred title, a white rule underneath. Bleeds to the screen edges. */
 export function Band({ title, subtitle }: { title: string; subtitle?: string }) {
+  const id = useSvgId('band');
   return (
     <View style={styles.band}>
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <Svg width="100%" height="100%" preserveAspectRatio="none">
           <Defs>
-            <LinearGradient id="band" x1="0" y1="0" x2="0" y2="1">
+            <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor={color.band} />
               <Stop offset="1" stopColor={color.bg} />
             </LinearGradient>
           </Defs>
-          <Rect width="100%" height="100%" fill="url(#band)" />
+          <Rect width="100%" height="100%" fill={`url(#${id})`} />
         </Svg>
       </View>
       <Text variant="headline" style={{ fontSize: 24, textAlign: 'center' }}>{title}</Text>
@@ -140,23 +145,47 @@ export function Band({ title, subtitle }: { title: string; subtitle?: string }) 
 
 /** Ember glow behind a hero: original art standing in for the site's key-art blades. */
 export function Glow() {
+  const shade = useSvgId('shade');
+  const ember = useSvgId('ember');
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <Svg width="100%" height="100%" preserveAspectRatio="none">
         <Defs>
-          <LinearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+          <LinearGradient id={shade} x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor="#120404" />
             <Stop offset="1" stopColor={color.bg} />
           </LinearGradient>
-          <RadialGradient id="ember" cx="70%" cy="100%" rx="80%" ry="75%">
+          <RadialGradient id={ember} cx="70%" cy="100%" rx="80%" ry="75%">
             <Stop offset="0" stopColor="#E50F11" stopOpacity={0.55} />
             <Stop offset="0.45" stopColor={color.band} stopOpacity={0.35} />
             <Stop offset="1" stopColor={color.bg} stopOpacity={0} />
           </RadialGradient>
         </Defs>
-        <Rect width="100%" height="100%" fill="url(#shade)" />
-        <Rect width="100%" height="100%" fill="url(#ember)" />
+        <Rect width="100%" height="100%" fill={`url(#${shade})`} />
+        <Rect width="100%" height="100%" fill={`url(#${ember})`} />
       </Svg>
+    </View>
+  );
+}
+
+/** Card art: a coloured glow over black, labelled like the site's game tiles. Original art, no game assets. */
+export function Art({ label, glow, height = 76 }: { label?: string; glow: string; height?: number }) {
+  const id = useSvgId('art');
+  return (
+    <View style={[styles.art, { height }]}>
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Svg width="100%" height="100%" preserveAspectRatio="none">
+          <Defs>
+            <RadialGradient id={id} cx="50%" cy="110%" rx="90%" ry="90%">
+              <Stop offset="0" stopColor={glow} stopOpacity={0.6} />
+              <Stop offset="1" stopColor="#0E0E0E" stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Rect width="100%" height="100%" fill="#0E0E0E" />
+          <Rect width="100%" height="100%" fill={`url(#${id})`} />
+        </Svg>
+      </View>
+      {label ? <Text variant="overline" style={{ fontSize: 13 }}>{label}</Text> : null}
     </View>
   );
 }
@@ -228,6 +257,7 @@ export function IconButton({ icon, label, onPress, dot }: { icon: IconName; labe
 }
 
 const styles = StyleSheet.create({
+  art: { padding: 8, justifyContent: 'flex-end', overflow: 'hidden', backgroundColor: color.surface },
   content: { paddingHorizontal: space.xl, paddingTop: space.lg, gap: 14 },
   header: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md, paddingBottom: space.md, borderBottomWidth: 1, borderBottomColor: color.border },
   card: { backgroundColor: color.surface, borderColor: color.border, borderWidth: 1, borderRadius: radius.card, padding: 14, gap: 10 },

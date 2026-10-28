@@ -62,7 +62,7 @@ export default function Reporte() {
   const now = useNow();
   const tz = player!.timezone;
   const { data: m, error, reload } = useApi(() => api.getMatch(id, now), [id, now]);
-  const back = <IconButton icon="back" label="Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/partidas'))} />;
+  const back = <IconButton icon="back" label="Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/servicio'))} />;
   if (!m) return <Screen title="Reporte" right={back}><Loader error={error} onRetry={reload} /></Screen>;
 
   const horde = m.mode === 'horde_siege';

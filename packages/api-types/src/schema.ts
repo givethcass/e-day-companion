@@ -247,6 +247,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/news": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Noticias oficiales publicadas hasta asOf, más recientes primero */
+        get: operations["listNews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/news/{newsId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Una noticia completa */
+        get: operations["getNews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lo que viene en la temporada desde asOf: eventos, rotación de tienda y retos, regalos, fin de temporada */
+        get: operations["listCalendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sessions": {
         parameters: {
             query?: never;
@@ -578,6 +629,42 @@ export interface components {
             endsAt: string;
             modes?: components["schemas"]["Mode"][];
             rewards?: string[];
+        };
+        /** @enum {string} */
+        NewsTag: "patch" | "event" | "season" | "store" | "community";
+        NewsSummary: {
+            id: string;
+            tag: components["schemas"]["NewsTag"];
+            title: string;
+            summary: string;
+            /** Format: date-time */
+            publishedAt: string;
+            readMinutes: number;
+            /** @description Candidata a noticia destacada en Inicio */
+            featured?: boolean;
+        };
+        NewsArticle: components["schemas"]["NewsSummary"] & {
+            sections: {
+                heading?: string;
+                paragraphs?: string[];
+                bullets?: string[];
+            }[];
+            /** @description Solo notas de parche */
+            knownIssues?: string[];
+            cta?: {
+                label: string;
+                /** @description Ruta dentro de la app */
+                link: string;
+            };
+        };
+        CalendarEntry: {
+            id: string;
+            /** @enum {string} */
+            kind: "event" | "store" | "gift" | "season";
+            title: string;
+            /** Format: date-time */
+            at: string;
+            link?: string;
         };
         NewSquadSession: {
             mode: components["schemas"]["Mode"];
@@ -1003,6 +1090,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Event"][];
+                };
+            };
+        };
+    };
+    listNews: {
+        parameters: {
+            query?: {
+                tag?: components["schemas"]["NewsTag"];
+                limit?: components["parameters"]["Limit"];
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Noticias */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsSummary"][];
+                };
+            };
+        };
+    };
+    getNews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                newsId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Noticia */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsArticle"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listCalendar: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entradas en orden de fecha */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarEntry"][];
                 };
             };
         };

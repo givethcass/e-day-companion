@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.5.0
+  version: 0.6.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -22,6 +22,7 @@ tags:
   - name: Escuadras
   - name: Clanes
   - name: Notificaciones
+  - name: Noticias
 paths:
   /me:
     get:
@@ -262,6 +263,57 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Event' }
+  /news:
+    get:
+      tags: [Noticias]
+      summary: Noticias oficiales publicadas hasta asOf, más recientes primero
+      operationId: listNews
+      parameters:
+        - name: tag
+          in: query
+          schema: { $ref: '#/components/schemas/NewsTag' }
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Noticias
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/NewsSummary' }
+  /news/{newsId}:
+    get:
+      tags: [Noticias]
+      summary: Una noticia completa
+      operationId: getNews
+      parameters:
+        - name: newsId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Noticia
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NewsArticle' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /calendar:
+    get:
+      tags: [Temporada]
+      summary: 'Lo que viene en la temporada desde asOf: eventos, rotación de tienda y retos, regalos, fin de temporada'
+      operationId: listCalendar
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Entradas en orden de fecha
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CalendarEntry' }
   /sessions:
     get:
       tags: [Escuadras]
@@ -509,7 +561,7 @@ components:
         body: { type: string }
         createdAt: { type: string, format: date-time }
         read: { type: boolean }
-        link: { type: string, description: Ruta dentro de la app, por ejemplo /escuadra/sess_friday }
+        link: { type: string, description: Ruta dentro de la app, por ejemplo /comunidad/escuadra/sess_friday }
     Wallet:
       type: object
       required: [coins, iron, coinsThisWeek, coinsWeeklyCap, capResetsAt]
@@ -563,7 +615,7 @@ components:
               required: [text]
               properties:
                 text: { type: string, examples: ['Sin Médico nadie te levantó. El viernes aún te falta uno.'] }
-                link: { type: string, description: Ruta de la app, como /escuadra/sess_friday }
+                link: { type: string, description: Ruta de la app, como /comunidad/escuadra/sess_friday }
             scoreboard:
               type: array
               items:
@@ -662,6 +714,53 @@ components:
         rewards:
           type: array
           items: { type: string }
+    NewsTag:
+      type: string
+      enum: [patch, event, season, store, community]
+    NewsSummary:
+      type: object
+      required: [id, tag, title, summary, publishedAt, readMinutes]
+      properties:
+        id: { type: string }
+        tag: { $ref: '#/components/schemas/NewsTag' }
+        title: { type: string }
+        summary: { type: string }
+        publishedAt: { type: string, format: date-time }
+        readMinutes: { type: integer, minimum: 1 }
+        featured: { type: boolean, description: Candidata a noticia destacada en Inicio }
+    NewsArticle:
+      allOf:
+        - $ref: '#/components/schemas/NewsSummary'
+        - type: object
+          required: [sections]
+          properties:
+            sections:
+              type: array
+              items:
+                type: object
+                properties:
+                  heading: { type: string }
+                  paragraphs: { type: array, items: { type: string } }
+                  bullets: { type: array, items: { type: string } }
+            knownIssues:
+              type: array
+              description: Solo notas de parche
+              items: { type: string }
+            cta:
+              type: object
+              required: [label, link]
+              properties:
+                label: { type: string }
+                link: { type: string, description: Ruta dentro de la app }
+    CalendarEntry:
+      type: object
+      required: [id, kind, title, at]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [event, store, gift, season] }
+        title: { type: string }
+        at: { type: string, format: date-time }
+        link: { type: string }
     NewSquadSession:
       type: object
       required: [mode, startsAt, slots]

@@ -60,6 +60,7 @@ validateAll('store rotations', 'StoreRotation', data.storeRotations.map((r) => (
 validateAll('squad sessions', 'SquadSession', data.sessions);
 validateAll('clans', 'Clan', data.clans);
 validateAll('wallets', 'Wallet', data.wallets);
+validateAll('news articles', 'NewsArticle', data.news);
 validateAll('challenge progress rows', 'Challenge', data.challengeProgress.map((p) => ({ ...challengeById.get(p.challengeId), progress: p.progress })));
 
 // 4. The demo story

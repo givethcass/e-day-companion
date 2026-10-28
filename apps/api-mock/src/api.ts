@@ -1,10 +1,10 @@
 // The simulated backend. Every route in contract/openapi.yaml is answered here from the seed,
 // with the demo clock as "now" unless the request passes asOf.
 import type {
-  Challenge, Clan, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
-  NewSquadSession, Notification, NotificationPrefs, Player, SquadSession, StoreItem, WeeklyReport,
+  CalendarEntry, Challenge, Clan, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
+  NewsSummary, NewsTag, NewSquadSession, Notification, NotificationPrefs, Player, SquadSession, StoreItem, WeeklyReport,
 } from '@eday/api-types';
-import { HORDE_WAVE_GOAL, generate, type SeedData, type SeedMatch, type SeedPlayer, type SeedSession } from '@eday/seed';
+import { GIFT_AT, HORDE_WAVE_GOAL, generate, type SeedData, type SeedMatch, type SeedPlayer, type SeedSession } from '@eday/seed';
 import { DAY, clock, day, dayMonth, difficultyLabel, localDate, rankLabel, roleLabel, weekday } from './format.ts';
 import { createRouter, error, noContent, ok, type Query } from './router.ts';
 
@@ -145,7 +145,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     if (tonight) out.push({ id: `n_tonight_${tonight.id}`, pref: 'squad', kind: 'session', createdAt: hoursAgo(1), read: false,
       title: `Horde ${tonight.language === 'es' ? 'en español' : 'in English'} hoy, ${clock(tonight.startsAt, tz)}`,
       body: `${tonight.map} · ${difficultyLabel(tonight.difficulty)} · sin micrófono · quedan ${tonight.slots - tonight.members.length} lugares`,
-      link: `/escuadra/${tonight.id}` });
+      link: `/comunidad/escuadra/${tonight.id}` });
     for (const s of sessions.values()) {
       const mine = s.members.find((m) => m.gamertag === p.gamertag);
       if (!mine || s.startsAt <= now || Date.parse(s.startsAt) - Date.parse(now) > 7 * DAY) continue;
@@ -154,7 +154,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
       out.push({ id: `n_squad_${s.id}`, pref: 'squad', kind: 'session', createdAt: hoursAgo(3), read: false,
         title: missing.length ? `Falta un ${roleLabel(missing[0])} en tu escuadra` : 'Tu escuadra está completa',
         body: `${day(s.startsAt, tz)}, ${clock(s.startsAt, tz)} · escuadra ${mine.squad} · ${s.members.length} de ${s.slots}`,
-        link: `/escuadra/${s.id}` });
+        link: `/comunidad/escuadra/${s.id}` });
     }
     const rotation = rotationAt(now);
     for (const id of wishlists.get(p.id) ?? []) {
@@ -173,7 +173,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
       title: 'Ranked ya abrió', body: 'Tus 3 primeras partidas definen tu rango', link: '/' });
     const rival = rivalOf(p);
     if (rival) out.push({ id: `n_rival_${rival.gamertag}`, pref: 'rival', kind: 'rival', createdAt: hoursAgo(20), read: true,
-      title: `${rival.gamertag} ya es ${rival.rank}`, body: `Te lleva ${rival.pointsAhead} puntos`, link: '/clasificacion' });
+      title: `${rival.gamertag} ya es ${rival.rank}`, body: `Te lleva ${rival.pointsAhead} puntos`, link: '/servicio/clasificacion' });
     return out.filter((n) => pr[n.pref]).map(({ pref: _, ...n }) => n).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   };
 
@@ -187,12 +187,12 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
         const squad = next.members.find((x) => x.gamertag === p.gamertag)!.squad;
         const covered = next.members.some((x) => x.squad === squad && x.role === missing);
         const when = localDate(next.startsAt, p.timezone) === localDate(now, p.timezone) ? 'Hoy' : `El ${weekday(next.startsAt, p.timezone)}`;
-        return { text: `${ROLE_GAP[missing]} ${when} ${covered ? 'tu escuadra ya tiene uno' : 'aún te falta uno'}.`, link: `/escuadra/${next.id}` };
+        return { text: `${ROLE_GAP[missing]} ${when} ${covered ? 'tu escuadra ya tiene uno' : 'aún te falta uno'}.`, link: `/comunidad/escuadra/${next.id}` };
       }
-      if (missing) return { text: `${ROLE_GAP[missing]} Busca una escuadra que ya tenga uno.`, link: '/escuadra' };
-      if (m.result === 'completed') return { text: `Completaste las ${HORDE_WAVE_GOAL} oleadas. Ya puedes subir la dificultad.`, link: '/escuadra' };
+      if (missing) return { text: `${ROLE_GAP[missing]} Busca una escuadra que ya tenga uno.`, link: '/comunidad' };
+      if (m.result === 'completed') return { text: `Completaste las ${HORDE_WAVE_GOAL} oleadas. Ya puedes subir la dificultad.`, link: '/comunidad' };
       const best = bestWave(p.id, now);
-      return { text: m.wavesCleared === best ? 'Es tu mejor oleada hasta ahora. Repite con la misma escuadra.' : `Tu mejor oleada es la ${best}. Aquí tenías los cuatro roles: repite con esta escuadra.`, link: '/escuadra' };
+      return { text: m.wavesCleared === best ? 'Es tu mejor oleada hasta ahora. Repite con la misma escuadra.' : `Tu mejor oleada es la ${best}. Aquí tenías los cuatro roles: repite con esta escuadra.`, link: '/comunidad' };
     }
     if (m.mode === 'campaign') {
       return { text: m.result === 'completed' ? 'Capítulo terminado. El siguiente empieza donde lo dejaste.' : 'Retoma desde tu último punto de control.' };
@@ -333,6 +333,36 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   });
 
   r.add('GET', '/events', ({ query }) => ok(data.events.filter((e) => e.endsAt > nowOf(query))));
+
+  // News appear once published; the demo clock decides what "already out" means.
+  const published = (now: string) => data.news.filter((n) => n.publishedAt <= now).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  r.add('GET', '/news', ({ query }) => {
+    const limit = Math.min(50, Math.max(1, Number(query.limit ?? 20)));
+    const list = published(nowOf(query)).filter((n) => !query.tag || n.tag === (query.tag as NewsTag));
+    return ok(list.slice(0, limit).map(({ sections: _s, knownIssues: _k, cta: _c, ...n }): NewsSummary => n));
+  });
+  r.add('GET', '/news/{newsId}', ({ params, query }) => {
+    const n = data.news.find((x) => x.id === params.newsId && x.publishedAt <= nowOf(query));
+    return n ? ok(structuredClone(n)) : error(404, 'not_found', `No existe la noticia ${params.newsId}`);
+  });
+
+  r.add('GET', '/calendar', ({ query }) => {
+    const now = nowOf(query);
+    const story = (eventId: string) => {
+      const n = data.news.find((x) => x.tag === 'event' && x.id === `n_${eventId.slice(3)}` && x.publishedAt <= now);
+      return n ? { link: `/noticias/${n.id}` } : {};
+    };
+    const out: CalendarEntry[] = [];
+    for (const e of data.events) {
+      if (e.startsAt > now) out.push({ id: `cal_${e.id}_start`, kind: 'event', title: `Empieza ${e.name}`, at: e.startsAt });
+      else if (e.endsAt > now) out.push({ id: `cal_${e.id}_end`, kind: 'event', title: `Termina ${e.name}`, at: e.endsAt, ...story(e.id) });
+    }
+    const rotation = rotationAt(now);
+    if (rotation.endsAt > now) out.push({ id: `cal_rotation_${rotation.id}`, kind: 'store', title: 'Rota la tienda y los retos', at: rotation.endsAt, link: '/tienda' });
+    if (GIFT_AT > now) out.push({ id: 'cal_gift', kind: 'gift', title: 'Regalo de aniversario', at: GIFT_AT });
+    if (data.season.endsAt > now) out.push({ id: `cal_${data.season.id}_end`, kind: 'season', title: `Termina la Temporada ${data.season.number}`, at: data.season.endsAt });
+    return ok(out.sort((a, b) => a.at.localeCompare(b.at)));
+  });
 
   r.add('GET', '/sessions', ({ query }) => {
     const now = nowOf(query);

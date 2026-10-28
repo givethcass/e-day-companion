@@ -5,11 +5,11 @@ import { Icon, type IconName } from '@/ui/Icon';
 import { color, fontFamily } from '@/ui/theme';
 
 const TABS: { name: string; title: string; icon: IconName }[] = [
-  { name: 'index', title: 'Semana', icon: 'home' },
-  { name: 'partidas', title: 'Partidas', icon: 'list' },
-  { name: 'clasificacion', title: 'Ranking', icon: 'bars' },
-  { name: 'escuadra', title: 'Escuadra', icon: 'squad' },
-  { name: 'tienda', title: 'Tienda', icon: 'bag' },
+  { name: 'index', title: 'Inicio', icon: 'home' },
+  { name: 'noticias', title: 'Noticias', icon: 'news' },
+  { name: 'guias', title: 'Guías', icon: 'book' },
+  { name: 'servicio', title: 'Servicio', icon: 'tag' },
+  { name: 'comunidad', title: 'Comunidad', icon: 'squad' },
 ];
 
 export default function TabsLayout() {
@@ -23,7 +23,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: color.text,
         tabBarInactiveTintColor: color.textSubtle,
         tabBarStyle: { backgroundColor: color.bg, borderTopColor: color.border, height: 76, paddingTop: 6, paddingBottom: 18 },
-        tabBarLabelStyle: { fontFamily: fontFamily.labelStrong, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
+        tabBarLabelStyle: { fontFamily: fontFamily.labelStrong, fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase' },
         sceneStyle: { backgroundColor: color.bg },
       }}
     >

@@ -4,7 +4,7 @@
 
 What if *Gears of War: E-Day* had an official companion app built to bring players back?
 
-Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its first week, yet more than half of Xbox players stopped at 5 hours or less. This project imagines an official mobile companion whose job is retention: a weekly "deployment report" with a short personal mission, real match history and leaderboards, squad planning for 12-player Horde Siege, and a weekly store watchlist, each ending in one action: **Deploy** (open the game).
+Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its first week, yet more than half of Xbox players stopped at 5 hours or less. This project imagines an official mobile companion in the spirit of Halo Waypoint: official news and patch notes, guides, your own service record, and a community side where Horde Siege squads get organised. A short personal mission on the home screen keeps the original retention goal, ending in one action: **Deploy** (open the game).
 
 ## Status
 
@@ -14,7 +14,8 @@ Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its
 | 1 | Visual system and prototype | Done (real player test pending) |
 | 2 | App base and simulated backend | Done |
 | 3 | Your week, match history, match report, demo clock | Done |
-| 4–5 | Remaining P0 screens at full design | Not started |
+| 4 | Waypoint-style structure (five tabs), Home, News, season calendar | Done |
+| 5 | Guides, service record, community | Not started |
 | 6 | Polish, demo video, case study | Not started |
 
 ## Repository

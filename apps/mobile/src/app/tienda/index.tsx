@@ -7,20 +7,21 @@ import { useNow } from '@/lib/clock';
 import { number } from '@/lib/demo';
 import { affordability } from '@/lib/store';
 import { day } from '@/lib/time';
-import { Loader, Readouts, Row, Screen, Section, Text } from '@/ui/kit';
+import { IconButton, Loader, Readouts, Row, Screen, Section, Text } from '@/ui/kit';
 
 export default function Tienda() {
   const { player } = useSession();
   const tz = player!.timezone;
   const now = useNow();
+  const back = <IconButton icon="back" label="Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />;
   const { data, error, reload } = useApi(async () => {
     const [rotation, wallet] = await Promise.all([api.getStoreRotation(now), api.getMyWallet(now)]);
     return { rotation, wallet };
   }, [now]);
-  if (!data) return <Screen title="Tienda"><Loader error={error} onRetry={reload} /></Screen>;
+  if (!data) return <Screen title="Tienda" right={back}><Loader error={error} onRetry={reload} /></Screen>;
   const { rotation, wallet } = data;
   return (
-    <Screen overline={`Rota el ${day(rotation.endsAt, tz)} · ${rotation.items.length} objetos`} title="Tienda">
+    <Screen overline={`Rota el ${day(rotation.endsAt, tz)} · ${rotation.items.length} objetos`} title="Tienda" right={back}>
       <Readouts items={[
         { label: 'Monedas', value: number(wallet.coins) },
         { label: 'Hierro', value: number(wallet.iron) },

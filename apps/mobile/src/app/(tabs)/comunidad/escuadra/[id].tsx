@@ -22,7 +22,7 @@ export default function Planner() {
   const tz = player!.timezone;
   const { data: s, error, reload, setData } = useApi(() => api.getSession(id), [id]);
   const [busy, setBusy] = useState(false);
-  const back = <IconButton icon="back" label="Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/escuadra'))} />;
+  const back = <IconButton icon="back" label="Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/comunidad'))} />;
   if (!s) return <Screen title="Planificador" right={back}><Loader error={error} onRetry={reload} /></Screen>;
 
   const me = s.members.find((m) => m.gamertag === player!.gamertag);

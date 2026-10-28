@@ -1,4 +1,4 @@
-// Match history: the season in three figures, Ranked if it is still pending, then every match with its result.
+// Mi servicio: the season in three figures, Ranked if it is still pending, leaderboards, then every match with its result.
 import type { Mode, MatchSummary } from '@eday/api-types';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -11,14 +11,14 @@ import { openLaunchUrl } from '@/lib/launch';
 import { isWin, matchTitle, outcome } from '@/lib/match';
 import { dayTime } from '@/lib/time';
 import { Icon } from '@/ui/Icon';
-import { Chip, Loader, Readouts, Screen, Text } from '@/ui/kit';
+import { Chip, Loader, Readouts, Row, Screen, Text } from '@/ui/kit';
 import { color, size, space } from '@/ui/theme';
 
 const FILTERS: [string, Mode[] | null][] = [['Todo', null], ['Versus', ['versus_tdm', 'versus_conquest', 'versus_ranked']], ['Horde', ['horde_siege']], ['Campaña', ['campaign']]];
 
 function MatchRow({ m, tz }: { m: MatchSummary; tz: string }) {
   return (
-    <Pressable accessibilityRole="button" onPress={() => router.push(`/partidas/${m.id}`)} style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.surface }]}>
+    <Pressable accessibilityRole="button" onPress={() => router.push(`/servicio/partidas/${m.id}`)} style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.surface }]}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="bodyStrong" numberOfLines={1}>{matchTitle(m)}</Text>
         <Text variant="caption" tone="textSubtle">{dayTime(m.endedAt, tz)}</Text>
@@ -31,7 +31,7 @@ function MatchRow({ m, tz }: { m: MatchSummary; tz: string }) {
   );
 }
 
-export default function Partidas() {
+export default function Servicio() {
   const { player } = useSession();
   const now = useNow();
   const { data, error, reload } = useApi(async () => {
@@ -39,14 +39,14 @@ export default function Partidas() {
     return { matches: page.items, season };
   }, [now]);
   const [filter, setFilter] = useState(0);
-  if (!data) return <Screen title="Partidas"><Loader error={error} onRetry={reload} /></Screen>;
+  if (!data) return <Screen title="Mi servicio"><Loader error={error} onRetry={reload} /></Screen>;
   const { matches, season } = data;
   const modes = FILTERS[filter][1];
   const items = matches.filter((m) => !modes || modes.includes(m.mode));
   const hours = matches.reduce((s, m) => s + (m.durationSeconds ?? 0), 0) / 3600;
   const bestWave = Math.max(0, ...matches.map((m) => m.wavesCleared ?? 0));
   return (
-    <Screen overline={`Temporada ${season.number}`} title="Partidas" meta={`T${season.number} · ${matches.length} partidas`}>
+    <Screen overline={`Temporada ${season.number}`} title="Mi servicio" meta={`T${season.number} · ${matches.length} partidas`}>
       <Readouts items={[
         { label: 'Partidas', value: String(matches.length) },
         { label: 'Horas', value: hours.toFixed(1) },
@@ -58,6 +58,8 @@ export default function Partidas() {
           <Icon name="chev" size={16} color={color.textSubtle} />
         </Pressable>
       )}
+      <Row icon="bars" title="Clasificaciones" subtitle="Horde por mejor oleada y Ranked por puntos" onPress={() => router.push('/servicio/clasificacion')} />
+      <Text variant="section">Historial</Text>
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         {FILTERS.map(([label], i) => <View key={label} style={{ flex: 1 }}><Chip label={label} selected={i === filter} onPress={() => setFilter(i)} /></View>)}
       </View>

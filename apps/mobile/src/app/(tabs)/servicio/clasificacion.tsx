@@ -1,10 +1,11 @@
 // Leaderboards by mode: Horde ranks by best wave, Ranked by rank points. The game has none yet.
 import type { LeaderboardScope, Mode } from '@eday/api-types';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { api } from '@/api/client';
 import { useApi } from '@/api/useApi';
-import { Card, Chip, Loader, Row, Screen, Section, Text } from '@/ui/kit';
+import { Card, Chip, IconButton, Loader, Row, Screen, Section, Text } from '@/ui/kit';
 import { space } from '@/ui/theme';
 
 const MODES: [string, Mode][] = [['Horde', 'horde_siege'], ['Ranked', 'versus_ranked']];
@@ -16,7 +17,8 @@ export default function Clasificacion() {
   const { data, error, reload } = useApi(() => api.getLeaderboard(MODES[mode][1], { scope: SCOPES[scope][1], limit: 20 }), [mode, scope]);
   const unit = MODES[mode][1] === 'horde_siege' ? 'oleada' : 'pts';
   return (
-    <Screen overline="Temporada 1" title="Ranking">
+    <Screen overline="Temporada 1" title="Clasificaciones"
+      right={<IconButton icon="back" label="Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/servicio'))} />}>
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         {MODES.map(([label], i) => <Chip key={label} label={label} selected={i === mode} onPress={() => setMode(i)} />)}
       </View>

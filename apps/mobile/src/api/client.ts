@@ -2,8 +2,8 @@
 // With EXPO_PUBLIC_API_URL set it calls the HTTP mock; otherwise the simulated backend runs inside the app,
 // which is what the static web demo uses.
 import type {
-  Challenge, Clan, Event, JoinRequest, Leaderboard, LeaderboardScope, MatchPage, MatchReport, Mode, NewSquadSession,
-  Notification, NotificationPrefs, Player, Season, SessionFilters, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport,
+  CalendarEntry, Challenge, Clan, Event, JoinRequest, Leaderboard, LeaderboardScope, MatchPage, MatchReport, Mode, NewSquadSession,
+  NewsArticle, NewsSummary, NewsTag, Notification, NotificationPrefs, Player, Season, SessionFilters, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport,
 } from '@eday/api-types';
 import { createApi, type Api } from '@eday/api-mock';
 
@@ -87,6 +87,9 @@ export const api = {
   addToWishlist: (itemId: string) => call<void>('POST', '/me/wishlist', { body: { itemId } }),
   removeFromWishlist: (itemId: string) => call<void>('DELETE', `/me/wishlist/${enc(itemId)}`),
   listEvents: (asOf?: string) => call<Event[]>('GET', '/events', { query: { asOf } }),
+  listNews: (q: { tag?: NewsTag; limit?: number; asOf?: string } = {}) => call<NewsSummary[]>('GET', '/news', { query: q }),
+  getNews: (newsId: string, asOf?: string) => call<NewsArticle>('GET', `/news/${enc(newsId)}`, { query: { asOf } }),
+  listCalendar: (asOf?: string) => call<CalendarEntry[]>('GET', '/calendar', { query: { asOf } }),
   listSessions: (filters: SessionFilters = {}) => call<SquadSession[]>('GET', '/sessions', { query: filters }),
   createSession: (s: NewSquadSession) => call<SquadSession>('POST', '/sessions', { body: s }),
   getSession: (sessionId: string) => call<SquadSession>('GET', `/sessions/${enc(sessionId)}`),

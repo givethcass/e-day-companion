@@ -15,6 +15,9 @@ const shapes = {
   trophy: ['M8 4h8v5a4 4 0 01-8 0z', 'M8 6H5a3 3 0 003 4M16 6h3a3 3 0 01-3 4', 'M12 13v4M8 20h8'],
   target: [{ cx: 12, cy: 12, r: 8 }, { cx: 12, cy: 12, r: 3.5 }],
   chev: ['M9 5l7 7-7 7'],
+  news: ['M4 5h13v14H6a2 2 0 01-2-2z', 'M17 9h3v8a2 2 0 01-2 2', 'M7 9h7M7 13h7M7 16h4'],
+  book: ['M12 6.5C10 5 7 4.5 4 5v13.5c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5z', 'M12 6.5V20'],
+  tag: ['M8 3h8l3 3v12l-3 3H8l-3-3V6z', 'M9 10h6M9 14h6'],
 } satisfies Record<string, (string | { cx: number; cy: number; r: number })[]>;
 
 export type IconName = keyof typeof shapes;

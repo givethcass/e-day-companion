@@ -1,4 +1,4 @@
-// Squad sessions with the filters players asked for: Spanish, no mic, today.
+// Comunidad: squad sessions with the filters players asked for (Spanish, no mic, today). Clan and creators come next.
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -18,7 +18,7 @@ const endOfDay = (now: string, tz: string) => {
   return new Date(Date.parse(now) + (24 - Number(offset)) * 3600e3).toISOString();
 };
 
-export default function Escuadra() {
+export default function Comunidad() {
   const { player } = useSession();
   const tz = player!.timezone;
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('Todas');
@@ -33,7 +33,7 @@ export default function Escuadra() {
   const open = data?.filter((s) => s !== mine && s.status === 'open').slice(0, 12) ?? [];
 
   return (
-    <Screen overline={`Horas en tu zona: ${zoneLabel(tz)}`} title="Escuadra">
+    <Screen overline={`Horas en tu zona: ${zoneLabel(tz)}`} title="Comunidad">
       {mine && (
         <Card priority>
           <Text variant="overline" tone="primary">Próxima sesión · {countdown(mine.startsAt, now)}</Text>
@@ -43,18 +43,18 @@ export default function Escuadra() {
             <DataLine label="Dificultad" value={difficultyLabel(mine.difficulty)} />
             <DataLine label="Lugares" value={`${mine.members.length}/${mine.slots}`} tone="primary" />
           </View>
-          <Button label="Abrir planificador" onPress={() => router.push(`/escuadra/${mine.id}`)} />
+          <Button label="Abrir planificador" onPress={() => router.push(`/comunidad/escuadra/${mine.id}`)} />
         </Card>
       )}
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
         {FILTERS.map((f) => <Chip key={f} label={f} selected={f === filter} onPress={() => setFilter(f)} />)}
       </View>
-      <Section title="Sesiones abiertas">
+      <Section title="Escuadras abiertas">
         {!data ? <Loader error={error} onRetry={reload} /> : open.map((s) => (
           <Row key={s.id} tag={dayTime(s.startsAt, tz).split(' ').slice(0, 2).join(' ').toUpperCase()} tagTone={s.mode === 'horde_siege' ? 'primary' : 'text'}
             title={`${modeLabel(s.mode)}${s.map ? ` · ${s.map}` : ''}`}
             subtitle={`${clock(s.startsAt, tz)} · ${s.language === 'es' ? 'Español' : 'Inglés'}${s.micRequired ? ' · micrófono' : ' · sin micro'}${s.difficulty ? ` · ${difficultyLabel(s.difficulty)}` : ''}`}
-            trailing={`${s.members.length}/${s.slots}`} onPress={() => router.push(`/escuadra/${s.id}`)} />
+            trailing={`${s.members.length}/${s.slots}`} onPress={() => router.push(`/comunidad/escuadra/${s.id}`)} />
         ))}
         {data && open.length === 0 && <Text tone="textMuted">No hay sesiones con ese filtro.</Text>}
       </Section>

@@ -27,6 +27,12 @@ export interface SeedSession {
 export interface SeedWallet { playerId: string; coins: number; iron: number; coinsThisWeek: number; coinsWeeklyCap: number; capResetsAt: Iso }
 export interface SeedEvent { id: string; name: string; startsAt: Iso; endsAt: Iso; modes: Mode[]; rewards: string[] }
 
+type NewsTag = 'patch' | 'event' | 'season' | 'store' | 'community';
+export interface SeedNews {
+  id: string; tag: NewsTag; title: string; summary: string; publishedAt: Iso; readMinutes: number; featured?: boolean;
+  sections: { heading?: string; paragraphs?: string[]; bullets?: string[] }[]; knownIssues?: string[]; cta?: { label: string; link: string };
+}
+
 export interface SeedData {
   meta: { seed: number; demoNow: Iso; disclaimer: string };
   season: { id: string; number: number; name: string; startsAt: Iso; endsAt: Iso };
@@ -43,9 +49,12 @@ export interface SeedData {
   wishlists: { playerId: string; itemId: string; addedAt: Iso }[];
   sessions: SeedSession[];
   wallets: SeedWallet[];
+  news: SeedNews[];
 }
 
 /** Waves that complete a Horde Siege map. */
 export const HORDE_WAVE_GOAL: number;
+/** When the anniversary gift unlocks. */
+export const GIFT_AT: string;
 export function generate(options?: { seed?: number }): SeedData;
 export function rankFromPoints(points: number): SeedRank;
