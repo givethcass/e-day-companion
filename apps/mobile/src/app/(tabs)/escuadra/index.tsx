@@ -41,7 +41,7 @@ export default function Escuadra() {
             <DataLine label="Dificultad" value={difficultyLabel(mine.difficulty)} />
             <DataLine label="Lugares" value={`${mine.members.length}/${mine.slots}`} tone="primary" />
           </View>
-          <Button label="Abrir planificador ▸" onPress={() => router.push(`/escuadra/${mine.id}`)} />
+          <Button label="Abrir planificador" onPress={() => router.push(`/escuadra/${mine.id}`)} />
         </Card>
       )}
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>

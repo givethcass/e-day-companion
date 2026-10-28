@@ -22,7 +22,7 @@ Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its
 contract/openapi.yaml    API contract (OpenAPI 3.1), written before any code
 packages/api-types       TypeScript types generated from the contract
 packages/seed            Deterministic simulated data + checks against the contract
-packages/tokens          Design tokens (direction B, Tactical HUD) + WCAG contrast checks
+packages/tokens          Design tokens (direction C, official-site look) + WCAG contrast checks
 apps/mobile              Expo app (iOS, Android, web)
 apps/api-mock            Simulated backend: every contract operation, in the app or over HTTP
 docs/adr                 Architecture decision records

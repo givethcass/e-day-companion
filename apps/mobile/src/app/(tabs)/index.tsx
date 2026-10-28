@@ -1,18 +1,52 @@
-// Tu semana as a deployment report: readouts, the priority objective (switchable to the alternatives), the week's log.
+// Tu semana in the official site's look: an ember hero with the week's objective (tabs switch to the
+// alternatives), the week's figures, then a red band over what is coming up.
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { api } from '@/api/client';
 import { useSession } from '@/api/session';
 import { useApi } from '@/api/useApi';
 import { DEMO_NOW, number } from '@/lib/demo';
 import { openLaunchUrl } from '@/lib/launch';
 import { clock, day, dayTime } from '@/lib/time';
-import { Button, Card, Chip, DataLine, IconButton, Loader, Readouts, Row, Screen, Section, Text } from '@/ui/kit';
-import { space } from '@/ui/theme';
+import { Band, Button, Glow, IconButton, Loader, Readouts, Row, Screen, Tabs, Text } from '@/ui/kit';
+import { color, space } from '@/ui/theme';
 
-const CHIP: Record<string, string> = { versus_ranked: 'Ranked', horde_siege: 'Horde', campaign: 'Campaña', versus_tdm: 'Versus', versus_conquest: 'Versus' };
-const ddmm = (iso: string, tz: string) => new Intl.DateTimeFormat('es-MX', { timeZone: tz, day: '2-digit', month: '2-digit' }).format(new Date(iso)).replace('/', '.');
+const TAB: Record<string, string> = { versus_ranked: 'Ranked', horde_siege: 'Horde', campaign: 'Campaña', versus_tdm: 'Versus', versus_conquest: 'Versus' };
+
+/** Card art: a coloured glow over grain-free black, labelled like the site's game tiles. */
+function Thumb({ label, glow }: { label: string; glow: string }) {
+  return (
+    <View style={styles.thumb}>
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Svg width="100%" height="100%" preserveAspectRatio="none">
+          <Defs>
+            <RadialGradient id={`t${glow.slice(1)}`} cx="50%" cy="110%" rx="90%" ry="90%">
+              <Stop offset="0" stopColor={glow} stopOpacity={0.6} />
+              <Stop offset="1" stopColor="#0E0E0E" stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Rect width="100%" height="100%" fill="#0E0E0E" />
+          <Rect width="100%" height="100%" fill={`url(#t${glow.slice(1)})`} />
+        </Svg>
+      </View>
+      <Text variant="overline" style={{ fontSize: 13 }}>{label}</Text>
+    </View>
+  );
+}
+
+function Tile({ label, glow, title, body, cta, onPress }: { label: string; glow: string; title: string; body: string; cta: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" style={{ flex: 1, gap: 6 }}>
+      <Thumb label={label} glow={glow} />
+      <Text variant="headline" tone="textSubtle" style={{ fontSize: 20, lineHeight: 21, textTransform: 'none' }}>{title}</Text>
+      <Text variant="caption" tone="textMuted" style={{ flexGrow: 1 }}>{body}</Text>
+      <Button compact label={cta} onPress={onPress} />
+    </Pressable>
+  );
+}
 
 export default function TuSemana() {
   const { player } = useSession();
@@ -28,66 +62,88 @@ export default function TuSemana() {
   const [pick, setPick] = useState(0);
   const [sent, setSent] = useState<number | null>(null);
 
-  if (!data) return <Screen overline="Informe de despliegue" title={player!.gamertag}><Loader error={error} onRetry={reload} /></Screen>;
+  if (!data) return <Screen title="Tu semana"><Loader error={error} onRetry={reload} /></Screen>;
   const { week, wallet, season, sessions, rotation, events, clan, unread } = data;
   const weekNo = Math.floor((Date.parse(DEMO_NOW) - Date.parse(season.startsAt)) / (7 * 864e5)) + 1;
   const weeks = Math.round((Date.parse(season.endsAt) - Date.parse(season.startsAt)) / (7 * 864e5));
   const missions = [week.nextMission, ...(week.nextMission.alternatives ?? [])];
   const m = missions[pick];
   const isMain = pick === 0;
+  const main = week.nextMission;
+  const body = isMain
+    ? [main.reason, `Unos ${main.estimatedMinutes} minutos`, main.reward].filter(Boolean).join(' · ')
+    : 'Otra opción según cómo juegas esta temporada.';
   const mine = sessions.filter((s) => s.members.some((x) => x.gamertag === player!.gamertag));
   const wished = rotation.items.filter((i) => i.wishlisted);
   const ending = events.filter((e) => e.startsAt <= DEMO_NOW);
-  const daysLeft = (iso: string) => `${Math.ceil((Date.parse(iso) - Date.parse(DEMO_NOW)) / 864e5)}d`;
+  const daysLeft = (iso: string) => `${Math.ceil((Date.parse(iso) - Date.parse(DEMO_NOW)) / 864e5)} días`;
+  const s0 = mine[0];
+  const me = s0?.members.find((x) => x.gamertag === player!.gamertag);
+  const w0 = wished[0];
+
+  const hero = (
+    <SafeAreaView edges={['top']}>
+      <View style={styles.topBar}>
+        <Text variant="headline" style={{ fontSize: 19, letterSpacing: 1 }}>E-Day <Text variant="headline" tone="primary" style={{ fontSize: 19, letterSpacing: 1 }}>Companion</Text></Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text variant="overline" tone="textSubtle" style={{ fontSize: 13, letterSpacing: 0.8 }}>{`T${season.number} · Semana ${weekNo} de ${weeks}`}</Text>
+          <IconButton icon="bell" label={`Avisos, ${unread} sin leer`} dot={unread > 0} onPress={() => router.push('/avisos')} />
+        </View>
+      </View>
+      <View style={styles.hero}>
+        <Glow />
+        <Tabs items={missions.map((x) => TAB[x.mode] ?? x.mode)} selected={pick} onSelect={(i) => { setPick(i); setSent(null); }} />
+        <Text variant="overline" tone="textMuted" style={{ marginTop: 18 }}>{isMain ? `Objetivo de la semana · ${player!.gamertag}` : 'Otra opción'}</Text>
+        <Text variant="display" style={{ fontSize: 34, lineHeight: 34 }}>{m.title}</Text>
+        <Text tone="textMuted" style={{ color: '#E2E0E0' }}>{body}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }}>
+          <Button compact label={sent === pick ? 'Enviado' : 'Desplegar'} kind={sent === pick ? 'secondary' : 'primary'}
+            onPress={() => { setSent(pick); if (m.launchUrl) openLaunchUrl(m.launchUrl); }} />
+          {sent === pick && <Text variant="caption" tone="textMuted" style={{ flex: 1 }}>Enviado a tu Xbox o PC.</Text>}
+        </View>
+      </View>
+    </SafeAreaView>
+  );
 
   return (
-    <Screen
-      overline="Informe de despliegue"
-      title={player!.gamertag}
-      meta={`T${season.number} · SEM ${String(weekNo).padStart(2, '0')}/${String(weeks).padStart(2, '0')}\n${ddmm(rotation.startsAt, tz)} → ${ddmm(new Date(Date.parse(rotation.endsAt) - 864e5).toISOString(), tz)}`}
-      right={<IconButton icon="bell" label={`Avisos, ${unread} sin leer`} dot={unread > 0} onPress={() => router.push('/avisos')} />}
-    >
+    <Screen edges={[]} bleed={hero}>
       <Readouts items={[
-        { label: 'Inactivo', value: week.daysSinceLastMatch ? `${week.daysSinceLastMatch}d` : 'hoy', tone: week.daysSinceLastMatch ? 'primary' : 'text' },
-        { label: 'Retos', value: `${week.challengesDone}/${week.challengesTotal}` },
+        { label: 'Inactivo', value: week.daysSinceLastMatch ? `${week.daysSinceLastMatch} días` : 'Hoy', tone: week.daysSinceLastMatch ? 'primary' : 'text' },
+        { label: 'Retos', value: `${week.challengesDone} / ${week.challengesTotal}` },
         { label: 'Monedas', value: number(wallet.coins) },
       ]} />
 
-      <Card priority>
-        <Text variant="overline" tone="primary">{isMain ? 'Objetivo prioritario' : 'Objetivo alterno'}</Text>
-        <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-          {missions.map((x, i) => <Chip key={x.mode} label={CHIP[x.mode] ?? x.mode} selected={i === pick} onPress={() => { setPick(i); setSent(null); }} />)}
-        </View>
-        <Text variant="headline">{m.title}</Text>
-        {isMain ? (
-          <View style={{ gap: 5 }}>
-            {week.nextMission.reason ? <DataLine label="Motivo" value={week.nextMission.reason} /> : null}
-            <DataLine label="Tiempo estimado" value={`~${week.nextMission.estimatedMinutes} min`} />
-            {week.nextMission.reward ? <DataLine label="Recompensa" value={week.nextMission.reward} tone="primary" /> : null}
-          </View>
-        ) : null}
-        <Button label={sent === pick ? '[ Enviado ]' : 'Desplegar ▸'} kind={sent === pick ? 'secondary' : 'primary'}
-          onPress={() => { setSent(pick); if (m.launchUrl) openLaunchUrl(m.launchUrl); }} />
-      </Card>
-
-      <Section title="Registro de la semana">
-        {mine.map((s) => {
-          const me = s.members.find((x) => x.gamertag === player!.gamertag)!;
-          return (
-            <Row key={s.id} tag={day(s.startsAt, tz).split(' ').slice(0, 2).join(' ').toUpperCase()} tagTone="primary"
-              title={`Horde Siege · ${s.clanId === clan?.id ? clan?.name : s.hostGamertag}`}
-              subtitle={`${clock(s.startsAt, tz)} tu hora · escuadra ${me.squad}${me.confirmed ? ' · confirmado' : ''}`}
-              trailing={`${s.members.length}/${s.slots}`} onPress={() => router.push(`/escuadra/${s.id}`)} />
-          );
-        })}
-        {wished.map((i) => (
-          <Row key={i.id} tag="TIENDA" title={`${i.name} disponible`} subtitle={`Lista de deseos · sale el ${day(rotation.endsAt, tz)}`}
-            trailing={number(i.price.amount)} trailingTone="text" onPress={() => router.push(`/tienda/${i.id}`)} />
+      <Band title="Esta semana" subtitle="Tu escuadra, tu tienda y lo que termina" />
+      <View style={{ flexDirection: 'row', gap: 14 }}>
+        {s0 && me && (
+          <Tile label={`${day(s0.startsAt, tz).split(' ').slice(0, 2).join(' ')} · ${clock(s0.startsAt, tz)}`} glow="#E50F11"
+            title={`Horde Siege · ${s0.clanId === clan?.id ? clan?.name : s0.hostGamertag}`}
+            body={`Escuadra ${me.squad}${me.confirmed ? ', confirmado' : ''} · ${s0.members.length} de ${s0.slots}`}
+            cta="Ver escuadra" onPress={() => router.push(`/escuadra/${s0.id}`)} />
+        )}
+        {w0 && (
+          <Tile label="En tu lista" glow="#7AA0BE" title={w0.name} body={`Volvió a la tienda · se va el ${day(rotation.endsAt, tz)}`}
+            cta="Ver objeto" onPress={() => router.push(`/tienda/${w0.id}`)} />
+        )}
+      </View>
+      <View>
+        {mine.slice(1).map((s) => (
+          <Row key={s.id} tag={day(s.startsAt, tz).split(' ').slice(0, 2).join(' ')} tagTone="primary" title={`Horde Siege · ${s.hostGamertag}`}
+            subtitle={`${clock(s.startsAt, tz)} tu hora`} trailing={`${s.members.length}/${s.slots}`} onPress={() => router.push(`/escuadra/${s.id}`)} />
+        ))}
+        {wished.slice(1).map((i) => (
+          <Row key={i.id} tag="Tienda" title={`${i.name} disponible`} subtitle="Lista de deseos" trailing={number(i.price.amount)} trailingTone="text" onPress={() => router.push(`/tienda/${i.id}`)} />
         ))}
         {ending.map((e) => (
-          <Row key={e.id} tag="EVENTO" title={`${e.name} termina pronto`} subtitle={`${dayTime(e.endsAt, tz)} tu hora`} trailing={daysLeft(e.endsAt)} trailingTone="text" />
+          <Row key={e.id} tag="Evento" title={`${e.name} termina pronto`} subtitle={`${dayTime(e.endsAt, tz)} tu hora`} trailing={daysLeft(e.endsAt)} trailingTone="text" />
         ))}
-      </Section>
+      </View>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: space.xl, paddingRight: space.sm, paddingTop: space.sm },
+  hero: { paddingHorizontal: space.xl, paddingTop: 18, paddingBottom: 20, gap: 10, overflow: 'hidden' },
+  thumb: { height: 76, padding: 8, justifyContent: 'flex-end', overflow: 'hidden', backgroundColor: color.surface },
+});

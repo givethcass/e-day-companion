@@ -31,7 +31,7 @@ export default function Partidas() {
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
         {FILTERS.map(([label], i) => <Chip key={label} label={label} selected={i === filter} onPress={() => setFilter(i)} />)}
       </View>
-      <Section title="Registro de partidas">
+      <Section title="Partidas recientes">
         {items.map((m) => (
           <Row key={m.id} tag={day(m.endedAt, player!.timezone).split(' ').slice(0, 2).join(' ').toUpperCase()} tagTone={m.result === 'win' || m.result === 'completed' ? 'primary' : 'textSubtle'}
             title={`${modeLabel(m.mode)} · ${m.map}`} subtitle={RESULT[m.result]}

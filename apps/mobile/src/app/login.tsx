@@ -21,7 +21,7 @@ export default function Login() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: color.bg, padding: space.xl, justifyContent: 'space-between' }}>
       <View style={{ flex: 1, justifyContent: 'center', gap: space.md }}>
-        <Text variant="overline" tone="primary">// Enlace con el campo de batalla</Text>
+        <Text variant="overline" tone="primary">Enlace con el campo de batalla</Text>
         <Text variant="display" style={{ fontSize: 46, lineHeight: 46 }}>E-DAY{'\n'}COMPANION</Text>
         <Text tone="textMuted" style={{ fontSize: 15, lineHeight: 22 }}>
           Tu informe semanal, tu escuadra y la tienda en el bolsillo. Cuando sea hora de jugar, un toque y estás dentro.
@@ -31,11 +31,11 @@ export default function Login() {
         {busy ? (
           <View style={{ height: 46, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: space.sm }}>
             <ActivityIndicator color={color.primary} />
-            <Text variant="data" tone="textMuted">&gt; Conectando con Xbox…</Text>
+            <Text variant="data" tone="textMuted">Conectando con Xbox…</Text>
           </View>
         ) : (
           <>
-            <Button label="Entrar con tu cuenta Xbox ▸" onPress={enter} />
+            <Button label="Entrar con tu cuenta Xbox" onPress={enter} />
             <Button kind="secondary" label="Explorar sin cuenta" onPress={enter} />
           </>
         )}

@@ -39,7 +39,7 @@ export default function Planner() {
           <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
             {ROLES.map((r) => <Chip key={r} label={roleLabel(r)} selected={me?.role === r} onPress={() => !busy && join(r)} />)}
           </View>
-          {me?.confirmed && <Text variant="data" tone="primary">&gt; Confirmado: escuadra {me.squad}, {roleLabel(me.role)}. {s.hostGamertag} ya ve tu lugar.</Text>}
+          {me?.confirmed && <Text variant="data" tone="primary">Confirmado: escuadra {me.squad}, {roleLabel(me.role)}. {s.hostGamertag} ya ve tu lugar.</Text>}
         </Section>
       )}
       {horde ? [1, 2, 3].map((n) => {
@@ -55,15 +55,15 @@ export default function Planner() {
               </View>
             ))}
             {Array.from({ length: 4 - squad.length }, (_, i) => (
-              <Text key={i} variant="data" tone="textSubtle">[ libre ] se busca {roleLabel(missing[i] ?? 'assault')}</Text>
+              <Text key={i} variant="data" tone="textSubtle">Libre · se busca {roleLabel(missing[i] ?? 'assault')}</Text>
             ))}
           </Card>
         );
       }) : (
         <Card>{s.members.map((m) => <Text key={m.gamertag} variant="bodyStrong">{m.gamertag}</Text>)}</Card>
       )}
-      {!me && <Button label={busy ? 'Uniendo…' : 'Unirme ▸'} onPress={() => join()} disabled={busy} />}
-      {me && <Button label="Desplegar ▸" onPress={deploy} />}
+      {!me && <Button label={busy ? 'Uniendo…' : 'Unirme'} onPress={() => join()} disabled={busy} />}
+      {me && <Button label="Desplegar" onPress={deploy} />}
     </Screen>
   );
 }

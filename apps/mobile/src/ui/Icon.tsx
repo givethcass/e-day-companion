@@ -1,4 +1,4 @@
-// Line icons from the week 1 prototype (24px grid), drawn with direction B's square ends.
+// Line icons from the week 1 prototype (24px grid), drawn with square ends.
 import Svg, { Circle, Path } from 'react-native-svg';
 import { color as palette } from './theme';
 
@@ -21,7 +21,7 @@ export type IconName = keyof typeof shapes;
 
 export function Icon({ name, size = 22, color = palette.text }: { name: IconName; size?: number; color?: string }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.6} strokeLinecap="square" strokeLinejoin="miter">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="square" strokeLinejoin="miter">
       {shapes[name].map((s, i) => (typeof s === 'string' ? <Path key={i} d={s} /> : <Circle key={i} {...s} />))}
     </Svg>
   );

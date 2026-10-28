@@ -30,10 +30,10 @@ export default function Item() {
     <Screen overline={onSale ? `Se va de la tienda el ${dayTime(rotation.endsAt, player!.timezone)} tu hora` : 'No está en la tienda esta semana'} title={item.name} right={back}>
       <Card priority>
         <Text variant="stat">{number(item.price.amount)} {item.price.currency === 'iron' ? 'Hierro' : 'Monedas'}</Text>
-        <Text variant="data" tone="textMuted">&gt; {affordability(item, wallet)}</Text>
+        <Text variant="data" tone="textMuted">{affordability(item, wallet)}</Text>
       </Card>
       <Button kind="secondary" label={item.wishlisted ? 'Quitar de la lista de deseos' : 'Agregar a la lista de deseos'} onPress={toggle} />
-      <Button label="Ver en la tienda del juego ▸" onPress={() => router.push({ pathname: '/launch', params: { mode: 'store' } })} />
+      <Button label="Ver en la tienda del juego" onPress={() => router.push({ pathname: '/launch', params: { mode: 'store' } })} />
       <Text variant="caption" tone="textSubtle">La app no vende nada: el botón abre la tienda dentro del juego.</Text>
     </Screen>
   );

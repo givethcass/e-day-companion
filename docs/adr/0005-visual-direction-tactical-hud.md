@@ -1,6 +1,6 @@
 # ADR 0005: Visual direction B, "Tactical HUD"
 
-- Status: Accepted
+- Status: Superseded by ADR 0006 (same day)
 - Date: 2026-10-28
 
 ## Context

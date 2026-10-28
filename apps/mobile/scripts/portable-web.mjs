@@ -31,7 +31,7 @@ const boot = `<script>
 // A fragment, not a full document: hosts that wrap pages in their own skeleton get valid HTML either way.
 await writeFile(join(out, 'index.html'), `<title>E-Day Companion</title>
 <meta name="description" content="Concepto no oficial con datos simulados.">
-${style.replace('<style id="expo-reset">', '<style id="expo-reset">\n      :root { color-scheme: dark; }\n      body { background: #111315; }')}
+${style.replace('<style id="expo-reset">', '<style id="expo-reset">\n      :root { color-scheme: dark; }\n      body { background: #000000; }')}
 ${boot}
 <noscript>Necesitas JavaScript para usar esta demo.</noscript>
 <div id="root"></div>

@@ -1,0 +1,193 @@
+{
+  "$description": "Direction B, \"Tactical HUD\" (chosen and then replaced by direction C on 2026-10-28; kept for the record): amber on near-black, condensed uppercase titles, monospaced numbers and labels, log-style rows, square corners. Dark only. Direction A is kept in tokens-a.json for the record.",
+  "color": {
+    "bg": "#0B0C0D",
+    "surface": "#131517",
+    "surfaceRaised": "#1B1E21",
+    "border": "#23262A",
+    "text": "#E6E4DF",
+    "textMuted": "#B9BCC0",
+    "textSubtle": "#8B8F94",
+    "textFaint": "#7E8288",
+    "primary": "#F2A900",
+    "onPrimary": "#0B0C0D",
+    "accent": "#F2A900",
+    "highlight": "#F2A900",
+    "onHighlight": "#0B0C0D",
+    "danger": "#FF6B5B",
+    "disabled": "#2A2E33"
+  },
+  "font": {
+    "display": "IBM Plex Sans Condensed",
+    "body": "IBM Plex Sans",
+    "mono": "IBM Plex Mono"
+  },
+  "type": {
+    "display": {
+      "font": "display",
+      "weight": 700,
+      "size": 28,
+      "lineHeight": 1.0,
+      "case": "upper"
+    },
+    "headline": {
+      "font": "display",
+      "weight": 700,
+      "size": 25,
+      "lineHeight": 1.05,
+      "case": "upper"
+    },
+    "section": {
+      "font": "mono",
+      "weight": 400,
+      "size": 11,
+      "lineHeight": 1.3,
+      "letterSpacing": 1,
+      "case": "upper"
+    },
+    "stat": {
+      "font": "mono",
+      "weight": 600,
+      "size": 24,
+      "lineHeight": 1.1
+    },
+    "bodyStrong": {
+      "font": "body",
+      "weight": 600,
+      "size": 14,
+      "lineHeight": 1.4
+    },
+    "body": {
+      "font": "body",
+      "weight": 400,
+      "size": 13,
+      "lineHeight": 1.45
+    },
+    "caption": {
+      "font": "body",
+      "weight": 400,
+      "size": 12,
+      "lineHeight": 1.4
+    },
+    "overline": {
+      "font": "mono",
+      "weight": 400,
+      "size": 11,
+      "lineHeight": 1.3,
+      "letterSpacing": 1,
+      "case": "upper"
+    },
+    "data": {
+      "font": "mono",
+      "weight": 400,
+      "size": 12,
+      "lineHeight": 1.4
+    },
+    "button": {
+      "font": "mono",
+      "weight": 600,
+      "size": 14,
+      "lineHeight": 1.2,
+      "letterSpacing": 1,
+      "case": "upper"
+    },
+    "legal": {
+      "font": "mono",
+      "weight": 400,
+      "size": 10,
+      "lineHeight": 1.5,
+      "case": "upper"
+    }
+  },
+  "space": {
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 20,
+    "xxl": 28
+  },
+  "radius": {
+    "chip": 4,
+    "button": 4,
+    "card": 4,
+    "hero": 4,
+    "avatar": 999
+  },
+  "size": {
+    "touchTarget": 44,
+    "button": 46,
+    "icon": 22,
+    "tabBar": 76,
+    "heroRule": 3
+  },
+  "contrast": {
+    "$description": "Pairs used for text in the designs. Each must reach WCAG AA (4.5:1).",
+    "text": [
+      [
+        "text",
+        "bg"
+      ],
+      [
+        "text",
+        "surface"
+      ],
+      [
+        "text",
+        "surfaceRaised"
+      ],
+      [
+        "text",
+        "disabled"
+      ],
+      [
+        "textMuted",
+        "bg"
+      ],
+      [
+        "textMuted",
+        "surface"
+      ],
+      [
+        "textSubtle",
+        "bg"
+      ],
+      [
+        "textSubtle",
+        "surface"
+      ],
+      [
+        "textFaint",
+        "bg"
+      ],
+      [
+        "textFaint",
+        "surface"
+      ],
+      [
+        "primary",
+        "bg"
+      ],
+      [
+        "primary",
+        "surface"
+      ],
+      [
+        "primary",
+        "surfaceRaised"
+      ],
+      [
+        "onPrimary",
+        "primary"
+      ],
+      [
+        "danger",
+        "bg"
+      ],
+      [
+        "danger",
+        "surface"
+      ]
+    ]
+  }
+}

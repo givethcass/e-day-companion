@@ -1,8 +1,8 @@
-import { IBMPlexMono_400Regular } from '@expo-google-fonts/ibm-plex-mono/400Regular';
-import { IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono/600SemiBold';
-import { IBMPlexSans_400Regular } from '@expo-google-fonts/ibm-plex-sans/400Regular';
-import { IBMPlexSans_600SemiBold } from '@expo-google-fonts/ibm-plex-sans/600SemiBold';
-import { IBMPlexSansCondensed_700Bold } from '@expo-google-fonts/ibm-plex-sans-condensed/700Bold';
+import { Barlow_400Regular } from '@expo-google-fonts/barlow/400Regular';
+import { Barlow_600SemiBold } from '@expo-google-fonts/barlow/600SemiBold';
+import { BarlowCondensed_500Medium } from '@expo-google-fonts/barlow-condensed/500Medium';
+import { BarlowCondensed_600SemiBold } from '@expo-google-fonts/barlow-condensed/600SemiBold';
+import { BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed/700Bold';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -12,7 +12,7 @@ import { color } from '@/ui/theme';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    IBMPlexSansCondensed_700Bold, IBMPlexSans_400Regular, IBMPlexSans_600SemiBold, IBMPlexMono_400Regular, IBMPlexMono_600SemiBold,
+    Barlow_400Regular, Barlow_600SemiBold, BarlowCondensed_500Medium, BarlowCondensed_600SemiBold, BarlowCondensed_700Bold,
   });
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: color.bg }} />;
   return (

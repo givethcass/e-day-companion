@@ -24,7 +24,7 @@ export default function Tienda() {
         { label: 'Hierro', value: number(wallet.iron) },
         { label: 'Tope sem.', value: `${number(wallet.coinsThisWeek)}/${wallet.coinsWeeklyCap / 1000}k` },
       ]} />
-      <Text variant="data" tone="textSubtle">&gt; El tope de Monedas se reinicia el {day(wallet.capResetsAt, tz)}.</Text>
+      <Text variant="data" tone="textSubtle">El tope de Monedas se reinicia el {day(wallet.capResetsAt, tz)}.</Text>
       <Section title="Rotación actual">
         {rotation.items.map((i) => (
           <Row key={i.id} tag={i.wishlisted ? '♥ DESEO' : i.price.currency === 'iron' ? 'HIERRO' : 'MONEDAS'} tagTone={i.wishlisted ? 'primary' : 'textSubtle'}
