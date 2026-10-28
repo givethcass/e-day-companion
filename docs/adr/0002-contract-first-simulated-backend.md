@@ -9,7 +9,7 @@ An official app would read player data from Xbox services and PlayFab. There is 
 
 ## Decision
 
-Write the API as an OpenAPI 3.1 contract first (`contract/openapi.yaml`). A simulated backend (Supabase Postgres + Edge Functions, week 2) serves exactly that contract from seed data. The app only talks to the contract. "Sign in with Xbox" and "Deploy" (open the game) are simulated and labelled as such.
+Write the API as an OpenAPI 3.1 contract first (`contract/openapi.yaml`). A simulated backend serves exactly that contract from seed data (Supabase was the first plan; see ADR 0004). The app only talks to the contract. "Sign in with Xbox" and "Deploy" (open the game) are simulated and labelled as such.
 
 ## Consequences
 

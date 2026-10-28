@@ -2,16 +2,27 @@
   "name": "e-day-companion",
   "private": true,
   "description": "Portfolio concept: an official-style companion app for Gears of War: E-Day. Unofficial; not affiliated with Microsoft, Xbox or The Coalition.",
-  "workspaces": ["packages/*"],
-  "engines": { "node": ">=22" },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "seed": "npm run seed -w @eday/seed",
-    "check": "npm run check --workspaces"
+    "check": "npm run check --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "api": "npm start -w @eday/api-mock",
+    "web": "npm run web -w @eday/mobile",
+    "export:web": "npm run export:web -w @eday/mobile"
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^13.1.0",
+    "@types/node": "^22.20.5",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
+    "typescript": "~6.0.3",
     "yaml": "^2.9.1"
   }
 }

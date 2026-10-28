@@ -11,18 +11,20 @@ Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its
 | Week | Focus | State |
 | --- | --- | --- |
 | 0 | Case, data and API contract | Done |
-| 1 | Visual system and prototype | In progress |
-| 2–5 | App and simulated backend | Not started |
+| 1 | Visual system and prototype | Done (real player test pending) |
+| 2 | App base and simulated backend | Done |
+| 3–5 | P0 screens at full design | Not started |
 | 6 | Polish, demo video, case study | Not started |
 
 ## Repository
 
 ```
 contract/openapi.yaml    API contract (OpenAPI 3.1), written before any code
+packages/api-types       TypeScript types generated from the contract
 packages/seed            Deterministic simulated data + checks against the contract
 packages/tokens          Design tokens (direction A) + WCAG contrast checks
-apps/mobile              Expo app (iOS, Android, web) — week 2
-apps/api-mock            Simulated backend serving the contract — week 2
+apps/mobile              Expo app (iOS, Android, web)
+apps/api-mock            Simulated backend: every contract operation, in the app or over HTTP
 docs/adr                 Architecture decision records
 docs/case-study.md       Case study draft
 docs/information-architecture.md  Tabs, screens and the contract operations behind them
@@ -35,7 +37,10 @@ Requires Node 22.
 ```bash
 npm install
 npm run seed    # writes packages/seed/out/*.json
-npm run check   # contract, determinism, schemas, demo story and color contrast
+npm run check       # contract, determinism, schemas, demo story, color contrast, backend tests
+npm run typecheck   # TypeScript across the workspace
+npm run web         # the app in a browser, with the simulated backend inside it
+npm run api         # the simulated backend over HTTP on :8787
 ```
 
 ## Decisions
@@ -43,3 +48,4 @@ npm run check   # contract, determinism, schemas, demo story and color contrast
 - [ADR 0001: Expo monorepo](docs/adr/0001-expo-monorepo.md)
 - [ADR 0002: Contract-first simulated backend](docs/adr/0002-contract-first-simulated-backend.md)
 - [ADR 0003: Deterministic seed and demo clock](docs/adr/0003-deterministic-seed-and-demo-clock.md)
+- [ADR 0004: Portable simulated backend instead of Supabase](docs/adr/0004-portable-simulated-backend.md)

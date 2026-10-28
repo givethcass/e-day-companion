@@ -6,5 +6,11 @@
   "scripts": {
     "seed": "node src/index.mjs",
     "check": "node test/check.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/generate.d.mts",
+      "default": "./src/generate.mjs"
+    }
   }
 }

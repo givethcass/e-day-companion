@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "description": "Design tokens for the E-Day Companion app (direction A, \"COG Command\").",
-  "exports": "./src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./tokens.json": "./src/tokens.json"
+  },
   "scripts": {
     "check": "node test/check.mjs"
   }

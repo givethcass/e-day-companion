@@ -1,0 +1,15 @@
+{
+  "name": "@eday/api-types",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript types generated from contract/openapi.yaml. Do not edit src/schema.ts by hand.",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "generate": "openapi-typescript ../../contract/openapi.yaml -o src/schema.ts",
+    "check": "openapi-typescript ../../contract/openapi.yaml -o /tmp/eday-schema.ts && diff -q src/schema.ts /tmp/eday-schema.ts && echo 'ok   generated types match the contract'",
+    "typecheck": "tsc -p ."
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0"
+  }
+}

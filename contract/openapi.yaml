@@ -8,8 +8,8 @@ info:
     PlayFab). Todo dato es simulado. Concepto no oficial: no afiliado a Microsoft,
     Xbox ni The Coalition.
 servers:
-  - url: https://api.example.com/v0
-    description: Backend simulado (Supabase Edge Functions)
+  - url: http://localhost:8787/v0
+    description: Backend simulado (apps/api-mock; en la demo web corre dentro de la app)
 security:
   - bearerAuth: []
 tags:

@@ -1,0 +1,16 @@
+{
+  "name": "@eday/api-mock",
+  "private": true,
+  "type": "module",
+  "description": "Simulated backend: serves contract/openapi.yaml from the deterministic seed, in process or over HTTP.",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "start": "node src/server.ts",
+    "check": "node --test test/*.test.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@eday/api-types": "*",
+    "@eday/seed": "*"
+  }
+}
