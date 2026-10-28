@@ -86,7 +86,7 @@ check('a Spanish, no-mic Horde Siege with open slots starts tonight', () => {
   assert.ok(tonight.members.length < tonight.slots);
   assert.ok(Date.parse(tonight.startsAt) - Date.parse(DEMO_NOW) < 12 * 3600e3);
 });
-check("Delta_Rojo's coins buy the 500-coin emblem but not a 2,000-coin one", () => {
+check("Delta_Rojo's coins buy some coin items but not all", () => {
   const wallet = data.wallets.find((w) => w.playerId === 'p_demo');
   const current = data.storeRotations.find((r) => r.startsAt <= DEMO_NOW && DEMO_NOW < r.endsAt);
   const coinPrices = current.itemIds.map((id) => itemsById.get(id).price).filter((p) => p.currency === 'coins').map((p) => p.amount);

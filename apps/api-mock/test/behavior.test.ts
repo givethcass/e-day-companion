@@ -53,8 +53,8 @@ test('session filters narrow to tonight, Spanish, no mic', () => {
 
 test('joining with a role confirms the spot', () => {
   const { call: c } = fresh();
-  const s = c<SquadSession>('POST', '/sessions/sess_tonight/join', { body: { squad: 2, role: 'support' } });
-  assert.deepEqual(s.members.find((m) => m.gamertag === 'Delta_Rojo'), { gamertag: 'Delta_Rojo', squad: 2, role: 'support', confirmed: true });
+  const s = c<SquadSession>('POST', '/sessions/sess_tonight/join', { body: { squad: 2, role: 'medic' } });
+  assert.deepEqual(s.members.find((m) => m.gamertag === 'Delta_Rojo'), { gamertag: 'Delta_Rojo', squad: 2, role: 'medic', confirmed: true });
 });
 
 test('Horde leaderboard ranks by best wave and includes the player', () => {
@@ -88,8 +88,8 @@ test('sign-in tokens map to players', () => {
 test('a Horde report names the missing role and points at the next session', () => {
   const horde = call<MatchPage>('GET', '/me/matches', { query: { mode: 'horde_siege', limit: '100' } }).items;
   const reports = horde.map((m) => call<MatchReport>('GET', `/matches/${m.id}`));
-  const lesson = reports.find((r) => r.takeaway?.text.startsWith('Sin Ingeniero'));
-  assert.ok(lesson, 'no Horde match without an Engineer');
+  const lesson = reports.find((r) => r.takeaway?.text.startsWith('Sin Irruptor'));
+  assert.ok(lesson, 'no Horde match without a Breacher');
   assert.equal(lesson.takeaway!.link, '/escuadra/sess_friday');
   assert.match(lesson.takeaway!.text, /El viernes tu escuadra ya tiene uno/);
   for (const r of reports) {

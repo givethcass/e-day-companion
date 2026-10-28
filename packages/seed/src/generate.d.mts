@@ -1,6 +1,6 @@
 // Types for the seed output. Records mirror the contract schemas plus a few internal fields.
 type Mode = 'versus_tdm' | 'versus_conquest' | 'versus_ranked' | 'horde_siege' | 'campaign';
-type Role = 'assault' | 'support' | 'engineer' | 'marksman';
+type Role = 'assault' | 'breacher' | 'marksman' | 'medic';
 type Iso = string;
 
 export interface SeedRank { tier: string; division: number; points: number }

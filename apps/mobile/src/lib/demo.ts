@@ -6,7 +6,7 @@ const MODES: Record<string, string> = {
 };
 export const modeLabel = (m: string) => MODES[m] ?? m;
 
-const ROLES: Record<string, string> = { assault: 'Asalto', support: 'Soporte', engineer: 'Ingeniero', marksman: 'Tirador' };
+const ROLES: Record<string, string> = { assault: 'Asalto', breacher: 'Irruptor', marksman: 'Tirador', medic: 'Médico' };
 export const roleLabel = (r?: string) => (r ? ROLES[r] ?? r : '');
 
 const DIFFICULTY: Record<string, string> = { casual: 'casual', normal: 'normal', hard: 'alta', insane: 'locura' };

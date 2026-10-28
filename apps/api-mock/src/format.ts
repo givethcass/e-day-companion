@@ -9,7 +9,7 @@ export const rankLabel = (rank: { tier: string; division: number } | null | unde
 const DIFFICULTY: Record<string, string> = { casual: 'casual', normal: 'normal', hard: 'alta', insane: 'locura' };
 export const difficultyLabel = (d?: string) => (d ? DIFFICULTY[d] ?? d : '');
 
-const ROLES: Record<string, string> = { assault: 'Asalto', support: 'Soporte', engineer: 'Ingeniero', marksman: 'Tirador' };
+const ROLES: Record<string, string> = { assault: 'Asalto', breacher: 'Irruptor', marksman: 'Tirador', medic: 'Médico' };
 export const roleLabel = (r: string) => ROLES[r] ?? r;
 
 const parts = (iso: string, timeZone: string, options: Intl.DateTimeFormatOptions) =>

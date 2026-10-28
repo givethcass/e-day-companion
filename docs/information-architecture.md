@@ -56,3 +56,12 @@ Week 3 built History, the match report and the demo clock at full design. That n
 The mission also changed: a session the player already joined for today becomes the mission ("Your Horde today, 21:00") ahead of any suggestion.
 
 The demo clock is a footer link on every screen. It jumps between four moments in the story: Tuesday noon (15 days away), Tuesday 21:30 (an hour before a Spanish no-mic Horde), Friday 20:00 (an hour before the clan's Horde) and the next Tuesday (new store, new event).
+
+## Data aligned with the game (v0.5.0)
+
+Player research on 2026-10-28 (Steam, Pure Xbox, PC Gamer, Game8) showed two places where the simulated data contradicted what any player knows:
+
+1. Horde Siege classes are Assault, Breacher, Marksman and Medic. `HordeRole` is now `assault | breacher | marksman | medic`; the lesson on a match report names the missing class ("Sin Médico nadie te levantó").
+2. The weekly Coin cap is 50,000 and coin items cost thousands. Coins per match, the cap, coin prices and wallets are scaled to match.
+
+Map names stay invented on purpose.

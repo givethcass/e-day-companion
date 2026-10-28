@@ -34,7 +34,7 @@ const calls: [string, string, { query?: Record<string, string>; body?: unknown }
   ['GET', '/sessions', { query: { mode: 'horde_siege' } }],
   ['POST', '/sessions', { body: { mode: 'horde_siege', startsAt: '2026-10-29T02:00:00.000Z', slots: 12, language: 'es', difficulty: 'normal', map: 'Bastión' } }],
   ['GET', '/sessions/sess_friday'],
-  ['POST', '/sessions/sess_tonight/join', { body: { squad: 2, role: 'support' } }],
+  ['POST', '/sessions/sess_tonight/join', { body: { squad: 2, role: 'medic' } }],
   ['POST', '/sessions/sess_friday/deploy'],
   ['GET', '/clans/c_00'],
   ['GET', '/clans/c_00/leaderboard'],

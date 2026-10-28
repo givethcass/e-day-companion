@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.4.0
+  version: 0.5.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -435,7 +435,7 @@ components:
       enum: [versus_tdm, versus_conquest, versus_ranked, horde_siege, campaign]
     HordeRole:
       type: string
-      enum: [assault, support, engineer, marksman]
+      enum: [assault, breacher, marksman, medic]
     Platform:
       type: string
       enum: [xbox, pc]
@@ -562,7 +562,7 @@ components:
               description: Una lección concreta de la partida, con un enlace a lo que ayuda a aplicarla
               required: [text]
               properties:
-                text: { type: string, examples: ['Sin Ingeniero no hubo fortificaciones. El viernes tu escuadra ya tiene uno.'] }
+                text: { type: string, examples: ['Sin Médico nadie te levantó. El viernes aún te falta uno.'] }
                 link: { type: string, description: Ruta de la app, como /escuadra/sess_friday }
             scoreboard:
               type: array

@@ -64,7 +64,7 @@ export function Tabs({ items, selected, onSelect }: { items: string[]; selected:
   );
 }
 
-/** A row of figures divided by hairlines: "INACTIVO 15 DÍAS · RETOS 0 / 6 · MONEDAS 1,850". */
+/** A row of figures divided by hairlines: "INACTIVO 15 DÍAS · RETOS 0 / 6 · MONEDAS 16,000". */
 export function Readouts({ items }: { items: { label: string; value: string; tone?: keyof typeof color }[] }) {
   return (
     <View style={styles.readouts}>

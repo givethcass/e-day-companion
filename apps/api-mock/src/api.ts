@@ -14,14 +14,14 @@ export const DEFAULT_PREFS: Required<NotificationPrefs> = {
 
 const SPANISH = new Set(['MX', 'ES', 'AR', 'CO', 'CL', 'PE']);
 const RANKED_OPENED = '2026-10-13T15:00:00.000Z';
-const ROLES: HordeRole[] = ['assault', 'support', 'engineer', 'marksman'];
+const ROLES: HordeRole[] = ['assault', 'medic', 'breacher', 'marksman'];
 const launch = (params: Record<string, string>) => `edaycompanion://launch?${new URLSearchParams(params)}`;
 // What a Horde squad loses without each role, for the match report's lesson.
 const ROLE_GAP: Record<HordeRole, string> = {
-  engineer: 'Sin Ingeniero no hubo fortificaciones.',
-  support: 'Sin Soporte nadie repartió munición.',
-  marksman: 'Sin Tirador nadie cubrió a distancia.',
-  assault: 'Sin Asalto nadie aguantó el frente.',
+  medic: 'Sin Médico nadie te levantó.',
+  breacher: 'Sin Irruptor nadie limpió de cerca.',
+  marksman: 'Sin Tirador nadie tumbó a los jefes.',
+  assault: 'Sin Asalto nadie aturdió al enemigo.',
 };
 const modeLabelEs = (mode: Mode) => (mode === 'horde_siege' ? 'Horde' : mode === 'campaign' ? 'campaña' : 'Versus');
 const family = (mode: Mode) => (mode.startsWith('versus') ? 'versus' : mode === 'horde_siege' ? 'horde' : 'campaign');

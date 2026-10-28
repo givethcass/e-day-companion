@@ -361,7 +361,7 @@ export interface components {
         /** @enum {string} */
         Mode: "versus_tdm" | "versus_conquest" | "versus_ranked" | "horde_siege" | "campaign";
         /** @enum {string} */
-        HordeRole: "assault" | "support" | "engineer" | "marksman";
+        HordeRole: "assault" | "breacher" | "marksman" | "medic";
         /** @enum {string} */
         Platform: "xbox" | "pc";
         Rank: {
@@ -492,7 +492,7 @@ export interface components {
             medals?: string[];
             /** @description Una lección concreta de la partida, con un enlace a lo que ayuda a aplicarla */
             takeaway?: {
-                /** @example Sin Ingeniero no hubo fortificaciones. El viernes tu escuadra ya tiene uno. */
+                /** @example Sin Médico nadie te levantó. El viernes aún te falta uno. */
                 text: string;
                 /** @description Ruta de la app */
                 link?: string;

@@ -66,7 +66,7 @@ export const MATCH_MINUTES = {
 };
 
 export const MEDALS = ['Racha x3', 'MVP', 'Reanimador', 'Defensor', 'Primer derribo', 'Ejecución', 'Último en pie'];
-export const HORDE_ROLES = ['assault', 'support', 'engineer', 'marksman'];
+export const HORDE_ROLES = ['assault', 'medic', 'breacher', 'marksman'];
 
 export const GAMERTAG_PARTS = {
   head: ['Delta', 'Kilo', 'Torre', 'Pino', 'Roca', 'Viento', 'Nube', 'Brasa', 'Acero', 'Ceniza', 'Sombra', 'Lobo',
@@ -84,8 +84,8 @@ export const STORE = {
   types: [
     ['character_skin', 'Armadura', 'iron', [1200, 2000]],
     ['weapon_skin', 'Acabado', 'iron', [500, 1000]],
-    ['banner', 'Estandarte', 'coins', [1000, 3000]],
-    ['emblem', 'Emblema', 'coins', [500, 2000]],
+    ['banner', 'Estandarte', 'coins', [8000, 18000]],
+    ['emblem', 'Emblema', 'coins', [5000, 20000]],
     ['bundle', 'Paquete', 'iron', [1800, 2800]],
   ],
   itemCount: 40,
@@ -94,7 +94,7 @@ export const STORE = {
 
 // Coins are earned by playing, up to a weekly cap that resets with the Tuesday store rotation.
 // Iron is the paid currency. Amounts are illustrative.
-export const COINS = { perMatch: 110, weeklyCap: 5000 };
+export const COINS = { perMatch: 1100, weeklyCap: 50000 };
 
 export const CHALLENGE_TEMPLATES = [
   { key: 'versus_wins', title: 'Gana {n} partidas de Versus', goal: [3, 5], mode: 'versus_tdm', reward: '+2000 XP' },

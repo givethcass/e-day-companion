@@ -13,7 +13,7 @@ import { countdown, dayTime } from '@/lib/time';
 import { Button, Card, Chip, IconButton, Loader, Screen, Section, Text } from '@/ui/kit';
 import { space } from '@/ui/theme';
 
-const ROLES: HordeRole[] = ['assault', 'support', 'engineer', 'marksman'];
+const ROLES: HordeRole[] = ['assault', 'breacher', 'marksman', 'medic'];
 
 export default function Planner() {
   const { id } = useLocalSearchParams<{ id: string }>();

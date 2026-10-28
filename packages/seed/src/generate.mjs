@@ -329,9 +329,9 @@ export function generate({ seed = SEED } = {}) {
   const outsiders = players.map((p) => p.id).filter((id) => !scriptedIds.includes(id) && !clanmates.includes(id));
   const fill = [...rng.sample(clanmates, 6), ...rng.sample(outsiders, 6)].slice(0, 6);
   const fridayMembers = [
-    ['p_capi', 1, 'assault'], ['p_marla', 1, 'support'], [fill[0], 1, 'engineer'], [fill[1], 1, 'marksman'],
-    ['p_demo', 2, 'assault'], [fill[2], 2, 'engineer'], [fill[3], 2, 'marksman'],
-    [fill[4], 3, 'support'], [fill[5], 3, 'assault'],
+    ['p_capi', 1, 'assault'], ['p_marla', 1, 'medic'], [fill[0], 1, 'breacher'], [fill[1], 1, 'marksman'],
+    ['p_demo', 2, 'assault'], [fill[2], 2, 'breacher'], [fill[3], 2, 'marksman'],
+    [fill[4], 3, 'medic'], [fill[5], 3, 'assault'],
   ];
   const tagOf = new Map(players.map((p) => [p.id, p.gamertag]));
   const sessions = [{
@@ -413,14 +413,14 @@ export function generate({ seed = SEED } = {}) {
   }
   const wallets = players.map((p) => ({
     playerId: p.id,
-    coins: extra.int(200, 6000),
+    coins: extra.int(2000, 60000),
     iron: extra.chance(0.3) ? extra.int(100, 3000) : 0,
     coinsThisWeek: Math.min(COINS.weeklyCap, (weekMatches.get(p.id) ?? 0) * COINS.perMatch),
     coinsWeeklyCap: COINS.weeklyCap,
     capResetsAt: rotationNow.endsAt,
   }));
-  // Delta_Rojo can afford a 500-coin emblem but not a 2,000-coin one.
-  Object.assign(wallets.find((w) => w.playerId === 'p_demo'), { coins: 1850, iron: 400, coinsThisWeek: 0 });
+  // Delta_Rojo can afford a cheap emblem but not every coin item this week.
+  Object.assign(wallets.find((w) => w.playerId === 'p_demo'), { coins: 16000, iron: 400, coinsThisWeek: 0 });
 
   const events = EVENTS.map((e) => ({ ...e, modes: ['versus_tdm', 'horde_siege'], rewards: [`Emblema ${e.name}`, `Estandarte ${e.name}`] }));
 
