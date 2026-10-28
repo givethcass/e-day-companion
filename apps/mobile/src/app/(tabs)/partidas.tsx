@@ -7,7 +7,7 @@ import { useSession } from '@/api/session';
 import { useApi } from '@/api/useApi';
 import { DEMO_NOW, modeLabel } from '@/lib/demo';
 import { day } from '@/lib/time';
-import { Card, Chip, Loader, Row, Screen, Text } from '@/ui/kit';
+import { Chip, Loader, Readouts, Row, Screen, Section } from '@/ui/kit';
 import { space } from '@/ui/theme';
 
 const FILTERS: [string, Mode[] | null][] = [['Todo', null], ['Versus', ['versus_tdm', 'versus_conquest', 'versus_ranked']], ['Horde', ['horde_siege']], ['Campaña', ['campaign']]];
@@ -22,18 +22,22 @@ export default function Partidas() {
   const items = data.items.filter((m) => !modes || modes.includes(m.mode));
   const wins = data.items.filter((m) => m.result === 'win').length;
   return (
-    <Screen overline={`Hasta el ${day(DEMO_NOW, player!.timezone)}`} title="Partidas">
-      <Card>
-        <Text variant="stat">{data.items.length}</Text>
-        <Text variant="caption" tone="textMuted">partidas esta temporada · {wins} victorias en Versus</Text>
-      </Card>
+    <Screen overline={`Historial al ${day(DEMO_NOW, player!.timezone)}`} title="Partidas">
+      <Readouts items={[
+        { label: 'Partidas', value: String(data.items.length) },
+        { label: 'Victorias', value: String(wins) },
+        { label: 'Bajas', value: String(data.items.reduce((s, m) => s + (m.kills ?? 0), 0)) },
+      ]} />
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
         {FILTERS.map(([label], i) => <Chip key={label} label={label} selected={i === filter} onPress={() => setFilter(i)} />)}
       </View>
-      {items.map((m) => (
-        <Row key={m.id} title={`${modeLabel(m.mode)} · ${m.map}`} subtitle={`${day(m.endedAt, player!.timezone)} · ${RESULT[m.result]}`}
-          trailing={m.kills !== undefined ? `${m.kills}/${m.deaths}` : undefined} />
-      ))}
+      <Section title="Registro de partidas">
+        {items.map((m) => (
+          <Row key={m.id} tag={day(m.endedAt, player!.timezone).split(' ').slice(0, 2).join(' ').toUpperCase()} tagTone={m.result === 'win' || m.result === 'completed' ? 'primary' : 'textSubtle'}
+            title={`${modeLabel(m.mode)} · ${m.map}`} subtitle={RESULT[m.result]}
+            trailing={m.kills !== undefined ? `${m.kills}/${m.deaths}` : undefined} trailingTone="text" />
+        ))}
+      </Section>
     </Screen>
   );
 }

@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
-    "@expo-google-fonts/barlow-condensed": "^0.4.1",
+    "@eday/api-mock": "*",
+    "@eday/api-types": "*",
+    "@eday/tokens": "*",
+    "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
     "@expo-google-fonts/ibm-plex-sans": "^0.4.1",
+    "@expo-google-fonts/ibm-plex-sans-condensed": "^0.4.1",
     "@expo/metro-runtime": "~58.0.15",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~58.0.20",
@@ -19,10 +23,7 @@
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "~4.30.0",
     "react-native-svg": "15.16.0",
-    "react-native-web": "~0.21.4",
-    "@eday/api-mock": "*",
-    "@eday/api-types": "*",
-    "@eday/tokens": "*"
+    "react-native-web": "~0.21.4"
   },
   "devDependencies": {
     "@types/react": "~19.3.0",

@@ -21,14 +21,14 @@ export default function Launch() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: color.bg, padding: space.xl, justifyContent: 'center', gap: space.lg }}>
-      <Card hud>
-        <Text variant="overline" tone="accent">{sent ? 'Listo' : 'Desplegando'}</Text>
+      <Card priority>
+        <Text variant="overline" tone="primary">{sent ? '// Enlace establecido' : '// Desplegando'}</Text>
         <Text variant="headline">{sent ? 'Enviado a tu consola' : 'Abriendo E-Day…'}</Text>
         {!sent && <ActivityIndicator color={color.accent} style={{ alignSelf: 'flex-start' }} />}
         {sent && <Text tone="textMuted">Abre E-Day en tu Xbox o PC{target ? ` con ${target} seleccionado` : ''}.</Text>}
       </Card>
       <View style={{ gap: space.sm }}>
-        <Button kind="secondary" label="Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+        <Button kind="secondary" label="◂ Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
         <Text variant="caption" tone="textSubtle" style={{ textAlign: 'center' }}>
           Demo: aquí la app oficial abriría el juego directo en la partida. Enlace: edaycompanion://launch{session ? `?session=${session}` : mode ? `?mode=${mode}` : ''}
         </Text>

@@ -1,6 +1,8 @@
-import { BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed/700Bold';
+import { IBMPlexMono_400Regular } from '@expo-google-fonts/ibm-plex-mono/400Regular';
+import { IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono/600SemiBold';
 import { IBMPlexSans_400Regular } from '@expo-google-fonts/ibm-plex-sans/400Regular';
 import { IBMPlexSans_600SemiBold } from '@expo-google-fonts/ibm-plex-sans/600SemiBold';
+import { IBMPlexSansCondensed_700Bold } from '@expo-google-fonts/ibm-plex-sans-condensed/700Bold';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -9,7 +11,9 @@ import { SessionProvider } from '@/api/session';
 import { color } from '@/ui/theme';
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({ BarlowCondensed_700Bold, IBMPlexSans_400Regular, IBMPlexSans_600SemiBold });
+  const [fontsLoaded] = useFonts({
+    IBMPlexSansCondensed_700Bold, IBMPlexSans_400Regular, IBMPlexSans_600SemiBold, IBMPlexMono_400Regular, IBMPlexMono_600SemiBold,
+  });
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: color.bg }} />;
   return (
     <SessionProvider>

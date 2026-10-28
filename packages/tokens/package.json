@@ -2,7 +2,7 @@
   "name": "@eday/tokens",
   "private": true,
   "type": "module",
-  "description": "Design tokens for the E-Day Companion app (direction A, \"COG Command\").",
+  "description": "Design tokens for the E-Day Companion app (direction B, \"Tactical HUD\").",
   "exports": {
     ".": "./src/index.mjs",
     "./tokens.json": "./src/tokens.json"

@@ -6,9 +6,9 @@ import { api } from '@/api/client';
 import { useSession } from '@/api/session';
 import { useApi } from '@/api/useApi';
 import { DEMO_NOW, difficultyLabel, modeLabel } from '@/lib/demo';
-import { countdown, dayTime, zoneLabel } from '@/lib/time';
-import { Card, Chip, Loader, Row, Screen, Section, Text, Button } from '@/ui/kit';
-import { color, space } from '@/ui/theme';
+import { clock, countdown, dayTime, zoneLabel } from '@/lib/time';
+import { Button, Card, Chip, DataLine, Loader, Row, Screen, Section, Text } from '@/ui/kit';
+import { space } from '@/ui/theme';
 
 const FILTERS = ['Todas', 'Español', 'Sin micro', 'Hoy'] as const;
 const endOfDay = (tz: string) => {
@@ -33,11 +33,15 @@ export default function Escuadra() {
   return (
     <Screen overline={`Horas en tu zona: ${zoneLabel(tz)}`} title="Escuadra">
       {mine && (
-        <Card hud>
-          <Text variant="overline" tone="accent">Tu próxima sesión · {countdown(mine.startsAt)}</Text>
-          <Text variant="headline">{modeLabel(mine.mode)}</Text>
-          <Text tone="textMuted">{dayTime(mine.startsAt, tz)} tu hora · {mine.map} · {difficultyLabel(mine.difficulty)} · {mine.members.length} de {mine.slots}</Text>
-          <Button label="Ver planificador" onPress={() => router.push(`/escuadra/${mine.id}`)} />
+        <Card priority>
+          <Text variant="overline" tone="primary">Próxima sesión · {countdown(mine.startsAt)}</Text>
+          <Text variant="headline">{modeLabel(mine.mode)}{mine.map ? ` · ${mine.map}` : ''}</Text>
+          <View style={{ gap: 5 }}>
+            <DataLine label="Hora" value={`${dayTime(mine.startsAt, tz)} tu hora`} />
+            <DataLine label="Dificultad" value={difficultyLabel(mine.difficulty)} />
+            <DataLine label="Lugares" value={`${mine.members.length}/${mine.slots}`} tone="primary" />
+          </View>
+          <Button label="Abrir planificador ▸" onPress={() => router.push(`/escuadra/${mine.id}`)} />
         </Card>
       )}
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
@@ -45,9 +49,9 @@ export default function Escuadra() {
       </View>
       <Section title="Sesiones abiertas">
         {!data ? <Loader error={error} onRetry={reload} /> : open.map((s) => (
-          <Row key={s.id} icon="squad" iconColor={s.mode === 'horde_siege' ? color.highlight : color.text}
+          <Row key={s.id} tag={dayTime(s.startsAt, tz).split(' ').slice(0, 2).join(' ').toUpperCase()} tagTone={s.mode === 'horde_siege' ? 'primary' : 'text'}
             title={`${modeLabel(s.mode)}${s.map ? ` · ${s.map}` : ''}`}
-            subtitle={`${dayTime(s.startsAt, tz)} · ${s.language === 'es' ? 'Español' : 'Inglés'}${s.micRequired ? ' · micrófono' : ' · sin micro'}${s.difficulty ? ` · ${difficultyLabel(s.difficulty)}` : ''}`}
+            subtitle={`${clock(s.startsAt, tz)} · ${s.language === 'es' ? 'Español' : 'Inglés'}${s.micRequired ? ' · micrófono' : ' · sin micro'}${s.difficulty ? ` · ${difficultyLabel(s.difficulty)}` : ''}`}
             trailing={`${s.members.length}/${s.slots}`} onPress={() => router.push(`/escuadra/${s.id}`)} />
         ))}
         {data && open.length === 0 && <Text tone="textMuted">No hay sesiones con ese filtro.</Text>}
