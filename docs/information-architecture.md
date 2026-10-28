@@ -30,3 +30,16 @@ Mapping screens to operations exposed five gaps, now fixed in `contract/openapi.
 5. `WeeklyReport.nextMission.launchUrl`, so the mission card can deploy.
 
 The seed also changed: players stay unranked (`rank: null`) until their first Ranked match, which is what makes Delta_Rojo's story ("Ranked is open and you have no rank yet") true in the data.
+
+## Contract changes after the synthetic test (v0.3.0)
+
+Ten simulated player profiles, built from real reviews and forum posts, ran the week 1 test script against the prototype. All ten asked for local times, a visible coin balance and control over notifications, and most did not care about Ranked. These changes support the six fixes:
+
+1. `Player.timezone`, so every date renders in the player's own time.
+2. `GET /me/wallet` and the `Wallet` schema: Coins, Iron, coins earned this week and the weekly cap.
+3. `GET`/`PUT /me/notification-prefs`. Squad and wishlist alerts are on by default; events, rival and Ranked are opt-in, with quiet hours.
+4. `WeeklyReport.nextMission.reason` and `alternatives[]`, so the mission follows how the player plays instead of always pushing Ranked.
+5. `listSessions` filters (`micRequired`, `difficulty`, `startsAfter`, `startsBefore`); Horde sessions carry `difficulty` and `map`, and members carry `confirmed`.
+6. `Leaderboard.metric` (`rank_points` or `best_wave`), so Horde gets its own leaderboard.
+
+The seed now gives every player a wallet and adds a Spanish, no-mic Horde Siege starting tonight. Map names are invented placeholders.

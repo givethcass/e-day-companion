@@ -43,11 +43,17 @@ export const COUNTRIES = [
   ['US', 30], ['MX', 14], ['BR', 10], ['GB', 8], ['DE', 6], ['ES', 6],
   ['CA', 6], ['AR', 5], ['CO', 5], ['FR', 5], ['CL', 3], ['PE', 2],
 ];
+export const TIMEZONES = {
+  US: 'America/Chicago', MX: 'America/Mexico_City', BR: 'America/Sao_Paulo', GB: 'Europe/London',
+  DE: 'Europe/Berlin', ES: 'Europe/Madrid', CA: 'America/Toronto', AR: 'America/Argentina/Buenos_Aires',
+  CO: 'America/Bogota', FR: 'Europe/Paris', CL: 'America/Santiago', PE: 'America/Lima',
+};
 export const SPANISH_COUNTRIES = new Set(['MX', 'ES', 'AR', 'CO', 'CL', 'PE']);
 
-// Real map and weapon names are not confirmed yet, so the demo uses placeholders.
-export const VERSUS_MAPS = ['[Mapa 1]', '[Mapa 2]', '[Mapa 3]', '[Mapa 4]', '[Mapa 5]'];
-export const HORDE_MAPS = ['[Horde 1]', '[Horde 2]', '[Horde 3]'];
+// Invented map names (illustrative, not the game's real maps).
+export const VERSUS_MAPS = ['Distrito Norte', 'Refinería', 'Puente Seco', 'Estación Central', 'Mercado Viejo'];
+export const HORDE_MAPS = ['Bastión', 'Presa Sur', 'Hangar 7'];
+export const HORDE_DIFFICULTIES = ['casual', 'normal', 'hard', 'insane'];
 export const HORDE_WAVE_GOAL = 30;
 
 // Minutes per match, [min, max].
@@ -85,6 +91,10 @@ export const STORE = {
   itemCount: 40,
   itemsPerRotation: 6,
 };
+
+// Coins are earned by playing, up to a weekly cap that resets with the Tuesday store rotation.
+// Iron is the paid currency. Amounts are illustrative.
+export const COINS = { perMatch: 110, weeklyCap: 5000 };
 
 export const CHALLENGE_TEMPLATES = [
   { key: 'versus_wins', title: 'Gana {n} partidas de Versus', goal: [3, 5], mode: 'versus_tdm', reward: '+2000 XP' },

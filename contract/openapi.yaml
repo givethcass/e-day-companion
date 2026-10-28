@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.2.0
+  version: 0.3.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -63,6 +63,45 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Notification' }
+  /me/wallet:
+    get:
+      tags: [Jugador]
+      summary: Saldo de Monedas y Hierro, con el tope semanal de Monedas
+      operationId: getMyWallet
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Saldo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Wallet' }
+  /me/notification-prefs:
+    get:
+      tags: [Notificaciones]
+      summary: Qué avisos quiere recibir el jugador
+      operationId: getNotificationPrefs
+      responses:
+        '200':
+          description: Preferencias
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationPrefs' }
+    put:
+      tags: [Notificaciones]
+      summary: Cambiar qué avisos recibe el jugador
+      operationId: setNotificationPrefs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationPrefs' }
+      responses:
+        '200':
+          description: Preferencias guardadas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationPrefs' }
   /me/matches:
     get:
       tags: [Partidas]
@@ -233,6 +272,19 @@ paths:
         - name: language
           in: query
           schema: { type: string, examples: [es, en] }
+        - name: micRequired
+          in: query
+          schema: { type: boolean }
+        - name: difficulty
+          in: query
+          schema: { $ref: '#/components/schemas/HordeDifficulty' }
+        - name: startsAfter
+          in: query
+          schema: { type: string, format: date-time }
+        - name: startsBefore
+          in: query
+          description: Con startsAfter, permite pedir solo las sesiones de hoy
+          schema: { type: string, format: date-time }
       responses:
         '200':
           description: Sesiones
@@ -394,12 +446,13 @@ components:
         points: { type: integer }
     Player:
       type: object
-      required: [id, gamertag, platform, country, level]
+      required: [id, gamertag, platform, country, timezone, level]
       properties:
         id: { type: string }
         gamertag: { type: string }
         platform: { $ref: '#/components/schemas/Platform' }
         country: { type: string, description: ISO 3166-1 alfa-2 }
+        timezone: { type: string, description: Zona IANA; la app muestra todas las horas en esta zona, examples: [America/Mexico_City] }
         level: { type: integer }
         rank:
           description: Null hasta jugar la primera partida de Ranked
@@ -433,6 +486,17 @@ components:
             mode: { $ref: '#/components/schemas/Mode' }
             reward: { type: string }
             launchUrl: { type: string, description: Deep link simulado que abre el juego en el modo de la misión }
+            reason: { type: string, description: Por qué se sugiere, en una línea, examples: ['Ranked abrió el 13 oct y aún no tienes rango'] }
+            alternatives:
+              type: array
+              description: Otras opciones según cómo juega el jugador
+              items:
+                type: object
+                required: [title, mode]
+                properties:
+                  title: { type: string }
+                  mode: { $ref: '#/components/schemas/Mode' }
+                  launchUrl: { type: string }
     Notification:
       type: object
       required: [id, kind, title, createdAt, read]
@@ -444,6 +508,29 @@ components:
         createdAt: { type: string, format: date-time }
         read: { type: boolean }
         link: { type: string, description: Ruta dentro de la app, por ejemplo /escuadra/sess_friday }
+    Wallet:
+      type: object
+      required: [coins, iron, coinsThisWeek, coinsWeeklyCap, capResetsAt]
+      properties:
+        coins: { type: integer, minimum: 0, description: Se ganan jugando }
+        iron: { type: integer, minimum: 0, description: Moneda de pago; la app no la vende }
+        coinsThisWeek: { type: integer, minimum: 0 }
+        coinsWeeklyCap: { type: integer }
+        capResetsAt: { type: string, format: date-time }
+    NotificationPrefs:
+      type: object
+      description: Por defecto solo avisa de la escuadra y de la lista de deseos
+      properties:
+        squad: { type: boolean, default: true }
+        wishlist: { type: boolean, default: true }
+        events: { type: boolean, default: false }
+        rival: { type: boolean, default: false }
+        ranked: { type: boolean, default: false }
+        quietHours:
+          type: object
+          properties:
+            from: { type: string, examples: ['22:00'] }
+            to: { type: string, examples: ['08:00'] }
     MatchSummary:
       type: object
       required: [id, mode, map, endedAt, result]
@@ -484,6 +571,10 @@ components:
       properties:
         mode: { $ref: '#/components/schemas/Mode' }
         scope: { type: string }
+        metric:
+          type: string
+          enum: [rank_points, best_wave]
+          description: Ranked usa puntos de rango; Horde Siege usa la mejor oleada de la temporada
         entries:
           type: array
           items: { $ref: '#/components/schemas/LeaderboardEntry' }
@@ -568,7 +659,12 @@ components:
         slots: { type: integer, minimum: 2, maximum: 12 }
         language: { type: string }
         micRequired: { type: boolean, default: false }
+        difficulty: { $ref: '#/components/schemas/HordeDifficulty' }
+        map: { type: string }
         clanId: { type: [string, 'null'] }
+    HordeDifficulty:
+      type: string
+      enum: [casual, normal, hard, insane]
     SquadSession:
       allOf:
         - $ref: '#/components/schemas/NewSquadSession'
@@ -588,6 +684,7 @@ components:
                   gamertag: { type: string }
                   squad: { type: integer, minimum: 1, maximum: 3 }
                   role: { $ref: '#/components/schemas/HordeRole' }
+                  confirmed: { type: boolean, description: El organizador ya ve su lugar y su rol }
     Clan:
       type: object
       required: [id, name, tag, memberCount]

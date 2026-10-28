@@ -59,6 +59,7 @@ validateAll('store items', 'StoreItem', data.storeItems.map((i) => ({ ...i, wish
 validateAll('store rotations', 'StoreRotation', data.storeRotations.map((r) => ({ ...r, items: r.itemIds.map((id) => itemsById.get(id)) })));
 validateAll('squad sessions', 'SquadSession', data.sessions);
 validateAll('clans', 'Clan', data.clans);
+validateAll('wallets', 'Wallet', data.wallets);
 validateAll('challenge progress rows', 'Challenge', data.challengeProgress.map((p) => ({ ...challengeById.get(p.challengeId), progress: p.progress })));
 
 // 4. The demo story
@@ -77,6 +78,20 @@ check('Friday Horde Siege has 9 of 12, Delta_Rojo in squad 2', () => {
   const friday = data.sessions.find((s) => s.id === 'sess_friday');
   assert.equal(friday.members.length, 9);
   assert.ok(friday.members.some((m) => m.gamertag === 'Delta_Rojo' && m.squad === 2));
+});
+check('a Spanish, no-mic Horde Siege with open slots starts tonight', () => {
+  const tonight = data.sessions.find((s) => s.id === 'sess_tonight');
+  assert.equal(tonight.language, 'es');
+  assert.equal(tonight.micRequired, false);
+  assert.ok(tonight.members.length < tonight.slots);
+  assert.ok(Date.parse(tonight.startsAt) - Date.parse(DEMO_NOW) < 12 * 3600e3);
+});
+check("Delta_Rojo's coins buy the 500-coin emblem but not a 2,000-coin one", () => {
+  const wallet = data.wallets.find((w) => w.playerId === 'p_demo');
+  const current = data.storeRotations.find((r) => r.startsAt <= DEMO_NOW && DEMO_NOW < r.endsAt);
+  const coinPrices = current.itemIds.map((id) => itemsById.get(id).price).filter((p) => p.currency === 'coins').map((p) => p.amount);
+  assert.ok(coinPrices.some((a) => a <= wallet.coins), 'nothing affordable');
+  assert.ok(coinPrices.some((a) => a > wallet.coins), 'everything affordable');
 });
 check('one wishlist item is on sale now and the other arrives next rotation', () => {
   const current = data.storeRotations.find((r) => r.startsAt <= DEMO_NOW && DEMO_NOW < r.endsAt);

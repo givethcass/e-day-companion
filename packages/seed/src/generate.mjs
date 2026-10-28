@@ -1,7 +1,7 @@
 import { createRng, clamp } from './rng.mjs';
 import {
   DAY, SEED, PLAYER_COUNT, CLAN_COUNT, SEASON, SEASON_START, SEASON_END, RANKED_START, DEMO_NOW, EVENTS,
-  PLAYTIME_BUCKETS, COUNTRIES, SPANISH_COUNTRIES, VERSUS_MAPS, HORDE_MAPS, HORDE_WAVE_GOAL, MATCH_MINUTES,
+  PLAYTIME_BUCKETS, COUNTRIES, SPANISH_COUNTRIES, TIMEZONES, COINS, HORDE_DIFFICULTIES, VERSUS_MAPS, HORDE_MAPS, HORDE_WAVE_GOAL, MATCH_MINUTES,
   MEDALS, HORDE_ROLES, GAMERTAG_PARTS, CLAN_WORDS, STORE, CHALLENGE_TEMPLATES,
 } from './constants.mjs';
 
@@ -196,6 +196,7 @@ export function generate({ seed = SEED } = {}) {
   for (const m of matches) matchCount.set(m.playerId, (matchCount.get(m.playerId) ?? 0) + 1);
   for (const p of players) {
     p.level = clamp(1 + Math.floor((matchCount.get(p.id) ?? 0) / 3), 1, 100);
+    p.timezone = TIMEZONES[p.country];
     p.rankStartPoints = startPoints.get(p.id);
     p.rank = rankedPlayers.has(p.id) ? rankFromPoints(pointsAtDemo.get(p.id)) : null;
   }
@@ -317,6 +318,8 @@ export function generate({ seed = SEED } = {}) {
   ];
 
   // ---------- Squad sessions ----------
+  // Attributes added after v0.1 draw from their own stream so earlier records keep their values.
+  const extra = createRng(seed ^ 0x5e55);
   const shareUrl = (id) => `https://example.com/s/${id}`;
   // Friday Horde Siege from the brief: 9 of 12, clan members first, Delta_Rojo in squad Bravo (2).
   const scriptedIds = ['p_capi', 'p_marla', 'p_demo'];
@@ -338,11 +341,32 @@ export function generate({ seed = SEED } = {}) {
     slots: 12,
     language: 'es',
     micRequired: true,
+    difficulty: 'hard',
+    map: 'Bastión',
     clanId: 'c_00',
     status: 'open',
     shareUrl: shareUrl('sess_friday'),
-    members: fridayMembers.map(([id, squad, role]) => ({ gamertag: tagOf.get(id), squad, role })),
+    members: fridayMembers.map(([id, squad, role]) => ({ gamertag: tagOf.get(id), squad, role, confirmed: true })),
   }];
+  // Tonight's open Horde Siege in Spanish with no mic required: the "play Horde now" option.
+  const spanishPlayers = players.filter((p) => SPANISH_COUNTRIES.has(p.country) && !scriptedIds.includes(p.id));
+  const tonight = extra.sample(spanishPlayers, 7);
+  sessions.push({
+    id: 'sess_tonight',
+    hostGamertag: tonight[0].gamertag,
+    mode: 'horde_siege',
+    // Tuesday Oct 27, 10:30 PM in Mexico City.
+    startsAt: '2026-10-28T04:30:00.000Z',
+    slots: 12,
+    language: 'es',
+    micRequired: false,
+    difficulty: 'normal',
+    map: 'Presa Sur',
+    clanId: null,
+    status: 'open',
+    shareUrl: shareUrl('sess_tonight'),
+    members: tonight.map((p, j) => ({ gamertag: p.gamertag, squad: Math.floor(j / 4) + 1, role: HORDE_ROLES[j % 4], confirmed: true })),
+  });
   for (let i = 1; i < 40; i++) {
     const mode = rng.weighted([['horde_siege', 0.5], ['versus_tdm', 0.2], ['versus_ranked', 0.15], ['campaign', 0.15]]);
     const slots = mode === 'horde_siege' ? 12 : 4;
@@ -366,7 +390,35 @@ export function generate({ seed = SEED } = {}) {
         : { gamertag: tagOf.get(pid) })),
     });
   }
+  for (const s of sessions.slice(1)) {
+    if (s.id === 'sess_tonight') continue;
+    if (s.mode === 'horde_siege') {
+      s.difficulty = extra.pick(HORDE_DIFFICULTIES);
+      s.map = extra.pick(HORDE_MAPS);
+    } else if (s.mode !== 'campaign') {
+      s.map = extra.pick(VERSUS_MAPS);
+    }
+    for (const m of s.members) m.confirmed = extra.chance(0.85);
+  }
   sessions.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+
+  // ---------- Wallets ----------
+  // Coins this week come from matches since the current rotation started, capped weekly.
+  const rotationNow = rotations[demoIdx];
+  const weekMatches = new Map();
+  for (const m of matches) {
+    if (m.endedAt >= rotationNow.startsAt && m.endedAt <= DEMO_NOW) weekMatches.set(m.playerId, (weekMatches.get(m.playerId) ?? 0) + 1);
+  }
+  const wallets = players.map((p) => ({
+    playerId: p.id,
+    coins: extra.int(200, 6000),
+    iron: extra.chance(0.3) ? extra.int(100, 3000) : 0,
+    coinsThisWeek: Math.min(COINS.weeklyCap, (weekMatches.get(p.id) ?? 0) * COINS.perMatch),
+    coinsWeeklyCap: COINS.weeklyCap,
+    capResetsAt: rotationNow.endsAt,
+  }));
+  // Delta_Rojo can afford a 500-coin emblem but not a 2,000-coin one.
+  Object.assign(wallets.find((w) => w.playerId === 'p_demo'), { coins: 1850, iron: 400, coinsThisWeek: 0 });
 
   const events = EVENTS.map((e) => ({ ...e, modes: ['versus_tdm', 'horde_siege'], rewards: [`Emblema ${e.name}`, `Estandarte ${e.name}`] }));
 
@@ -389,5 +441,6 @@ export function generate({ seed = SEED } = {}) {
     storeRotations: rotations,
     wishlists,
     sessions,
+    wallets,
   };
 }
