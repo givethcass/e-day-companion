@@ -1,6 +1,4 @@
 // Dates in the player's own time zone, in Spanish ("vie 30 oct, 21:00").
-import { DEMO_NOW } from './demo';
-
 const fmt = (iso: string, timeZone: string, options: Intl.DateTimeFormatOptions) =>
   Object.fromEntries(new Intl.DateTimeFormat('es-MX', { timeZone, ...options }).formatToParts(new Date(iso)).map((p) => [p.type, p.value]));
 
@@ -17,7 +15,7 @@ export const day = (iso: string, tz: string) => {
 export const dayTime = (iso: string, tz: string) => `${day(iso, tz)}, ${clock(iso, tz)}`;
 
 /** "en 3 d 9 h" until a moment, measured from the demo clock. */
-export const countdown = (iso: string, from = DEMO_NOW) => {
+export const countdown = (iso: string, from: string) => {
   const ms = Date.parse(iso) - Date.parse(from);
   if (ms <= 0) return 'ya empezó';
   const h = Math.floor(ms / 3600e3);

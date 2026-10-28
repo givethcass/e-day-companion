@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import { api } from '@/api/client';
 import { useSession } from '@/api/session';
 import { useApi } from '@/api/useApi';
+import { useNow } from '@/lib/clock';
 import { difficultyLabel, modeLabel, roleLabel } from '@/lib/demo';
 import { openLaunchUrl } from '@/lib/launch';
 import { countdown, dayTime } from '@/lib/time';
@@ -17,6 +18,7 @@ const ROLES: HordeRole[] = ['assault', 'support', 'engineer', 'marksman'];
 export default function Planner() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { player } = useSession();
+  const now = useNow();
   const tz = player!.timezone;
   const { data: s, error, reload, setData } = useApi(() => api.getSession(id), [id]);
   const [busy, setBusy] = useState(false);
@@ -32,7 +34,7 @@ export default function Planner() {
   const deploy = async () => openLaunchUrl((await api.deploySession(s.id)).launchUrl);
 
   return (
-    <Screen overline={`Organiza ${s.hostGamertag} · ${countdown(s.startsAt)}`} title={modeLabel(s.mode)} right={back}>
+    <Screen overline={`Organiza ${s.hostGamertag} · ${countdown(s.startsAt, now)}`} title={modeLabel(s.mode)} right={back}>
       <Text variant="data" tone="textMuted">{dayTime(s.startsAt, tz)} tu hora{s.map ? ` · ${s.map}` : ''}{s.difficulty ? ` · ${difficultyLabel(s.difficulty)}` : ''} · {s.members.length} de {s.slots}</Text>
       {horde && (
         <Section title="Tu rol">

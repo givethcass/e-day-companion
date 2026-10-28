@@ -417,7 +417,7 @@ export interface components {
                 /** @description Deep link simulado que abre el juego en el modo de la misión */
                 launchUrl?: string;
                 /**
-                 * @description Por qué se sugiere
+                 * @description Por qué se sugiere, en una línea
                  * @example Ranked abrió el 13 oct y aún no tienes rango
                  */
                 reason?: string;
@@ -481,19 +481,31 @@ export interface components {
             kills?: number;
             deaths?: number;
             rankDelta?: number | null;
-        };
-        MatchReport: components["schemas"]["MatchSummary"] & {
             durationSeconds?: number;
-            accuracy?: number;
-            medals?: string[];
             /** @description Solo Horde Siege */
             wavesCleared?: number | null;
+            /** @description Oleadas para completar el mapa; solo Horde Siege */
+            waveGoal?: number | null;
+        };
+        MatchReport: components["schemas"]["MatchSummary"] & {
+            accuracy?: number;
+            medals?: string[];
+            /** @description Una lección concreta de la partida, con un enlace a lo que ayuda a aplicarla */
+            takeaway?: {
+                /** @example Sin Ingeniero no hubo fortificaciones. El viernes tu escuadra ya tiene uno. */
+                text: string;
+                /** @description Ruta de la app */
+                link?: string;
+            };
             scoreboard?: {
                 gamertag: string;
                 team: string;
                 score: number;
                 kills?: number;
                 deaths?: number;
+                /** @description Solo Horde Siege */
+                role?: components["schemas"]["HordeRole"];
+                isMe?: boolean;
             }[];
         };
         Leaderboard: {
@@ -768,6 +780,8 @@ export interface operations {
                 mode?: components["schemas"]["Mode"];
                 cursor?: components["parameters"]["Cursor"];
                 limit?: components["parameters"]["Limit"];
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
             };
             header?: never;
             path?: never;
@@ -791,7 +805,10 @@ export interface operations {
     };
     getMatch: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
             header?: never;
             path: {
                 matchId: string;
@@ -800,7 +817,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Reporte de partida */
+            /** @description Reporte de partida. La lección puede apuntar a algo que viene después de la partida, visto desde asOf. */
             200: {
                 headers: {
                     [name: string]: unknown;

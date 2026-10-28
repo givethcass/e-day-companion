@@ -10,6 +10,8 @@ const round = (x, digits = 0) => Number(x.toFixed(digits));
 
 // Rank tiers by points; each tier has 3 divisions (1 = highest).
 const TIERS = [['bronze', 0], ['silver', 1000], ['gold', 1500], ['onyx', 2000]];
+export { HORDE_WAVE_GOAL };
+
 export function rankFromPoints(points) {
   let index = 0;
   TIERS.forEach(([, min], i) => { if (points >= min) index = i; });

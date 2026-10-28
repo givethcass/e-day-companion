@@ -4,8 +4,8 @@ import type {
   Challenge, Clan, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
   NewSquadSession, Notification, NotificationPrefs, Player, SquadSession, StoreItem, WeeklyReport,
 } from '@eday/api-types';
-import { generate, type SeedData, type SeedMatch, type SeedPlayer, type SeedSession } from '@eday/seed';
-import { DAY, clock, day, dayMonth, difficultyLabel, localDate, rankLabel, roleLabel } from './format.ts';
+import { HORDE_WAVE_GOAL, generate, type SeedData, type SeedMatch, type SeedPlayer, type SeedSession } from '@eday/seed';
+import { DAY, clock, day, dayMonth, difficultyLabel, localDate, rankLabel, roleLabel, weekday } from './format.ts';
 import { createRouter, error, noContent, ok, type Query } from './router.ts';
 
 export const DEFAULT_PREFS: Required<NotificationPrefs> = {
@@ -16,6 +16,14 @@ const SPANISH = new Set(['MX', 'ES', 'AR', 'CO', 'CL', 'PE']);
 const RANKED_OPENED = '2026-10-13T15:00:00.000Z';
 const ROLES: HordeRole[] = ['assault', 'support', 'engineer', 'marksman'];
 const launch = (params: Record<string, string>) => `edaycompanion://launch?${new URLSearchParams(params)}`;
+// What a Horde squad loses without each role, for the match report's lesson.
+const ROLE_GAP: Record<HordeRole, string> = {
+  engineer: 'Sin Ingeniero no hubo fortificaciones.',
+  support: 'Sin Soporte nadie repartió munición.',
+  marksman: 'Sin Tirador nadie cubrió a distancia.',
+  assault: 'Sin Asalto nadie aguantó el frente.',
+};
+const modeLabelEs = (mode: Mode) => (mode === 'horde_siege' ? 'Horde' : mode === 'campaign' ? 'campaña' : 'Versus');
 const family = (mode: Mode) => (mode.startsWith('versus') ? 'versus' : mode === 'horde_siege' ? 'horde' : 'campaign');
 
 // Small deterministic generator for derived detail (match scoreboards).
@@ -64,8 +72,8 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   const toPlayer = ({ rankStartPoints: _, ...p }: SeedPlayer): Player => p;
   const toSession = (s: SeedSession): SquadSession => structuredClone(s);
   const toItem = (playerId: string, id: string): StoreItem => ({ ...items.get(id)!, wishlisted: wishlists.get(playerId)?.has(id) ?? false });
-  const summary = ({ id, mode, map, endedAt, result, kills, deaths, rankDelta }: SeedMatch): MatchSummary =>
-    ({ id, mode, map, endedAt, result, kills, deaths, rankDelta });
+  const summary = ({ id, mode, map, endedAt, result, kills, deaths, rankDelta, durationSeconds, wavesCleared }: SeedMatch): MatchSummary =>
+    ({ id, mode, map, endedAt, result, kills, deaths, rankDelta, durationSeconds, wavesCleared, waveGoal: mode === 'horde_siege' ? HORDE_WAVE_GOAL : null });
 
   const bestWave = (id: string, now: string) =>
     playedBy(id, now).reduce((best, m) => Math.max(best, m.wavesCleared ?? 0), 0);
@@ -96,6 +104,9 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     for (const m of played) counts[family(m.mode)]++;
     const tz = p.timezone;
     const tonight = hordeTonight(p, now);
+    // A session the player already joined for today beats any suggestion.
+    const booked = [...sessions.values()].filter((s) => s.startsAt > now && localDate(s.startsAt, tz) === localDate(now, tz)
+      && s.members.some((m) => m.gamertag === p.gamertag)).sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
     const best = bestWave(p.id, now);
     const chapter = Math.max(1, ...played.filter((m) => m.mode === 'campaign').map((m) => Number(/(\d+)$/.exec(m.map)?.[1] ?? 1)));
     const rival = rivalOf(p);
@@ -105,7 +116,11 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
             reason: `Ranked abrió el ${dayMonth(RANKED_OPENED, tz)} y aún no tienes rango`, launchUrl: launch({ mode: 'versus_ranked' }) }
         : { title: 'Juega Ranked', mode: 'versus_ranked', estimatedMinutes: 30, reward: '+1500 XP',
             reason: rival ? `${rival.gamertag} te lleva ${rival.pointsAhead} puntos` : 'Defiende tu rango esta semana', launchUrl: launch({ mode: 'versus_ranked' }) },
-      horde: tonight
+      horde: booked
+        ? { title: `Tu ${modeLabelEs(booked.mode)} de hoy, ${clock(booked.startsAt, tz)}`, mode: booked.mode, estimatedMinutes: 40, reward: '+Monedas',
+            reason: `${booked.map ? `${booked.map} · ` : ''}escuadra ${booked.members.find((m) => m.gamertag === p.gamertag)!.squad} · ${booked.members.length} de ${booked.slots}`,
+            launchUrl: launch({ session: booked.id }) }
+        : tonight
         ? { title: `Horde ${tonight.language === 'es' ? 'en español' : 'in English'} hoy, ${clock(tonight.startsAt, tz)}`, mode: 'horde_siege', estimatedMinutes: 40,
             reward: '+Monedas', reason: `${tonight.map} · ${difficultyLabel(tonight.difficulty)} · sin micrófono · ${tonight.members.length} de ${tonight.slots}`,
             launchUrl: launch({ session: tonight.id }) }
@@ -114,7 +129,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
       campaign: { title: `Sigue en el capítulo ${chapter}`, mode: 'campaign', estimatedMinutes: 50, reward: '+1500 XP',
         reason: 'Retoma desde tu último punto de control', launchUrl: launch({ mode: 'campaign' }) },
     };
-    const order = (Object.keys(counts) as (keyof typeof counts)[]).sort((a, b) => counts[b] - counts[a]);
+    const order = (Object.keys(counts) as (keyof typeof counts)[]).sort((a, b) => Number(b === 'horde' && !!booked) - Number(a === 'horde' && !!booked) || counts[b] - counts[a]);
     return {
       ...options[order[0]],
       alternatives: order.slice(1).map((k) => ({ title: options[k].title, mode: options[k].mode, launchUrl: options[k].launchUrl })),
@@ -160,6 +175,37 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     if (rival) out.push({ id: `n_rival_${rival.gamertag}`, pref: 'rival', kind: 'rival', createdAt: hoursAgo(20), read: true,
       title: `${rival.gamertag} ya es ${rival.rank}`, body: `Te lleva ${rival.pointsAhead} puntos`, link: '/clasificacion' });
     return out.filter((n) => pr[n.pref]).map(({ pref: _, ...n }) => n).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  };
+
+  // One concrete lesson per match, pointing at what helps next time as seen from `now`.
+  const takeaway = (m: SeedMatch, p: SeedPlayer, board: NonNullable<MatchReport['scoreboard']>, now: string): NonNullable<MatchReport['takeaway']> => {
+    if (m.mode === 'horde_siege') {
+      const missing = ROLES.find((r) => !board.some((l) => l.role === r));
+      const next = [...sessions.values()].filter((s) => s.mode === 'horde_siege' && s.startsAt > now && s.members.some((x) => x.gamertag === p.gamertag))
+        .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
+      if (missing && next) {
+        const squad = next.members.find((x) => x.gamertag === p.gamertag)!.squad;
+        const covered = next.members.some((x) => x.squad === squad && x.role === missing);
+        const when = localDate(next.startsAt, p.timezone) === localDate(now, p.timezone) ? 'Hoy' : `El ${weekday(next.startsAt, p.timezone)}`;
+        return { text: `${ROLE_GAP[missing]} ${when} ${covered ? 'tu escuadra ya tiene uno' : 'aún te falta uno'}.`, link: `/escuadra/${next.id}` };
+      }
+      if (missing) return { text: `${ROLE_GAP[missing]} Busca una escuadra que ya tenga uno.`, link: '/escuadra' };
+      if (m.result === 'completed') return { text: `Completaste las ${HORDE_WAVE_GOAL} oleadas. Ya puedes subir la dificultad.`, link: '/escuadra' };
+      const best = bestWave(p.id, now);
+      return { text: m.wavesCleared === best ? 'Es tu mejor oleada hasta ahora. Repite con la misma escuadra.' : `Tu mejor oleada es la ${best}. Aquí tenías los cuatro roles: repite con esta escuadra.`, link: '/escuadra' };
+    }
+    if (m.mode === 'campaign') {
+      return { text: m.result === 'completed' ? 'Capítulo terminado. El siguiente empieza donde lo dejaste.' : 'Retoma desde tu último punto de control.' };
+    }
+    const team = board.filter((l) => l.team === 'COG');
+    const pos = team.findIndex((l) => l.gamertag === p.gamertag) + 1;
+    const lesson = m.result === 'win' ? `Fuiste ${pos}º de ${team.length} en tu equipo con ${m.kills} bajas.`
+      : m.result === 'draw' ? 'Partida pareja. Una baja más en el cierre la definía.'
+        : m.kills < m.deaths ? `Caíste ${m.deaths} veces. Moverte con tu equipo te deja menos expuesto.`
+          : m.mode === 'versus_conquest' ? 'Ganaste tus duelos, pero Conquista se gana con puntos. Quédate cerca de los objetivos.'
+            : 'Ganaste tus duelos, pero tu equipo cayó. Juega cerca de ellos para cubrirlos.';
+    if (m.result === 'win' && !p.rank && now >= RANKED_OPENED) return { text: `${lesson} Ya puedes ir a Ranked: tus 3 primeras partidas definen tu rango.`, link: '/' };
+    return { text: lesson };
   };
 
   const leaderboard = (playerId: string, mode: Mode, scope: string, limit: number, now: string, pool?: string[]): Leaderboard => {
@@ -211,9 +257,13 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
 
   r.add('GET', '/me/notifications', ({ playerId, query }) => ok(notifications(me(playerId), nowOf(query))));
 
-  r.add('GET', '/me/wallet', ({ playerId }) => {
+  r.add('GET', '/me/wallet', ({ playerId, query }) => {
     const { playerId: _, ...wallet } = data.wallets.find((w) => w.playerId === playerId)!;
-    return ok(wallet);
+    // Past the weekly reset, the cap starts over (the demo clock never plays matches).
+    const now = nowOf(query);
+    let resets = wallet.capResetsAt;
+    while (resets <= now) resets = new Date(Date.parse(resets) + 7 * DAY).toISOString();
+    return ok(resets === wallet.capResetsAt ? wallet : { ...wallet, coinsThisWeek: 0, capResetsAt: resets });
   });
 
   r.add('GET', '/me/notification-prefs', ({ playerId }) => ok(prefsOf(playerId)));
@@ -232,22 +282,30 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     return ok({ items: page.map(summary), nextCursor: start + limit < list.length ? String(start + limit) : null });
   });
 
-  r.add('GET', '/matches/{matchId}', ({ params }) => {
+  r.add('GET', '/matches/{matchId}', ({ params, query }) => {
     const m = matchById.get(params.matchId);
     if (!m) return error(404, 'not_found', `No existe la partida ${params.matchId}`);
     const p = me(m.playerId);
     const rand = hashRng(m.id);
     const horde = m.mode === 'horde_siege';
     const others = [...(friendsOf.get(p.id) ?? []), ...data.players.map((x) => x.id)].filter((id, i, a) => id !== p.id && a.indexOf(id) === i);
-    const pick = (n: number) => Array.from({ length: n }, (_, i) => players.get(others[Math.floor(rand() * Math.min(others.length, 40 + i))])!);
-    const line = (x: SeedPlayer, team: string, kills: number, deaths: number) => ({ gamertag: x.gamertag, team, kills, deaths, score: kills * (horde ? 70 : 100) + Math.floor(rand() * 400) });
+    // Friends first, then a few dozen others, each player at most once.
+    const pool = others.slice(0, 40);
+    const pick = (n: number) => Array.from({ length: n }, () => players.get(pool.splice(Math.floor(rand() * pool.length), 1)[0])!);
+    // The player keeps the role they sign up for in squads; teammates get one each.
+    const myRole = [...sessions.values()].flatMap((s) => s.members).find((x) => x.gamertag === p.gamertag && x.role)?.role
+      ?? ROLES[Math.floor(hashRng(p.id)() * ROLES.length)];
+    const line = (x: SeedPlayer, team: string, kills: number, deaths: number) => ({
+      gamertag: x.gamertag, team, kills, deaths, score: kills * (horde ? 70 : 100) + Math.floor(rand() * 400),
+      ...(horde ? { role: x.id === p.id ? myRole : ROLES[Math.floor(rand() * ROLES.length)] } : {}), ...(x.id === p.id ? { isMe: true } : {}),
+    });
     const scoreboard = m.mode === 'campaign'
       ? [line(p, 'COG', m.kills, m.deaths)]
       : horde
         ? [line(p, 'COG', m.kills, m.deaths), ...pick(3).map((x) => line(x, 'COG', Math.round(m.kills * (0.6 + rand() * 0.7)), Math.floor(rand() * 7)))]
         : [line(p, 'COG', m.kills, m.deaths), ...pick(7).map((x, i) => line(x, i < 3 ? 'COG' : 'Enjambre', Math.floor(rand() * 25), Math.floor(rand() * 20)))];
     scoreboard.sort((a, b) => b.score - a.score);
-    const report: MatchReport = { ...summary(m), durationSeconds: m.durationSeconds, accuracy: m.accuracy, medals: m.medals, wavesCleared: m.wavesCleared, scoreboard };
+    const report: MatchReport = { ...summary(m), accuracy: m.accuracy, medals: m.medals, takeaway: takeaway(m, p, scoreboard, nowOf(query)), scoreboard };
     return ok(report);
   });
 

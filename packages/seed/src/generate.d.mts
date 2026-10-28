@@ -45,5 +45,7 @@ export interface SeedData {
   wallets: SeedWallet[];
 }
 
+/** Waves that complete a Horde Siege map. */
+export const HORDE_WAVE_GOAL: number;
 export function generate(options?: { seed?: number }): SeedData;
 export function rankFromPoints(points: number): SeedRank;

@@ -43,3 +43,16 @@ Ten simulated player profiles, built from real reviews and forum posts, ran the 
 6. `Leaderboard.metric` (`rank_points` or `best_wave`), so Horde gets its own leaderboard.
 
 The seed now gives every player a wallet and adds a Spanish, no-mic Horde Siege starting tonight. Map names are invented placeholders.
+
+## Contract changes for the match report (v0.4.0)
+
+Week 3 built History, the match report and the demo clock at full design. That needed:
+
+1. `MatchSummary.durationSeconds`, `wavesCleared` and `waveGoal`, so History can show hours played, the best wave and "Wave 17/30" without loading every report.
+2. `MatchReport.takeaway`: one lesson per match with an in-app `link`. A Horde Siege without an Engineer says so and points at the player's next session, which tells them whether that squad already has one.
+3. `scoreboard[].role` (Horde Siege only) and `scoreboard[].isMe`.
+4. `asOf` on `listMyMatches` and `getMatch`, so the demo clock reaches every screen. The wallet also honours `asOf` now: past the weekly reset the cap starts over.
+
+The mission also changed: a session the player already joined for today becomes the mission ("Your Horde today, 21:00") ahead of any suggestion.
+
+The demo clock is a footer link on every screen. It jumps between four moments in the story: Tuesday noon (15 days away), Tuesday 21:30 (an hour before a Spanish no-mic Horde), Friday 20:00 (an hour before the clan's Horde) and the next Tuesday (new store, new event).

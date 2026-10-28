@@ -8,6 +8,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { SessionProvider } from '@/api/session';
+import { ClockProvider } from '@/lib/clock';
 import { color } from '@/ui/theme';
 
 export default function RootLayout() {
@@ -17,13 +18,16 @@ export default function RootLayout() {
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: color.bg }} />;
   return (
     <SessionProvider>
+      <ClockProvider>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.bg } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" options={{ animation: 'fade' }} />
         <Stack.Screen name="avisos" />
         <Stack.Screen name="launch" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="reloj" options={{ presentation: 'modal' }} />
       </Stack>
+      </ClockProvider>
     </SessionProvider>
   );
 }

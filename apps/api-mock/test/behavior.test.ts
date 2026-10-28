@@ -1,7 +1,7 @@
 // The demo story and the six fixes from the synthetic test hold in the simulated backend.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import type { Leaderboard, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
+import type { Leaderboard, MatchPage, MatchReport, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
 import { generate } from '@eday/seed';
 import { createApi } from '../src/index.ts';
 
@@ -83,4 +83,28 @@ test('sign-in tokens map to players', () => {
   assert.equal(session.player.gamertag, 'Delta_Rojo');
   assert.equal(api.playerIdFromToken(session.token), 'p_demo');
   assert.equal(api.playerIdFromToken('demo:nobody'), null);
+});
+
+test('a Horde report names the missing role and points at the next session', () => {
+  const horde = call<MatchPage>('GET', '/me/matches', { query: { mode: 'horde_siege', limit: '100' } }).items;
+  const reports = horde.map((m) => call<MatchReport>('GET', `/matches/${m.id}`));
+  const lesson = reports.find((r) => r.takeaway?.text.startsWith('Sin Ingeniero'));
+  assert.ok(lesson, 'no Horde match without an Engineer');
+  assert.equal(lesson.takeaway!.link, '/escuadra/sess_friday');
+  assert.match(lesson.takeaway!.text, /El viernes tu escuadra ya tiene uno/);
+  for (const r of reports) {
+    assert.equal(r.waveGoal, 30);
+    assert.equal(new Set(r.scoreboard!.map((l) => l.gamertag)).size, r.scoreboard!.length, 'a player appears twice');
+    assert.equal(r.scoreboard!.find((l) => l.isMe)?.role, 'assault');
+  }
+  // On Friday evening the same lesson says "today".
+  const friday = call<MatchReport>('GET', `/matches/${lesson.id}`, { query: { asOf: '2026-10-31T02:00:00.000Z' } });
+  assert.match(friday.takeaway!.text, /Hoy tu escuadra ya tiene uno/);
+});
+
+test('on Friday evening the booked Horde session becomes the mission', () => {
+  const week = call<WeeklyReport>('GET', '/me/week', { query: { asOf: '2026-10-31T02:00:00.000Z' } });
+  assert.equal(week.nextMission.title, 'Tu Horde de hoy, 21:00');
+  assert.equal(week.nextMission.launchUrl, 'edaycompanion://launch?session=sess_friday');
+  assert.deepEqual(week.nextMission.alternatives!.map((a) => a.mode), ['versus_ranked', 'campaign']);
 });

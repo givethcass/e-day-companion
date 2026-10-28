@@ -3,7 +3,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { api } from '@/api/client';
 import { useSession } from '@/api/session';
 import { useApi } from '@/api/useApi';
-import { DEMO_NOW, number } from '@/lib/demo';
+import { useNow } from '@/lib/clock';
+import { number } from '@/lib/demo';
 import { affordability } from '@/lib/store';
 import { dayTime } from '@/lib/time';
 import { Button, Card, IconButton, Loader, Screen, Text } from '@/ui/kit';
@@ -11,11 +12,12 @@ import { Button, Card, IconButton, Loader, Screen, Text } from '@/ui/kit';
 export default function Item() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { player } = useSession();
+  const now = useNow();
   const { data, error, reload, setData } = useApi(async () => {
-    const [rotation, wallet, wishlist] = await Promise.all([api.getStoreRotation(DEMO_NOW), api.getMyWallet(), api.getWishlist()]);
+    const [rotation, wallet, wishlist] = await Promise.all([api.getStoreRotation(now), api.getMyWallet(now), api.getWishlist()]);
     const item = rotation.items.find((i) => i.id === id) ?? wishlist.find((i) => i.id === id);
     return { rotation, wallet, item, onSale: rotation.items.some((i) => i.id === id) };
-  }, [id]);
+  }, [id, now]);
   const back = <IconButton icon="back" label="Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/tienda'))} />;
   if (!data) return <Screen title="Objeto" right={back}><Loader error={error} onRetry={reload} /></Screen>;
   const { item, wallet, rotation, onSale } = data;

@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { api } from '@/api/client';
 import { useSession } from '@/api/session';
 import { useApi } from '@/api/useApi';
-import { DEMO_NOW, number } from '@/lib/demo';
+import { useNow } from '@/lib/clock';
+import { number } from '@/lib/demo';
 import { affordability } from '@/lib/store';
 import { day } from '@/lib/time';
 import { Loader, Readouts, Row, Screen, Section, Text } from '@/ui/kit';
@@ -11,10 +12,11 @@ import { Loader, Readouts, Row, Screen, Section, Text } from '@/ui/kit';
 export default function Tienda() {
   const { player } = useSession();
   const tz = player!.timezone;
+  const now = useNow();
   const { data, error, reload } = useApi(async () => {
-    const [rotation, wallet] = await Promise.all([api.getStoreRotation(DEMO_NOW), api.getMyWallet()]);
+    const [rotation, wallet] = await Promise.all([api.getStoreRotation(now), api.getMyWallet(now)]);
     return { rotation, wallet };
-  });
+  }, [now]);
   if (!data) return <Screen title="Tienda"><Loader error={error} onRetry={reload} /></Screen>;
   const { rotation, wallet } = data;
   return (

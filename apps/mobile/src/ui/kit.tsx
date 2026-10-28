@@ -1,9 +1,13 @@
 // Building blocks for direction C, the look of the official site: black pages, solid red buttons, condensed
 // uppercase titles, a red band that fades to black, square corners and hairlines between rows.
+import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text as RNText, View, type StyleProp, type TextProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { useSession } from '@/api/session';
+import { useClock } from '@/lib/clock';
+import { dayTime } from '@/lib/time';
 import { Icon, type IconName } from './Icon';
 import { color, radius, size, space, type } from './theme';
 
@@ -161,6 +165,19 @@ export function Disclaimer() {
   return <Text variant="legal" tone="textFaint" style={{ marginTop: space.md }}>Concepto no oficial con datos simulados. No afiliado a Microsoft ni a The Coalition.</Text>;
 }
 
+/** Footer link to the demo clock, so whoever watches the demo can move time forward. */
+export function DemoClock() {
+  const { now } = useClock();
+  const { player } = useSession();
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel="Cambiar el reloj de demo" onPress={() => router.push('/reloj')} style={styles.clock}>
+      <Icon name="clock" size={16} color={color.textSubtle} />
+      <Text variant="data" tone="textSubtle" style={{ flex: 1 }}>Reloj de demo: {dayTime(now, player?.timezone ?? 'America/Mexico_City')}</Text>
+      <Text variant="overline" tone="primary">Cambiar</Text>
+    </Pressable>
+  );
+}
+
 /** Screen frame: safe area, scroll, header over a hairline, the unofficial-concept notice at the bottom. */
 export function Screen({ title, overline, meta, right, children, edges = ['top'], bleed }: {
   title?: string; overline?: string; meta?: string; right?: ReactNode; children: ReactNode; edges?: ('top' | 'bottom')[]; bleed?: ReactNode;
@@ -182,6 +199,7 @@ export function Screen({ title, overline, meta, right, children, edges = ['top']
           )}
           {children}
           <Disclaimer />
+          <DemoClock />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -226,6 +244,7 @@ const styles = StyleSheet.create({
   tag: { width: 58, fontSize: 12 },
   band: { marginHorizontal: -space.xl, paddingHorizontal: space.xl, paddingTop: 16, gap: 2, overflow: 'hidden' },
   bandRule: { height: 1, backgroundColor: color.text, opacity: 0.85, marginTop: 10 },
+  clock: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: size.touchTarget, borderTopWidth: 1, borderTopColor: color.border },
   iconButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   dot: { position: 'absolute', top: 10, right: 10, width: 7, height: 7, backgroundColor: color.primary },
 });

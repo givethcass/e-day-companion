@@ -27,6 +27,9 @@ export const day = (iso: string, timeZone: string) => {
   return `${p.weekday.replace('.', '')} ${p.day} ${p.month.replace('.', '')}`;
 };
 
+/** "viernes" */
+export const weekday = (iso: string, timeZone: string) => parts(iso, timeZone, { weekday: 'long' }).weekday;
+
 /** "13 oct" */
 export const dayMonth = (iso: string, timeZone: string) => {
   const p = parts(iso, timeZone, { day: 'numeric', month: 'short' });

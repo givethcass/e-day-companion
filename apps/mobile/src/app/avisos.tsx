@@ -3,13 +3,14 @@ import type { Href } from 'expo-router';
 import { router } from 'expo-router';
 import { api } from '@/api/client';
 import { useApi } from '@/api/useApi';
-import { DEMO_NOW } from '@/lib/demo';
+import { useNow } from '@/lib/clock';
 import { IconButton, Loader, Row, Screen, Section, Text } from '@/ui/kit';
 
 const TAG: Record<string, string> = { session: 'ESCUADRA', wishlist: 'TIENDA', event: 'EVENTO', mission: 'RANKED', rival: 'RIVAL' };
 
 export default function Avisos() {
-  const { data, error, reload } = useApi(() => api.listMyNotifications(DEMO_NOW));
+  const now = useNow();
+  const { data, error, reload } = useApi(() => api.listMyNotifications(now), [now]);
   return (
     <Screen
       overline="Escuadra y lista de deseos"

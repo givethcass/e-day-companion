@@ -1,17 +1,20 @@
 // Tu semana in the official site's look: an ember hero with the week's objective (tabs switch to the
-// alternatives), the week's figures, then a red band over what is coming up.
+// alternatives), the week's figures, a red band over what is coming up, then a recap: the last match's
+// lesson, the rival and the season.
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { api } from '@/api/client';
 import { useSession } from '@/api/session';
 import { useApi } from '@/api/useApi';
-import { DEMO_NOW, number } from '@/lib/demo';
+import { useNow } from '@/lib/clock';
+import { number } from '@/lib/demo';
+import { matchTitle, outcome } from '@/lib/match';
 import { openLaunchUrl } from '@/lib/launch';
 import { clock, day, dayTime } from '@/lib/time';
-import { Band, Button, Glow, IconButton, Loader, Readouts, Row, Screen, Tabs, Text } from '@/ui/kit';
+import { Band, Button, Glow, IconButton, Loader, Readouts, Row, Screen, Section, Tabs, Text } from '@/ui/kit';
 import { color, space } from '@/ui/theme';
 
 const TAB: Record<string, string> = { versus_ranked: 'Ranked', horde_siege: 'Horde', campaign: 'Campaña', versus_tdm: 'Versus', versus_conquest: 'Versus' };
@@ -51,20 +54,24 @@ function Tile({ label, glow, title, body, cta, onPress }: { label: string; glow:
 export default function TuSemana() {
   const { player } = useSession();
   const tz = player!.timezone;
+  const now = useNow();
   const { data, error, reload } = useApi(async () => {
-    const [week, wallet, season, sessions, rotation, events, notifications, clan] = await Promise.all([
-      api.getMyWeek(DEMO_NOW), api.getMyWallet(), api.getCurrentSeason(), api.listSessions({ startsAfter: DEMO_NOW }),
-      api.getStoreRotation(DEMO_NOW), api.listEvents(DEMO_NOW), api.listMyNotifications(DEMO_NOW),
-      player!.clanId ? api.getClan(player!.clanId) : null,
+    const [week, wallet, season, sessions, rotation, events, notifications, clan, history] = await Promise.all([
+      api.getMyWeek(now), api.getMyWallet(now), api.getCurrentSeason(), api.listSessions({ startsAfter: now }),
+      api.getStoreRotation(now), api.listEvents(now), api.listMyNotifications(now),
+      player!.clanId ? api.getClan(player!.clanId) : null, api.listMyMatches({ limit: 1, asOf: now }),
     ]);
-    return { week, wallet, season, sessions, rotation, events, clan, unread: notifications.filter((n) => !n.read).length };
-  });
+    const last = history.items[0] ? await api.getMatch(history.items[0].id, now) : null;
+    return { week, wallet, season, sessions, rotation, events, clan, last, unread: notifications.filter((n) => !n.read).length };
+  }, [now]);
   const [pick, setPick] = useState(0);
   const [sent, setSent] = useState<number | null>(null);
+  // A new demo moment can bring different missions.
+  useEffect(() => { setPick(0); setSent(null); }, [now]);
 
   if (!data) return <Screen title="Tu semana"><Loader error={error} onRetry={reload} /></Screen>;
-  const { week, wallet, season, sessions, rotation, events, clan, unread } = data;
-  const weekNo = Math.floor((Date.parse(DEMO_NOW) - Date.parse(season.startsAt)) / (7 * 864e5)) + 1;
+  const { week, wallet, season, sessions, rotation, events, clan, last, unread } = data;
+  const weekNo = Math.floor((Date.parse(now) - Date.parse(season.startsAt)) / (7 * 864e5)) + 1;
   const weeks = Math.round((Date.parse(season.endsAt) - Date.parse(season.startsAt)) / (7 * 864e5));
   const missions = [week.nextMission, ...(week.nextMission.alternatives ?? [])];
   const m = missions[pick];
@@ -75,8 +82,8 @@ export default function TuSemana() {
     : 'Otra opción según cómo juegas esta temporada.';
   const mine = sessions.filter((s) => s.members.some((x) => x.gamertag === player!.gamertag));
   const wished = rotation.items.filter((i) => i.wishlisted);
-  const ending = events.filter((e) => e.startsAt <= DEMO_NOW);
-  const daysLeft = (iso: string) => `${Math.ceil((Date.parse(iso) - Date.parse(DEMO_NOW)) / 864e5)} días`;
+  const ending = events.filter((e) => e.startsAt <= now);
+  const daysLeft = (iso: string) => `${Math.ceil((Date.parse(iso) - Date.parse(now)) / 864e5)} días`;
   const s0 = mine[0];
   const me = s0?.members.find((x) => x.gamertag === player!.gamertag);
   const w0 = wished[0];
@@ -116,7 +123,7 @@ export default function TuSemana() {
       <Band title="Esta semana" subtitle="Tu escuadra, tu tienda y lo que termina" />
       <View style={{ flexDirection: 'row', gap: 14 }}>
         {s0 && me && (
-          <Tile label={`${day(s0.startsAt, tz).split(' ').slice(0, 2).join(' ')} · ${clock(s0.startsAt, tz)}`} glow="#E50F11"
+          <Tile label={`${day(s0.startsAt, tz) === day(now, tz) ? 'Hoy' : day(s0.startsAt, tz).split(' ').slice(0, 2).join(' ')} · ${clock(s0.startsAt, tz)}`} glow="#E50F11"
             title={`Horde Siege · ${s0.clanId === clan?.id ? clan?.name : s0.hostGamertag}`}
             body={`Escuadra ${me.squad}${me.confirmed ? ', confirmado' : ''} · ${s0.members.length} de ${s0.slots}`}
             cta="Ver escuadra" onPress={() => router.push(`/escuadra/${s0.id}`)} />
@@ -138,6 +145,20 @@ export default function TuSemana() {
           <Row key={e.id} tag="Evento" title={`${e.name} termina pronto`} subtitle={`${dayTime(e.endsAt, tz)} tu hora`} trailing={daysLeft(e.endsAt)} trailingTone="text" />
         ))}
       </View>
+
+      <Section title="Tu resumen">
+        {last && (
+          <Row tag="Última" tagTone="primary" title={`${matchTitle(last)} · ${outcome(last)}`}
+            subtitle={last.takeaway?.text ?? day(last.endedAt, tz)} onPress={() => router.push(`/partidas/${last.id}`)} />
+        )}
+        {week.rival && (
+          <Row tag="Rival" title={`${week.rival.gamertag}${week.rival.rank ? `, ${week.rival.rank}` : ''}`}
+            subtitle={`Te lleva ${number(week.rival.pointsAhead ?? 0)} puntos`} onPress={() => router.push('/clasificacion')} />
+        )}
+        <Row tag="Semana" title={`${week.matchesPlayed} partidas · ${week.hoursPlayed} h`}
+          subtitle={`Llevas el ${Math.round((week.seasonProgress ?? 0) * 100)}% de la temporada. Termina el ${day(season.endsAt, tz)}.`}
+          onPress={() => router.push('/partidas')} />
+      </Section>
     </Screen>
   );
 }

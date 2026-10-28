@@ -13,7 +13,8 @@ Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its
 | 0 | Case, data and API contract | Done |
 | 1 | Visual system and prototype | Done (real player test pending) |
 | 2 | App base and simulated backend | Done |
-| 3–5 | P0 screens at full design | Not started |
+| 3 | Your week, match history, match report, demo clock | Done |
+| 4–5 | Remaining P0 screens at full design | Not started |
 | 6 | Polish, demo video, case study | Not started |
 
 ## Repository
@@ -49,3 +50,5 @@ npm run api         # the simulated backend over HTTP on :8787
 - [ADR 0002: Contract-first simulated backend](docs/adr/0002-contract-first-simulated-backend.md)
 - [ADR 0003: Deterministic seed and demo clock](docs/adr/0003-deterministic-seed-and-demo-clock.md)
 - [ADR 0004: Portable simulated backend instead of Supabase](docs/adr/0004-portable-simulated-backend.md)
+- [ADR 0005: Visual direction B, Tactical HUD](docs/adr/0005-visual-direction-tactical-hud.md) (superseded)
+- [ADR 0006: Visual direction C, the official site's look](docs/adr/0006-visual-direction-official-site.md)
