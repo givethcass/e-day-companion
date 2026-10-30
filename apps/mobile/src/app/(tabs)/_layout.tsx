@@ -20,6 +20,8 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        // Always a phone layout: on a wide browser the demo sits in a phone frame, but the window is wide.
+        tabBarLabelPosition: 'below-icon',
         tabBarActiveTintColor: color.text,
         tabBarInactiveTintColor: color.textSubtle,
         tabBarStyle: { backgroundColor: color.bg, borderTopColor: color.border, height: 76, paddingTop: 6, paddingBottom: 18 },
