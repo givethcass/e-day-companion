@@ -229,3 +229,20 @@ test('guides filter by section and class; creators and promos come from the seed
   }
 });
 
+
+test('service record breakdowns add up for charts', () => {
+  const r = call<ServiceRecord>('GET', '/me/service-record');
+  const b = r.breakdown;
+  const total = (xs: { value: number }[]) => xs.reduce((s, x) => s + x.value, 0);
+  assert.equal(total(b.killsByMode), r.career.kills);
+  assert.equal(total(b.killsByEnemy), r.horde.kills);
+  const count = (xs: number[]) => xs.reduce((s, x) => s + x, 0);
+  assert.equal(count(b.activityByHour), r.career.matches);
+  assert.equal(count(b.activityByWeekday), r.career.matches);
+  assert.equal(b.versusByMap.reduce((s, x) => s + x.matches, 0), r.versus.matches);
+  for (const xs of [b.killsByWeapon, b.killsByEnemy]) {
+    assert.ok(xs.length <= 6);
+    assert.ok(xs.slice(0, -1).every((x, i, all) => i === 0 || all[i - 1].value >= x.value), 'ranked before «Otras»');
+  }
+  assert.equal(b.killsByWeapon[0].label, 'Lancer MK1');
+});

@@ -1,8 +1,8 @@
-// Mi servicio: the full service record. The player's card with the medals they show in game, the career,
-// every mode in detail, medals (latest and what is missing), GTA-style curiosities, leaderboards, then every match.
+// Mi servicio: the full service record. The player's card with the medals they show in game, the career and kills
+// as charts, every mode in charts, when they play, classes, medals, GTA-style curiosities, leaderboards, every match.
 import type { MatchSummary, Mode, ServiceRecord } from '@eday/api-types';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { api } from '@/api/client';
 import { useSession } from '@/api/session';
@@ -19,6 +19,7 @@ import { MedalBadge, Progress, UnlockRow } from '@/ui/Medal';
 import { Emblem } from '@/ui/Service';
 import { color, size, space } from '@/ui/theme';
 import { Columns } from '@/ui/layout';
+import { ColumnStrip, Donut, Meter, MODE_COLOR, OTHER, RankBars, SERIES, SplitBar } from '@/ui/Charts';
 
 const FILTERS: [string, Mode[] | null][] = [['Todo', null], ['Versus', ['versus_tdm', 'versus_conquest', 'versus_ranked']], ['Horde', ['horde_siege']], ['Campaña', ['campaign']]];
 
@@ -37,47 +38,91 @@ function MatchRow({ m, tz }: { m: MatchSummary; tz: string }) {
   );
 }
 
-/** Every figure for one mode, as label / value lines. */
+/** A titled chart block. */
+function Chart({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+  return (
+    <View style={styles.chart}>
+      <View style={{ gap: 2 }}>
+        <Text variant="overline" tone="textMuted">{title}</Text>
+        {note ? <Text variant="caption" tone="textSubtle">{note}</Text> : null}
+      </View>
+      {children}
+    </View>
+  );
+}
+
+const ROLE_COLOR: Record<string, string> = { assault: SERIES[0], breacher: SERIES[1], marksman: SERIES[2], medic: SERIES[3] };
+const winPct = (wins: number, matches: number) => Math.round((wins / Math.max(1, matches)) * 100);
+
+/** One mode in charts, with the few figures that are single numbers kept as lines. */
 function ModeDetail({ r, f }: { r: ServiceRecord; f: Family }) {
-  let lines: [string, string, ('primary' | 'text')?][];
   if (f === 'versus') {
     const v = r.versus;
-    lines = [
-      ['Partidas', `${v.matches} · ${v.hoursPlayed} h`],
-      ['Ganadas / perdidas / empates', `${v.wins} / ${v.losses} / ${v.draws}`],
-      ['Porcentaje de victorias', pct(v.winRate), 'primary'],
-      ['Mejor racha de victorias', String(v.bestWinStreak)],
-      ['Bajas / caídas', `${number(v.kills)} / ${number(v.deaths)}`],
-      ['K/D', v.kd.toFixed(2)],
-      ['Precisión media', pct(v.accuracy)],
-      ['Más bajas en una partida', v.bestKills == null ? '–' : String(v.bestKills)],
-      ['Rango', v.rank ? `${rankLabel(v.rank)} · ${v.rank.points} pts` : 'Sin rango'],
-      ['Mejor mapa', v.bestMap ? `${v.bestMap.map} · ${v.bestMap.wins} de ${v.bestMap.matches}` : '–'],
-      ...v.byMode.map((x): [string, string] => [modeLabel(x.mode), `${x.wins} de ${x.matches} ganadas`]),
-    ];
-  } else if (f === 'horde') {
-    const h = r.horde;
-    lines = [
-      ['Partidas', `${h.matches} · ${h.hoursPlayed} h`],
-      ['Mejor oleada', `${h.bestWave} de ${h.waveGoal}`, 'primary'],
-      ['Partidas completas', `${h.completed} de ${h.matches}`],
-      ['Oleadas superadas', number(h.wavesCleared)],
-      ['Bajas', number(h.kills)],
-      ['Clase principal', h.mainRole ? roleLabel(h.mainRole) : '–'],
-      ...h.byMap.map((x): [string, string] => [x.map, `oleada ${x.bestWave} · ${x.matches} partidas`]),
-    ];
-  } else {
-    const c = r.campaign;
-    lines = [
-      ['Capítulos', `${c.chaptersCompleted} de ${c.chaptersTotal}`, 'primary'],
-      ['Avance de la historia', pct(c.chaptersCompleted / c.chaptersTotal)],
-      ['Capítulos jugados', String(c.attempts)],
-      ['Bajas', number(c.kills)],
-      ['Horas', String(c.hoursPlayed)],
-    ];
+    return (
+      <Columns>
+        <Chart title="Resultados" note={`${v.matches} partidas · ${v.hoursPlayed} h`}>
+          <SplitBar parts={[{ label: 'Victorias', value: v.wins }, { label: 'Derrotas', value: v.losses }, { label: 'Empates', value: v.draws }]}
+            colors={[SERIES[0], OTHER, SERIES[1]]} />
+          <View style={{ gap: 8 }}>
+            <DataLine label="K/D" value={v.kd.toFixed(2)} tone="primary" />
+            <DataLine label="Precisión media" value={pct(v.accuracy)} />
+            <DataLine label="Mejor racha de victorias" value={String(v.bestWinStreak)} />
+            <DataLine label="Más bajas en una partida" value={v.bestKills == null ? '–' : String(v.bestKills)} />
+            <DataLine label="Rango" value={v.rank ? `${rankLabel(v.rank)} · ${v.rank.points} pts` : 'Sin rango'} />
+          </View>
+        </Chart>
+        <Chart title="Victorias por modo" note="Porcentaje de partidas ganadas">
+          <RankBars max={100} format={(x) => `${x}%`} items={v.byMode.map((x) => ({ label: modeLabel(x.mode), value: winPct(x.wins, x.matches), note: `${x.wins} de ${x.matches}` }))} />
+        </Chart>
+        <Chart title="Victorias por mapa" note="Ordenados por partidas jugadas">
+          <RankBars max={100} format={(x) => `${x}%`} items={r.breakdown.versusByMap.map((x) => ({ label: x.map, value: winPct(x.wins, x.matches), note: `${x.wins} de ${x.matches}` }))} />
+        </Chart>
+      </Columns>
+    );
   }
-  return <View style={styles.lines}>{lines.map(([label, value, tone]) => <DataLine key={label} label={label} value={value} tone={tone} />)}</View>;
+  if (f === 'horde') {
+    const h = r.horde;
+    return (
+      <Columns>
+        <Chart title="Tu mejor partida" note={`${h.matches} partidas · ${h.hoursPlayed} h`}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+            <Meter value={h.bestWave} goal={h.waveGoal} label="oleadas" />
+            <View style={{ flex: 1, gap: 8 }}>
+              <DataLine label="Completas" value={`${h.completed} de ${h.matches}`} tone="primary" />
+              <DataLine label="Oleadas superadas" value={number(h.wavesCleared)} />
+              <DataLine label="Bajas" value={number(h.kills)} />
+            </View>
+          </View>
+        </Chart>
+        <Chart title="Partidas por clase" note={h.mainRole ? `Tu clase principal es ${roleLabel(h.mainRole)}` : undefined}>
+          <Donut unit="partidas" slices={r.classes.map((k) => ({ label: roleLabel(k.role), value: k.matches }))} colors={r.classes.map((k) => ROLE_COLOR[k.role])} />
+        </Chart>
+        <Chart title="Enemigos abatidos" note="Bajas en Horde por tipo de enemigo">
+          <Donut unit="bajas" slices={r.breakdown.killsByEnemy} />
+        </Chart>
+        <Chart title="Mejor oleada por mapa" note={`Meta: ${h.waveGoal} oleadas`}>
+          <RankBars max={h.waveGoal} items={h.byMap.map((x) => ({ label: x.map, value: x.bestWave, note: `${x.matches} partidas` }))} />
+        </Chart>
+      </Columns>
+    );
+  }
+  const c = r.campaign;
+  return (
+    <Chart title="Historia" note={`${c.attempts} capítulos jugados · ${c.hoursPlayed} h`}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <Meter value={c.chaptersCompleted} goal={c.chaptersTotal} label="capítulos" />
+        <View style={{ flex: 1, gap: 8 }}>
+          <DataLine label="Avance" value={pct(c.chaptersCompleted / c.chaptersTotal)} tone="primary" />
+          <DataLine label="Bajas" value={number(c.kills)} />
+        </View>
+      </View>
+    </Chart>
+  );
 }
+
+const WEEK = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const WEEK_NAME = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 
 export default function Servicio() {
   const { player } = useSession();
@@ -140,21 +185,52 @@ export default function Servicio() {
       )}
 
       <Section title="Carrera">
-        <View style={styles.lines}>
-          <DataLine label="Primera partida" value={c.firstMatchAt ? day(c.firstMatchAt, tz) : '–'} />
-          <DataLine label="Última partida" value={last} tone={c.daysSinceLastMatch ? 'primary' : 'text'} />
-          <DataLine label="Días jugados" value={`${c.daysPlayed} · mejor racha ${c.bestDayStreak}`} />
-          <DataLine label="Cuándo juegas más" value={[c.favoriteWeekday, c.favoriteHour].filter(Boolean).join(' · ') || '–'} />
-          <DataLine label="Bajas / caídas" value={`${number(c.kills)} / ${number(c.deaths)}`} />
-          <DataLine label="Precisión media" value={pct(c.accuracy)} />
-          <DataLine label="Tu tiempo" value={`Versus ${pct(c.share.versus)} · Horde ${pct(c.share.horde)} · Campaña ${pct(c.share.campaign)}`} />
-        </View>
+        <Columns>
+          <Chart title="Tu tiempo por modo" note={c.firstMatchAt ? `Desde el ${day(c.firstMatchAt, tz)}` : undefined}>
+            <Donut unit="horas" center={`${c.hoursPlayed} h`}
+              slices={[{ label: 'Versus', value: r.versus.hoursPlayed }, { label: 'Horde', value: r.horde.hoursPlayed }, { label: 'Campaña', value: r.campaign.hoursPlayed }]}
+              colors={[MODE_COLOR.versus, MODE_COLOR.horde, MODE_COLOR.campaign]} />
+          </Chart>
+          <View style={[styles.lines, { gap: 10 }]}>
+            <DataLine label="Última partida" value={last} tone={c.daysSinceLastMatch ? 'primary' : 'text'} />
+            <DataLine label="Días jugados" value={`${c.daysPlayed} · mejor racha ${c.bestDayStreak}`} />
+            <DataLine label="Bajas / caídas" value={`${number(c.kills)} / ${number(c.deaths)}`} />
+            <DataLine label="Precisión media" value={pct(c.accuracy)} />
+          </View>
+        </Columns>
       </Section>
+
+      <View style={{ gap: 12 }}>
+        <Text variant="section">Bajas</Text>
+        <Chart title="Por modo" note={`${number(c.kills)} bajas en total`}>
+          <SplitBar parts={r.breakdown.killsByMode} colors={[MODE_COLOR.versus, MODE_COLOR.horde, MODE_COLOR.campaign]} />
+        </Chart>
+        <Columns>
+          <Chart title="Por arma" note="Versus y Horde, con armas y granadas">
+            <Donut unit="bajas" slices={r.breakdown.killsByWeapon} />
+          </Chart>
+          <Chart title="Bajas especiales" note="Se traslapan: un disparo a la cabeza puede ser con Longshot">
+            <RankBars items={r.breakdown.killsByType.map((x) => ({ ...x, note: pct(x.value / Math.max(1, c.kills)) }))} />
+          </Chart>
+        </Columns>
+      </View>
 
       <View style={{ gap: 12 }}>
         <Text variant="section">Por modo</Text>
         <Tabs items={FAMILIES.map(([, label]) => label)} selected={tab} onSelect={setPick} />
         <ModeDetail r={r} f={FAMILIES[tab][0]} />
+      </View>
+
+      <View style={{ gap: 12 }}>
+        <Text variant="section">Cuándo juegas</Text>
+        <Columns>
+          <Chart title="Por hora del día" note="Según la hora en que terminó cada partida">
+            <ColumnStrip values={r.breakdown.activityByHour} labels={HOURS} ticks={[0, 6, 12, 18, 23]} name={(i) => `De ${HOURS[i]}:00 a ${HOURS[(i + 1) % 24]}:00`} />
+          </Chart>
+          <Chart title="Por día de la semana" note={c.favoriteWeekday ? `Juegas más los ${c.favoriteWeekday}` : undefined}>
+            <ColumnStrip values={r.breakdown.activityByWeekday} labels={WEEK} ticks={[0, 1, 2, 3, 4, 5, 6]} name={(i) => WEEK_NAME[i]} />
+          </Chart>
+        </Columns>
       </View>
 
       <Section title="Clases de Horde">
@@ -221,6 +297,7 @@ const styles = StyleSheet.create({
   slot: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 10, paddingHorizontal: 4, borderWidth: 1, borderColor: color.border, backgroundColor: color.bg },
   klass: { gap: 6, paddingVertical: 12, borderTopWidth: 1, borderTopColor: color.border },
   lines: { gap: 10, paddingVertical: 12, borderTopWidth: 1, borderTopColor: color.border },
+  chart: { gap: 12, paddingVertical: 14, borderTopWidth: 1, borderTopColor: color.border },
   trivia: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderBottomWidth: 1, borderColor: color.border },
   fact: { width: '50%', paddingVertical: 12, paddingRight: 10, gap: 3 },
   factRight: { borderLeftWidth: 1, borderLeftColor: color.border, paddingLeft: 12 },

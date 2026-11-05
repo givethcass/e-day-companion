@@ -811,6 +811,32 @@ export interface components {
                 /** @example Unas 160 cajas de munición */
                 detail?: string;
             }[];
+            /** @description Desgloses para dibujar gráficas. Las listas vienen ordenadas de mayor a menor, con lo menor ya agrupado en «Otras». */
+            breakdown: {
+                /** @description Bajas por modo (Versus, Horde, Campaña); suman career.kills */
+                killsByMode: components["schemas"]["Slice"][];
+                /** @description Bajas con armas y granadas en Versus y Horde, las 5 armas más usadas y «Otras armas y granadas» */
+                killsByWeapon: components["schemas"]["Slice"][];
+                /** @description Bajas especiales; se traslapan entre sí (un disparo a la cabeza puede ser con Longshot), no suman un total */
+                killsByType: components["schemas"]["Slice"][];
+                /** @description Bajas en Horde por tipo de enemigo, los 5 más comunes y «Otros»; suman horde.kills */
+                killsByEnemy: components["schemas"]["Slice"][];
+                versusByMap: {
+                    map: string;
+                    matches: number;
+                    wins: number;
+                }[];
+                /** @description Partidas por hora local en que terminaron, de 0 a 23 */
+                activityByHour: number[];
+                /** @description Partidas por día de la semana local, de lunes a domingo */
+                activityByWeekday: number[];
+            };
+        };
+        /** @description Una parte de un total, para gráficas */
+        Slice: {
+            /** @example Lancer MK1 */
+            label: string;
+            value: number;
         };
         MatchSummary: {
             id: string;

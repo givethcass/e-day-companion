@@ -7,6 +7,11 @@ import { day, dayTime, MEDAL_GROUP, MODE, matchTitle, num, outcome, pct, rankLab
 import { earned, MedalBadge, nextTier, SectionHead, TierPips, topTier } from '../ui/bits';
 import { Bar, CountUp, Reveal, spotlight, useSeen, useToast } from '../ui/fx';
 import { HeroScene } from '../ui/HeroScene';
+import { ChartCard, Columns, Donut, MODE_COLOR, OTHER, RankBars, ROLE_COLOR, SERIES, SplitBar } from '../ui/charts';
+
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const WEEK = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const WEEK_NAME = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 const SUBS = [['', 'Resumen'], ['medallas', 'Medallas'], ['logros', 'Logros']] as const;
 
@@ -81,7 +86,7 @@ function Summary() {
   const ach = useData((n) => api.achievements(n));
   const matches = useData((n) => api.matches(n, 12).items);
   const c = r.career, v = r.versus, h = r.horde;
-  const share: [string, number, string][] = [['Versus', c.share.versus, '#F0473A'], ['Horde', c.share.horde, '#D9A93B'], ['Campaña', c.share.campaign, '#7AA0BE']];
+  const b = r.breakdown;
   return (
     <div className="flex flex-col gap-20">
       <Reveal>
@@ -97,53 +102,85 @@ function Summary() {
             </div>
           ))}
         </div>
-        <div className="mt-6">
-          <div className="flex h-3 gap-1">
-            {share.map(([label, x, color], i) => <div key={label} className="h-full animate-rise" style={{ width: `${x * 100}%`, background: color, animationDelay: `${i * 120}ms` }} title={`${label} ${pct(x)}`} />)}
-          </div>
-          <div className="mt-3 flex gap-8 text-sm text-muted">{share.map(([label, x, color]) => <span key={label} className="flex items-center gap-2"><span className="size-2.5" style={{ background: color }} />{label} {pct(x)}</span>)}</div>
+      </Reveal>
+
+      <Reveal>
+        <SectionHead over="Desglose" title="En qué se te va el tiempo" />
+        <div className="grid grid-cols-3 gap-5">
+          <ChartCard title="Tu tiempo por modo" note={`${c.hoursPlayed} horas en total`}>
+            <Donut stack unit="horas" center={`${c.hoursPlayed} h`} format={(x) => `${x} h`}
+              slices={[{ label: 'Versus', value: v.hoursPlayed }, { label: 'Horde', value: h.hoursPlayed }, { label: 'Campaña', value: r.campaign.hoursPlayed }]}
+              colors={[MODE_COLOR.versus, MODE_COLOR.horde, MODE_COLOR.campaign]} />
+          </ChartCard>
+          <ChartCard title="Bajas por arma" note="Versus y Horde, con armas y granadas">
+            <Donut stack unit="bajas" slices={b.killsByWeapon} />
+          </ChartCard>
+          <ChartCard title="Enemigos abatidos" note="Bajas en Horde por tipo de enemigo">
+            <Donut stack unit="bajas" slices={b.killsByEnemy} />
+          </ChartCard>
+        </div>
+        <div className="grid grid-cols-[1.2fr_1fr] gap-5 mt-5">
+          <ChartCard title="Bajas por modo" note={`${num(c.kills)} bajas y ${num(c.deaths)} caídas en total`}>
+            <SplitBar parts={b.killsByMode} colors={[MODE_COLOR.versus, MODE_COLOR.horde, MODE_COLOR.campaign]} />
+            <div className="mt-2 pt-5 border-t border-line">
+              <div className="eyebrow text-muted mb-4">Bajas especiales</div>
+              <RankBars items={b.killsByType.map((x) => ({ ...x, note: `${pct(x.value / Math.max(1, c.kills))} de tus bajas` }))} />
+            </div>
+          </ChartCard>
+          <ChartCard title="Partidas por clase en Horde" note={`Tu clase principal es ${ROLE[h.mainRole ?? 'assault']}`}>
+            <Donut unit="partidas" slices={r.classes.map((k) => ({ label: ROLE[k.role], value: k.matches }))} colors={r.classes.map((k) => ROLE_COLOR[k.role])} />
+          </ChartCard>
         </div>
       </Reveal>
 
       <div className="grid grid-cols-2 gap-8">
         <Reveal>
-          <div className="border border-line bg-surface p-8 h-full">
-            <div className="flex items-baseline justify-between"><h2 className="display text-3xl">Versus</h2><span className="text-muted">{rankLabel(v.rank)} · {pct(v.winRate)} victorias</span></div>
-            <div className="grid grid-cols-4 gap-4 mt-6">
-              {[['Victorias', v.wins], ['Derrotas', v.losses], ['Mejor racha', v.bestWinStreak], ['Más bajas', v.bestKills]].map(([l, x]) => (
-                <div key={l}><div className="text-sm text-subtle">{l}</div><div className="display text-3xl"><CountUp value={x as number} /></div></div>
+          <div className="border border-line bg-surface p-8 h-full flex flex-col gap-8">
+            <div className="flex items-baseline justify-between"><h2 className="display text-3xl">Versus</h2><span className="text-muted">{rankLabel(v.rank)} · K/D {v.kd.toFixed(2)}</span></div>
+            <SplitBar parts={[{ label: 'Victorias', value: v.wins }, { label: 'Derrotas', value: v.losses }, { label: 'Empates', value: v.draws }]} colors={[SERIES[0], OTHER, SERIES[1]]} />
+            <div className="grid grid-cols-3 gap-4">
+              {[['Mejor racha', v.bestWinStreak], ['Más bajas', v.bestKills ?? 0], ['Precisión', Math.round(v.accuracy * 100)]].map(([l, x], i) => (
+                <div key={l}><div className="text-sm text-subtle">{l}</div><div className="display text-3xl"><CountUp value={x as number} suffix={i === 2 ? '%' : ''} /></div></div>
               ))}
             </div>
-            <div className="mt-8 flex flex-col gap-4">
-              {v.byMode.map((m, i) => (
-                <div key={m.mode}>
-                  <div className="flex justify-between text-sm mb-1.5"><span>{MODE[m.mode]}</span><span className="text-subtle">{m.wins} de {m.matches} · {pct(m.wins / Math.max(1, m.matches))}</span></div>
-                  <Bar value={m.wins / Math.max(1, m.matches)} className="h-1.5" delay={i * 120} />
-                </div>
-              ))}
+            <div>
+              <div className="eyebrow text-muted mb-4">Victorias por modo</div>
+              <RankBars max={100} format={(x) => `${x}%`} items={v.byMode.map((m) => ({ label: MODE[m.mode], value: Math.round((m.wins / Math.max(1, m.matches)) * 100), note: `${m.wins} de ${m.matches}` }))} />
             </div>
-            {v.bestMap && <p className="mt-6 text-sm text-muted">Mejor mapa: <b className="text-ink">{v.bestMap.map}</b>, {v.bestMap.wins} victorias en {v.bestMap.matches} partidas.</p>}
+            <div>
+              <div className="eyebrow text-muted mb-4">Victorias por mapa</div>
+              <RankBars max={100} format={(x) => `${x}%`} items={b.versusByMap.map((m) => ({ label: m.map, value: Math.round((m.wins / Math.max(1, m.matches)) * 100), note: `${m.wins} de ${m.matches}` }))} />
+            </div>
           </div>
         </Reveal>
         <Reveal delay={100}>
-          <div className="border border-line bg-surface p-8 h-full">
-            <div className="flex items-baseline justify-between"><h2 className="display text-3xl">Horde Siege</h2><span className="text-muted">Clase principal: {ROLE[h.mainRole ?? 'assault']}</span></div>
-            <div className="grid grid-cols-4 gap-4 mt-6">
-              {[['Mejor oleada', h.bestWave], ['Completadas', h.completed], ['Oleadas', h.wavesCleared], ['Bajas', h.kills]].map(([l, x]) => (
+          <div className="border border-line bg-surface p-8 h-full flex flex-col gap-8">
+            <div className="flex items-baseline justify-between"><h2 className="display text-3xl">Horde Siege</h2><span className="text-muted">{h.matches} partidas · {h.hoursPlayed} h</span></div>
+            <SplitBar parts={[{ label: 'Completas', value: h.completed }, { label: 'Sin terminar', value: h.matches - h.completed }]} colors={[SERIES[2], OTHER]} />
+            <div className="grid grid-cols-3 gap-4">
+              {[['Mejor oleada', h.bestWave], ['Oleadas', h.wavesCleared], ['Bajas', h.kills]].map(([l, x]) => (
                 <div key={l}><div className="text-sm text-subtle">{l}</div><div className="display text-3xl"><CountUp value={x as number} /></div></div>
               ))}
             </div>
-            <div className="mt-8 flex flex-col gap-4">
-              {h.byMap.map((m, i) => (
-                <div key={m.map}>
-                  <div className="flex justify-between text-sm mb-1.5"><span>{m.map}</span><span className="text-subtle">mejor oleada {m.bestWave}/{h.waveGoal} · {m.matches} partidas</span></div>
-                  <Bar value={(m.bestWave ?? 0) / h.waveGoal} color="#D9A93B" className="h-1.5" delay={i * 120} />
-                </div>
-              ))}
+            <div>
+              <div className="eyebrow text-muted mb-4">Mejor oleada por mapa · meta {h.waveGoal}</div>
+              <RankBars max={h.waveGoal} fill={SERIES[2]} items={h.byMap.map((m) => ({ label: m.map, value: m.bestWave ?? 0, note: `${m.matches} partidas` }))} />
             </div>
           </div>
         </Reveal>
       </div>
+
+      <Reveal>
+        <SectionHead over="Actividad" title="Cuándo juegas" />
+        <div className="grid grid-cols-[1.6fr_1fr] gap-5">
+          <ChartCard title="Por hora del día" note="Según la hora en que terminó cada partida">
+            <Columns values={b.activityByHour} labels={HOURS} ticks={[0, 3, 6, 9, 12, 15, 18, 21]} name={(i) => `De ${HOURS[i]}:00 a ${HOURS[(i + 1) % 24]}:00`} />
+          </ChartCard>
+          <ChartCard title="Por día de la semana" note={c.favoriteWeekday ? `Juegas más los ${c.favoriteWeekday}` : undefined}>
+            <Columns values={b.activityByWeekday} labels={WEEK} ticks={[0, 1, 2, 3, 4, 5, 6]} name={(i) => WEEK_NAME[i]} />
+          </ChartCard>
+        </div>
+      </Reveal>
 
       <Reveal>
         <SectionHead over="Horde Siege" title="Niveles de clase" />

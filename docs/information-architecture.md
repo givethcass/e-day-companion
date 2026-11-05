@@ -1,6 +1,6 @@
 # Information architecture
 
-> **Current structure (v0.9.0, week 5, with tablet and web).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060) and [Service record and medals (v0.7.0)](#service-record-and-medals-v070), with the full medal catalogue in v0.8.0 and [week 5 (v0.9.0)](#guides-class-levels-achievements-clan-creators-and-partner-slots-v090).
+> **Current structure (v0.10.0, week 5, with tablet and web).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060) and [Service record and medals (v0.7.0)](#service-record-and-medals-v070), with the full medal catalogue in v0.8.0 and [week 5 (v0.9.0)](#guides-class-levels-achievements-clan-creators-and-partner-slots-v090).
 
 Week 1. Five tabs, each one answering a single question, plus the profile in the top corner. Every screen ends in an action, and the main one is **Deploy** (open the game).
 
@@ -130,3 +130,12 @@ The demo now switches between three devices. Nothing new was needed from the API
   - Comunidad: squads you can join or leave, the clan and its board, creators (live ones pulse), the partner slot and the global ranked board.
   - Micro-interactions: sliding nav underline, magnetic buttons, cursor spotlight on cards, reveal on scroll, count-up numbers, toasts. All of them stand still under reduced motion.
 
+
+## Service record as charts (v0.10.0)
+
+Giveth asked for Mi servicio to read as charts instead of label / value lines, with pie-style charts where a figure splits into parts. The contract adds `ServiceRecord.breakdown`: kills by mode, by weapon (top five plus «Otras armas y granadas») and by enemy (top five plus «Otros»), special kills (they overlap, so they are bars, never a pie), Versus maps, and matches by local hour and weekday.
+
+- Donuts only for real partitions of up to six parts (time by mode, kills by weapon, enemies, Horde matches by class); each has a legend with value and share, and hover or tap shows a part in the middle.
+- A tall split bar for one whole in two or three parts (kills by mode, Versus wins / losses / draws, Horde finished or not).
+- Ranked bars when parts are compared (win rate by mode and map, best wave by map, special kills); columns for hours and weekdays, the busiest in the accent.
+- Colours: a categorical set checked with the dataviz validator against the dark surface (red, blue, yellow, aqua, violet, magenta), «Otras» always grey, and a fixed colour per mode and per class in the app and on the web.

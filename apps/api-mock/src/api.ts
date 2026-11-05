@@ -231,6 +231,40 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
       unlocked: got.length, items: [...got, ...left] };
   };
 
+  // Splits for charts. Weapon and enemy counts come from the medal series (the same estimate the medals use), so
+  // a chart and its medal never disagree; the smallest parts fold into «Otras» so a chart has at most six slices.
+  const WEEK = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+  const breakdownOf = (p: SeedPlayer, played: SeedMatch[], medals: Medal[], versus: SeedMatch[], horde: SeedMatch[], campaign: SeedMatch[]): ServiceRecord['breakdown'] => {
+    const sum = (ms: SeedMatch[]) => ms.reduce((s, m) => s + m.kills, 0);
+    const progress = new Map(medals.map((m) => [m.id, m.progress]));
+    const slices = (category: string, label: (name: string) => string) => data.medalSeries.filter((s) => s.category === category)
+      .map((s) => ({ label: label(s.name), value: progress.get(s.id) ?? 0 })).sort((a, b) => b.value - a.value);
+    const fold = (xs: { label: string; value: number }[], total: number, other: string, keep = 5) => {
+      const top = xs.slice(0, keep).filter((x) => x.value > 0);
+      const rest = Math.max(0, total - top.reduce((s, x) => s + x.value, 0));
+      return rest > 0 ? [...top, { label: other, value: rest }] : top;
+    };
+    const byMap = [...new Set(versus.map((m) => m.map))].map((map) => {
+      const ms = versus.filter((m) => m.map === map);
+      return { map, matches: ms.length, wins: ms.filter((m) => m.result === 'win').length };
+    }).sort((a, b) => b.matches - a.matches || a.map.localeCompare(b.map));
+    const hours = Array.from({ length: 24 }, () => 0);
+    const week = Array.from({ length: 7 }, () => 0);
+    for (const m of played) {
+      hours[Number(clock(m.endedAt, p.timezone).slice(0, 2))]++;
+      week[WEEK.indexOf(weekday(m.endedAt, p.timezone))]++;
+    }
+    return {
+      killsByMode: [{ label: 'Versus', value: sum(versus) }, { label: 'Horde', value: sum(horde) }, { label: 'Campaña', value: sum(campaign) }],
+      killsByWeapon: fold(slices('weapon', (n) => n.replace(/^Bajas con /, '')), [...slices('weapon', String), ...slices('grenade', String)].reduce((t, x) => t + x.value, 0), 'Otras armas y granadas'),
+      killsByType: slices('kill_type', (n) => n).slice(0, 6).filter((x) => x.value > 0),
+      killsByEnemy: fold(slices('enemy', (n) => n), sum(horde), 'Otros'),
+      versusByMap: byMap,
+      activityByHour: hours,
+      activityByWeekday: week,
+    };
+  };
+
   const serviceRecord = (p: SeedPlayer, now: string): ServiceRecord => {
     const tz = p.timezone;
     const played = playedBy(p.id, now);
@@ -269,7 +303,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
       .sort((a, b) => b.unlockedAt.localeCompare(a.unlockedAt) || MEDAL_TIERS.indexOf(b.tier) - MEDAL_TIERS.indexOf(a.tier));
     const last = played.at(-1);
     return {
-      gamertag: p.gamertag, level: p.level, trivia: trivia(p, played),
+      gamertag: p.gamertag, level: p.level, trivia: trivia(p, played), breakdown: breakdownOf(p, played, medals, versus, horde, campaign),
       title: main === 'horde' ? 'Defensor de Horde' : main === 'versus' ? 'Veterano de Versus' : main === 'campaign' ? 'Soldado de la COG' : 'Recluta',
       career: {
         matches: played.length, hoursPlayed: hours(played), daysPlayed: days.length, bestDayStreak: best,

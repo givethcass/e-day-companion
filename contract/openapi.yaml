@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.9.0
+  version: 0.10.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -799,7 +799,7 @@ components:
         unlockedAt: { type: string, format: date-time }
     ServiceRecord:
       type: object
-      required: [gamertag, level, title, career, versus, horde, campaign, classes, medals, equipped, trivia]
+      required: [gamertag, level, title, career, versus, horde, campaign, classes, medals, equipped, trivia, breakdown]
       properties:
         gamertag: { type: string }
         level: { type: integer }
@@ -928,6 +928,55 @@ components:
               label: { type: string, examples: [Balas disparadas] }
               value: { type: string, examples: ['48,210'] }
               detail: { type: string, examples: [Unas 160 cajas de munición] }
+        breakdown:
+          type: object
+          description: Desgloses para dibujar gráficas. Las listas vienen ordenadas de mayor a menor, con lo menor ya agrupado en «Otras».
+          required: [killsByMode, killsByWeapon, killsByType, killsByEnemy, versusByMap, activityByHour, activityByWeekday]
+          properties:
+            killsByMode:
+              type: array
+              description: Bajas por modo (Versus, Horde, Campaña); suman career.kills
+              items: { $ref: '#/components/schemas/Slice' }
+            killsByWeapon:
+              type: array
+              description: Bajas con armas y granadas en Versus y Horde, las 5 armas más usadas y «Otras armas y granadas»
+              items: { $ref: '#/components/schemas/Slice' }
+            killsByType:
+              type: array
+              description: Bajas especiales; se traslapan entre sí (un disparo a la cabeza puede ser con Longshot), no suman un total
+              items: { $ref: '#/components/schemas/Slice' }
+            killsByEnemy:
+              type: array
+              description: Bajas en Horde por tipo de enemigo, los 5 más comunes y «Otros»; suman horde.kills
+              items: { $ref: '#/components/schemas/Slice' }
+            versusByMap:
+              type: array
+              items:
+                type: object
+                required: [map, matches, wins]
+                properties:
+                  map: { type: string }
+                  matches: { type: integer }
+                  wins: { type: integer }
+            activityByHour:
+              type: array
+              description: Partidas por hora local en que terminaron, de 0 a 23
+              minItems: 24
+              maxItems: 24
+              items: { type: integer, minimum: 0 }
+            activityByWeekday:
+              type: array
+              description: Partidas por día de la semana local, de lunes a domingo
+              minItems: 7
+              maxItems: 7
+              items: { type: integer, minimum: 0 }
+    Slice:
+      type: object
+      description: Una parte de un total, para gráficas
+      required: [label, value]
+      properties:
+        label: { type: string, examples: [Lancer MK1] }
+        value: { type: integer, minimum: 0 }
     MatchSummary:
       type: object
       required: [id, mode, map, endedAt, result]
