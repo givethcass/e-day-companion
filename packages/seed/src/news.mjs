@@ -1,6 +1,7 @@
-// Official-style news for the demo. Written for this concept: dates follow the public Season 1 schedule
-// (launch Oct 6, Ranked Oct 13, patches Oct 5, 14 and 22, events every two weeks), the wording and the
-// details are illustrative. Map names are the demo's own placeholders.
+// Official-style news for the demo, written for this concept in our own words. Patch and event stories follow
+// what The Coalition actually shipped up to Nov 3, 2026 (Season 1 schedule, patches of Oct 5, 14, 22 and 26 and
+// Nov 2, the 20th anniversary update); the community spotlight, the coins explainer and the gift story are
+// illustrative. Map names are the demo's own placeholders.
 export const GIFT_AT = '2026-11-07T15:00:00.000Z';
 
 export const NEWS = [
@@ -54,26 +55,22 @@ export const NEWS = [
   },
   {
     id: 'n_patch_1014', tag: 'patch', publishedAt: '2026-10-14T17:00:00.000Z', readMinutes: 4,
-    title: 'Actualización 1: más de 60 arreglos',
-    summary: 'Corrige rangos mal asignados tras las partidas de clasificación, cierres en sesiones largas y errores de Horde Siege.',
+    title: 'Actualización del 14 de octubre: rangos, Diario de guerra y arreglos en todos los modos',
+    summary: 'Corrige las divisiones mal asignadas al terminar la clasificación de Ranked y el registro de logros y coleccionables.',
     sections: [
-      { paragraphs: ['Es la primera actualización grande desde el lanzamiento y toca todos los modos.'] },
-      { heading: 'Ranked', bullets: ['Arreglamos las partidas de clasificación que asignaban una división equivocada.'] },
-      { heading: 'Horde Siege', bullets: [
-        'El dispensador del Médico vuelve a levantar aliados con fuego amigo activo.',
-        'Los jefes de invasión ya no se vuelven invencibles.',
-        'Los Boomers ya no se quedan atorados en la fábrica de Presa Sur.',
+      { paragraphs: ['Es la primera actualización grande desde el lanzamiento y toca Campaña, Horde Siege y Versus.'] },
+      { heading: 'Ranked', bullets: ['Arreglamos un error que colocaba a algunos jugadores en una división equivocada al terminar sus partidas de clasificación.'] },
+      { heading: 'Campaña', bullets: [
+        'El Diario de guerra y los logros vuelven a registrar bien los coleccionables.',
+        'Nueva opción para apagar el sonido que avisa cuando recoges un coleccionable.',
       ] },
-      { heading: 'Versus', bullets: [
-        'El golpe cuerpo a cuerpo del Lancer vuelve a derribar.',
-        'Ya no se pueden capturar zonas de Conquista desde fuera en Distrito Norte.',
+      { heading: 'Horde Siege y Versus', bullets: [
+        'Ajustes a varias armas, entre ellas Hammerburst, Snub, Gut-Puncher, Torque Bow, cuerpo a cuerpo y torretas.',
+        'Cambios en las dificultades más altas de Horde Siege.',
       ] },
-      { heading: 'Estabilidad', bullets: ['Mejoras de memoria para sesiones largas en todas las plataformas.'] },
+      { heading: 'Estabilidad', bullets: ['Mejoras de memoria y del sistema antitrampas.'] },
     ],
-    knownIssues: [
-      'Los coleccionables perdidos no se devuelven solos: hay que recogerlos de nuevo.',
-      'Algunos logros de campaña no se otorgan al terminar.',
-    ],
+    knownIssues: ['Algunos logros de campaña ganados antes de esta actualización todavía no aparecen.'],
   },
   {
     id: 'n_coins', tag: 'store', publishedAt: '2026-10-16T15:00:00.000Z', readMinutes: 2,
@@ -103,20 +100,23 @@ export const NEWS = [
   },
   {
     id: 'n_patch_1022', tag: 'patch', publishedAt: '2026-10-22T17:00:00.000Z', readMinutes: 3,
-    title: 'Actualización 2: las partidas de Ranked ya no se cancelan al minuto',
-    summary: 'Ranked respeta los dos minutos para reconectar. También arreglos de objetivos en Horde Siege.',
+    title: 'Hotfix del 22 de octubre: Ranked espera dos minutos a quien se desconecta',
+    summary: 'Llega junto con Halloween: menos cierres, arreglos en Campaña y Horde Siege, y Ranked da más tiempo para reconectar.',
     sections: [
-      { heading: 'Ranked', bullets: [
-        'Las partidas ya no se cancelan al minuto si alguien se desconecta: ahora esperan los dos minutos previstos.',
-        'La bomba de Demolición ya no queda fuera de alcance en más puntos del mapa.',
-      ] },
+      { heading: 'Ranked', bullets: ['Si alguien se desconecta, la partida ahora espera dos minutos en lugar de uno antes de cancelarse.'] },
       { heading: 'Horde Siege', bullets: [
-        'Una escuadra que cierra agujeros de emergencia ya no bloquea ese objetivo secundario para las demás.',
-        'Arreglamos una desconexión de todo el grupo cuando un jugador no terminaba de cargar.',
+        'Arreglos al objetivo secundario de los agujeros de emergencia.',
+        'Menos desconexiones de toda la escuadra.',
       ] },
-      { heading: 'General', bullets: ['Arreglo para el error de inicio de sesión con la fecha del sistema mal configurada.'] },
+      { heading: 'General', bullets: [
+        'Menos cierres inesperados.',
+        'Ya no se queda el personaje en pose T al apuntar después de disparar la Gnasher a ciegas.',
+        'Xbox Cloud Gaming usa por defecto el modo de gráficos Rendimiento.',
+        'Arreglos en varios capítulos de la campaña.',
+      ] },
+      { paragraphs: ['También tomamos medidas contra quienes usan exploits y aimbots.'] },
     ],
-    knownIssues: ['Seguimos investigando el ping alto en algunas regiones.'],
+    knownIssues: ['Algunos jugadores tienen congelamientos y cierres en sesiones largas. Seguimos trabajando en ello.'],
   },
   {
     id: 'n_community_1024', tag: 'community', publishedAt: '2026-10-24T15:00:00.000Z', readMinutes: 2,
@@ -133,32 +133,69 @@ export const NEWS = [
     cta: { label: 'Arma tu escuadra', link: '/comunidad' },
   },
   {
-    id: 'n_patch_1029', tag: 'patch', publishedAt: '2026-10-29T17:00:00.000Z', readMinutes: 2,
-    title: 'Actualización 3: cambia de clase antes de que empiece la partida',
-    summary: 'Ahora puedes cambiar de clase en la sala de espera de Horde Siege, ya que ves a tu equipo.',
+    id: 'n_patch_1026', tag: 'patch', publishedAt: '2026-10-26T17:00:00.000Z', readMinutes: 1,
+    title: 'Hotfix del 26 de octubre: se acabó el exploit de las granadas de humo',
+    summary: 'En Versus ya no se puede anular el efecto de las granadas de humo. También arreglamos cierres al moverse.',
     sections: [
-      { paragraphs: ['Fue lo que más nos pidieron: elegir clase sin saber qué llevaba el resto del equipo.'] },
       { heading: 'Qué cambia', bullets: [
-        'En la sala de espera de Horde Siege puedes cambiar de clase hasta que empiece la partida.',
-        'Reabastecer munición cuesta menos energía.',
+        'Cerramos un exploit de Versus que permitía desactivar el efecto de las granadas de humo.',
+        'Arreglamos varios cierres relacionados con el movimiento.',
+        'Mejoras de estabilidad y rendimiento.',
       ] },
     ],
-    knownIssues: ['Algunos jugadores no ven su nivel de clase actualizado hasta reiniciar.'],
   },
   {
-    id: 'n_20years', tag: 'event', featured: true, publishedAt: '2026-11-03T15:00:00.000Z', readMinutes: 2,
-    title: '20 Years of Gears: dos semanas de recompensas',
-    summary: 'Celebramos dos décadas de la saga con un evento en Versus y Horde Siege. Termina el 17 de noviembre.',
+    id: 'n_patch_1102', tag: 'patch', publishedAt: '2026-11-02T17:00:00.000Z', readMinutes: 3,
+    title: 'Actualización del 2 de noviembre: contenido de aniversario y logros recuperados',
+    summary: 'Prepara el evento del 20 aniversario y devuelve las entradas del Diario de guerra y los logros que faltaban.',
     sections: [
-      { paragraphs: ['Del 3 al 17 de noviembre. El evento trae un modo de Versus, una misión de Horde Siege y recompensas de aniversario.'] },
-      { heading: 'No te lo pierdas', bullets: ['El 7 de noviembre hay un regalo de aniversario para todos los jugadores.'] },
+      { paragraphs: ['Publicamos esta actualización un día antes de que empiece el evento del 20 aniversario.'] },
+      { heading: 'Diario de guerra y logros', bullets: [
+        'Las entradas del Diario de guerra y los logros que no se registraron, como "This is my Rifle", se otorgan solos la próxima vez que entres.',
+        'Arreglamos errores de la campaña que impedían avanzar.',
+      ] },
+      { heading: 'General', bullets: [
+        'Los personajes ya no aparecen a veces como esqueletos.',
+        'Más mejoras de estabilidad en PC, Xbox y consolas portátiles.',
+        'Ajustes a enemigos de Horde Siege.',
+      ] },
+      { heading: 'Lo que sigue', paragraphs: ['Esta semana publicaremos los cambios de ajuste de armas para multijugador.'] },
     ],
-    cta: { label: 'Ver tu semana', link: '/' },
+    knownIssues: ['En PC se necesita una versión más reciente del controlador de NVIDIA.'],
+  },
+  {
+    id: 'n_20years', tag: 'event', featured: true, publishedAt: '2026-11-03T15:00:00.000Z', readMinutes: 3,
+    title: '20 aniversario: vuelve Guardián y llega la misión Por la Reina',
+    summary: 'Celebramos 20 años de Gears con el clásico modo Guardián en Versus, una misión de Horde Siege sin suministros y retos de aniversario.',
+    sections: [
+      { paragraphs: ['El evento empieza hoy y dura dos semanas. El 7 de noviembre, el día exacto del aniversario, hay un regalo para todos.'] },
+      { heading: 'Guardián (Versus)', paragraphs: [
+        'Cada equipo tiene un Líder. Mientras tu Líder siga vivo, tu equipo reaparece. Si cae, ya no hay reapariciones. Si se acaba el tiempo, se revela dónde están los dos Líderes.',
+      ] },
+      { heading: 'Por la Reina (Horde Siege)', paragraphs: [
+        'Una misión por tiempo limitado sin cajas de suministros en el mapa: solo tienes tu equipo inicial y lo que recojas de los enemigos.',
+      ] },
+      { heading: 'Retos de aniversario', bullets: [
+        'Haz 20 ejecuciones con pisotón.',
+        'Gana 5 partidas de Guardián.',
+        'Completa Por la Reina en dificultad Comandante o superior.',
+        'Despliega 25 piezas de equipo en Horde Siege, sin contar granadas.',
+        'Consigue 100 bajas con armas clásicas de Gears en Versus o Horde Siege.',
+      ] },
+      { heading: 'Recompensas', bullets: [
+        'Aspecto de arma del 20 aniversario, poses, aspectos y más por completar retos.',
+        'La pose "Brothers to the End" es gratis en la tienda.',
+      ] },
+    ],
+    cta: { label: 'Buscar escuadra', link: '/comunidad' },
   },
   {
     id: 'n_gift', tag: 'season', publishedAt: GIFT_AT, readMinutes: 1,
-    title: 'Tu regalo de aniversario ya está disponible',
-    summary: 'Entra al juego para recibirlo. Es nuestra forma de celebrar 20 años contigo.',
-    sections: [{ paragraphs: ['Desde hoy, todos los jugadores reciben un regalo de aniversario al entrar al juego.'] }],
+    title: 'Feliz 20 aniversario: tu regalo ya está disponible',
+    summary: 'Hace 20 años salió el primer Gears of War. Entra al juego para recibir tu regalo.',
+    sections: [{ paragraphs: [
+      'Hoy se cumplen 20 años del primer Gears of War. Todos los jugadores reciben un regalo al entrar al juego.',
+      'Es también un adelanto de la Temporada 2, Legacy, que empieza después del 1 de diciembre.',
+    ] }],
   },
 ];

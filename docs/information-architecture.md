@@ -82,5 +82,5 @@ Player research (2026-10-28) showed that what players look for outside the game 
 
 The store is no longer a tab: it opens over the tabs from Inicio and from news stories (`/tienda`). Routes moved with the tabs, and every in-app `link` the API returns follows them: `/comunidad/escuadra/{id}`, `/servicio/partidas/{id}`, `/servicio/clasificacion`, `/noticias/{id}`.
 
-Contract additions: `listNews` and `getNews` (official posts tagged patch, event, season, store or community; a story is visible only once `publishedAt` is past the demo clock, so the Oct 29 patch appears when the clock moves to Friday) and `listCalendar` (event starts and ends, the Tuesday store and challenge rotation, the Nov 7 anniversary gift and the end of the season).
+Contract additions: `listNews` and `getNews` (official posts tagged patch, event, season, store or community; a story is visible only once `publishedAt` is past the demo clock, so the Nov 2 patch and the 20th anniversary story appear when the clock moves to Nov 3; patch and event stories follow what The Coalition shipped up to Nov 3, 2026) and `listCalendar` (event starts and ends, the Tuesday store and challenge rotation, the Nov 7 anniversary gift and the end of the season).
 

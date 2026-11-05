@@ -109,15 +109,17 @@ test('on Friday evening the booked Horde session becomes the mission', () => {
   assert.deepEqual(week.nextMission.alternatives!.map((a) => a.mode), ['versus_ranked', 'campaign']);
 });
 
-test('news follow the demo clock: the Oct 29 patch only exists from Oct 29', () => {
+test('news follow the demo clock: the Nov 2 patch only exists from Nov 2', () => {
   const tuesday = call<NewsSummary[]>('GET', '/news');
-  assert.equal(tuesday[0].id, 'n_community_1024');
-  assert.ok(!tuesday.some((n) => n.id === 'n_patch_1029'));
-  assert.equal(fresh().api.handle({ method: 'GET', path: '/news/n_patch_1029', playerId: 'p_demo' }).status, 404);
-  const friday = call<NewsSummary[]>('GET', '/news', { query: { asOf: '2026-10-31T02:00:00.000Z', tag: 'patch' } });
-  assert.equal(friday[0].id, 'n_patch_1029');
-  assert.ok(friday.every((n) => n.tag === 'patch'));
-  assert.equal((friday[0] as { sections?: unknown }).sections, undefined, 'the list carries summaries only');
+  assert.equal(tuesday[0].id, 'n_patch_1026');
+  assert.ok(!tuesday.some((n) => n.id === 'n_patch_1102' || n.id === 'n_20years'));
+  assert.equal(fresh().api.handle({ method: 'GET', path: '/news/n_patch_1102', playerId: 'p_demo' }).status, 404);
+  const anniversary = call<NewsSummary[]>('GET', '/news', { query: { asOf: '2026-11-03T16:00:00.000Z' } });
+  assert.equal(anniversary[0].id, 'n_20years');
+  const patches = call<NewsSummary[]>('GET', '/news', { query: { asOf: '2026-11-03T16:00:00.000Z', tag: 'patch' } });
+  assert.equal(patches[0].id, 'n_patch_1102');
+  assert.ok(patches.every((n) => n.tag === 'patch'));
+  assert.equal((patches[0] as { sections?: unknown }).sections, undefined, 'the list carries summaries only');
 });
 
 test('the calendar lists what comes next, in order', () => {
