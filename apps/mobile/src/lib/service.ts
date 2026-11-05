@@ -9,8 +9,10 @@ export const TIER: Record<MedalTier, { label: string; color: string }> = {
   diamond: { label: 'Diamante', color: '#8FD3F2' },
 };
 
+// In the order the Medallas screen lists them.
 export const CATEGORY: Record<MedalCategory, string> = {
-  weapon: 'Armas', horde: 'Horde Siege', versus: 'Versus', campaign: 'Campaña', event: 'Eventos',
+  weapon: 'Armas', grenade: 'Granadas y minas', kill_type: 'Tipo de baja', support: 'Apoyo', horde: 'Horde Siege',
+  enemy: 'Enemigos', versus: 'Versus', campaign: 'Campaña', progression: 'Progresión', event: 'Eventos',
 };
 
 const RANK: Record<string, string> = { bronze: 'Bronce', silver: 'Plata', gold: 'Oro', onyx: 'Ónix' };

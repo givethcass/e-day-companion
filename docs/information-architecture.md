@@ -1,6 +1,6 @@
 # Information architecture
 
-> **Current structure (v0.7.0, week 4).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060) and [Service record and medals (v0.7.0)](#service-record-and-medals-v070).
+> **Current structure (v0.8.0, week 4).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060) and [Service record and medals (v0.7.0)](#service-record-and-medals-v070), with the full medal catalogue in v0.8.0.
 
 Week 1. Five tabs, each one answering a single question, plus the profile in the top corner. Every screen ends in an action, and the main one is **Deploy** (open the game).
 
@@ -99,3 +99,6 @@ Medal progress is computed from the player's matches, so every tier's unlock dat
 
 
 **Demo player (2026-11-05).** Delta_Rojo is now a veteran instead of the player who left after week 1, so the service record and medals have something to show: about 100 hours since launch, playing most nights, 300 matches, a Versus K/D near 3.3, Ónix in Ranked and the campaign finished. Medal goals grew to match (Diamante takes thousands of kills), so even this player has tiers to chase. Delta_Rojo's matches come from their own random stream, so changing their schedule never reshuffles the rest of the seed.
+
+**Full medal catalogue (v0.8.0).** E-Day launched with more than 80 medal series, so the demo now has 74 in ten groups: Armas (16 weapons, with the game's 100 / 500 / 1,500 / 3,000 / 5,000 kill tiers), Granadas y minas, Tipo de baja, Apoyo, Horde Siege (including one per class), Enemigos, Versus, Campaña, Progresión (Re-up) and Eventos. Every tier pays Coins; Oro and Ónix also unlock a cosmetic and Diamante a player title (`reward.unlock`). The Medallas screen adds a row of group chips and lists each group closest-to-next-tier first. Counts the seed does not record per match (revives, headshots, enemy types, tags) are estimated from kills and matches with fixed ratios.
+

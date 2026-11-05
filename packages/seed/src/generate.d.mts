@@ -34,9 +34,11 @@ export interface SeedNews {
 }
 
 export interface SeedMedalSeries {
-  id: string; name: string; category: 'weapon' | 'horde' | 'versus' | 'campaign' | 'event'; unit: string;
-  metric: 'kills' | 'versusKills' | 'waves' | 'hordeCompleted' | 'versusWins' | 'ranked' | 'chapters' | 'during';
-  share?: number; from?: Iso; to?: Iso; goals: number[];
+  id: string; name: string; unit: string; goals: number[]; title: string;
+  category: 'weapon' | 'grenade' | 'kill_type' | 'support' | 'horde' | 'enemy' | 'versus' | 'campaign' | 'progression' | 'event';
+  metric: 'kills' | 'versusKills' | 'hordeKills' | 'campaignKills' | 'matches' | 'versusMatches' | 'hordeMatches' | 'role'
+    | 'waves' | 'hordeCompleted' | 'versusWins' | 'ranked' | 'chapters' | 'during';
+  share?: number; from?: Iso; to?: Iso; role?: Role; item?: 'weapon';
 }
 
 export interface SeedData {

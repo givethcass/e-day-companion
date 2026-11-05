@@ -73,6 +73,7 @@ export default function MedalDetail() {
             <Text variant="data" tone="textSubtle">{`Te faltan ${number(next.goal - m.progress)}`}</Text>
             <Text variant="data">{`+${number(next.reward.amount)} Monedas`}</Text>
           </View>
+          {next.reward.unlock && <Text variant="caption" tone="textMuted">{`También desbloquea: ${next.reward.unlock}`}</Text>}
         </Card>
       ) : (
         <Card priority>
@@ -87,7 +88,10 @@ export default function MedalDetail() {
             <MedalBadge tier={t.unlockedAt ? t.tier : null} size={30} />
             <View style={{ flex: 1, gap: 2 }}>
               <Text variant="bodyStrong" tone={t.unlockedAt ? 'text' : 'textMuted'}>{TIER[t.tier].label}</Text>
-              <Text variant="caption" tone="textSubtle">{`${number(t.goal)} ${m.unit} · +${number(t.reward.amount)} Monedas`}</Text>
+              <Text variant="caption" tone="textSubtle">{`${number(t.goal)} ${m.unit}`}</Text>
+              <Text variant="caption" tone={t.reward.unlock ? 'textMuted' : 'textSubtle'}>
+                {[`+${number(t.reward.amount)} Monedas`, t.reward.unlock].filter(Boolean).join(' · ')}
+              </Text>
             </View>
             <Text variant="data" tone={t.unlockedAt ? 'primary' : 'textSubtle'} style={{ fontSize: 13 }}>
               {t.unlockedAt ? day(t.unlockedAt, tz) : `Faltan ${number(Math.max(0, t.goal - m.progress))}`}

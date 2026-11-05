@@ -167,6 +167,13 @@ test('each medal tier carries the date of the match that earned it', () => {
   }
   // The anniversary event starts on Nov 3, so on Oct 27 that series is still locked; a veteran still has tiers to chase.
   assert.equal(medals.find((m) => m.id === 'md_anniversary')!.progress, 0);
+  // Like the game: 70+ series in ten groups; Oro and Ónix unlock a cosmetic and Diamante a title.
+  assert.ok(medals.length > 70);
+  assert.equal(new Set(medals.map((m) => m.category)).size, 10);
+  for (const m of medals) {
+    assert.deepEqual(m.tiers.map((t) => Boolean(t.reward.unlock)), [false, false, true, true, true], m.id);
+    assert.match(m.tiers[4].reward.unlock!, /^Título «.+»$/);
+  }
   assert.ok(medals.some((m) => m.tiers.some((t) => !t.unlockedAt) && m.progress > 0));
   assert.equal(medals.filter((m) => m.equipped).length, 3);
 });

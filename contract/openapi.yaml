@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.7.0
+  version: 0.8.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -670,7 +670,7 @@ components:
       enum: [bronze, silver, gold, onyx, diamond]
     MedalCategory:
       type: string
-      enum: [weapon, horde, versus, campaign, event]
+      enum: [weapon, grenade, kill_type, support, horde, enemy, versus, campaign, progression, event]
     Medal:
       type: object
       description: Una serie de medallas de cinco niveles, como en la personalización del juego
@@ -698,6 +698,7 @@ components:
                 properties:
                   amount: { type: integer }
                   currency: { type: string, enum: [coins] }
+                  unlock: { type: string, description: 'Lo que desbloquea además de las Monedas: un aspecto, un emblema o un título', examples: ['Título «Sierra en mano»'] }
               unlockedAt: { type: [string, 'null'], format: date-time }
     MedalUnlock:
       type: object

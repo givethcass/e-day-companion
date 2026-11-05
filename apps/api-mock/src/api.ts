@@ -25,19 +25,32 @@ const ROLE_GAP: Record<HordeRole, string> = {
 };
 const MEDAL_TIERS: MedalTier[] = ['bronze', 'silver', 'gold', 'onyx', 'diamond'];
 // What one match adds to a medal series.
-const medalStep = (s: SeedMedalSeries, m: SeedMatch) => {
+const medalStep = (s: SeedMedalSeries, m: SeedMatch, role: HordeRole) => {
   const versus = m.mode.startsWith('versus');
+  const horde = m.mode === 'horde_siege';
+  const k = s.share ?? 1;
   switch (s.metric) {
-    case 'kills': return versus || m.mode === 'horde_siege' ? m.kills * (s.share ?? 1) : 0;
-    case 'versusKills': return versus ? m.kills * (s.share ?? 1) : 0;
-    case 'waves': return m.wavesCleared ?? 0;
-    case 'hordeCompleted': return Number(m.mode === 'horde_siege' && m.result === 'completed');
-    case 'versusWins': return Number(versus && m.result === 'win');
+    case 'kills': return versus || horde ? m.kills * k : 0;
+    case 'versusKills': return versus ? m.kills * k : 0;
+    case 'hordeKills': return horde ? m.kills * k : 0;
+    case 'campaignKills': return m.mode === 'campaign' ? m.kills * k : 0;
+    case 'matches': return k;
+    case 'versusMatches': return versus ? k : 0;
+    case 'hordeMatches': return horde ? k : 0;
+    // Most Horde matches go to the player's main class, the rest spread over the other three.
+    case 'role': return horde ? (s.role === role ? 0.7 : 0.1) : 0;
+    case 'waves': return (m.wavesCleared ?? 0) * k;
+    case 'hordeCompleted': return Number(horde && m.result === 'completed') * k;
+    case 'versusWins': return Number(versus && m.result === 'win') * k;
     case 'ranked': return Number(m.mode === 'versus_ranked');
-    case 'chapters': return Number(m.mode === 'campaign' && m.result === 'completed');
+    case 'chapters': return Number(m.mode === 'campaign' && m.result === 'completed') * k;
     case 'during': return Number(m.endedAt >= s.from! && m.endedAt < s.to!);
   }
 };
+// As in the game: Oro and Ónix add a cosmetic, Diamante a player title.
+const unlockOfTier = (s: SeedMedalSeries, i: number) =>
+  i === 4 ? `Título «${s.title}»` : i === 3 ? (s.item === 'weapon' ? 'Aspecto de arma Ónix' : 'Estandarte de la medalla')
+    : i === 2 ? (s.item === 'weapon' ? 'Aspecto de arma Oro' : 'Emblema de la medalla') : null;
 const round = (x: number, digits = 1) => Number(x.toFixed(digits));
 const modeOf = <T,>(xs: T[]) => {
   const counts = new Map<T, number>();
@@ -105,16 +118,19 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   // Medal progress is counted from the player's matches up to `now`; each tier carries the date of the match that earned it.
   const medalsOf = (p: SeedPlayer, now: string): Medal[] & { chosen: string[] } => {
     const played = playedBy(p.id, now);
-    const list = data.medalSeries.map(({ id, name, category, unit, goals, ...rule }): Medal => {
+    const role = roleOf(p);
+    const list = data.medalSeries.map((s): Medal => {
+      const { id, name, category, unit, goals } = s;
       let raw = 0;
       const unlockedAt: (string | null)[] = goals.map(() => null);
       for (const m of played) {
-        raw += medalStep({ id, name, category, unit, goals, ...rule }, m);
+        raw += medalStep(s, m, role);
         goals.forEach((g, i) => { if (!unlockedAt[i] && Math.floor(raw) >= g) unlockedAt[i] = m.endedAt; });
       }
       return {
         id, name, category, unit, progress: Math.floor(raw), equipped: false,
-        tiers: goals.map((goal, i) => ({ tier: MEDAL_TIERS[i], goal, reward: { amount: MEDAL_REWARDS[i], currency: 'coins' as const }, unlockedAt: unlockedAt[i] })),
+        tiers: goals.map((goal, i) => ({ tier: MEDAL_TIERS[i], goal, unlockedAt: unlockedAt[i],
+          reward: { amount: MEDAL_REWARDS[i], currency: 'coins' as const, ...(unlockOfTier(s, i) ? { unlock: unlockOfTier(s, i)! } : {}) } })),
       };
     });
     const earned = (m: Medal) => m.tiers.filter((t) => t.unlockedAt).length;

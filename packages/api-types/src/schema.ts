@@ -592,7 +592,7 @@ export interface components {
         /** @enum {string} */
         MedalTier: "bronze" | "silver" | "gold" | "onyx" | "diamond";
         /** @enum {string} */
-        MedalCategory: "weapon" | "horde" | "versus" | "campaign" | "event";
+        MedalCategory: "weapon" | "grenade" | "kill_type" | "support" | "horde" | "enemy" | "versus" | "campaign" | "progression" | "event";
         /** @description Una serie de medallas de cinco niveles, como en la personalización del juego */
         Medal: {
             id: string;
@@ -610,6 +610,11 @@ export interface components {
                     amount: number;
                     /** @enum {string} */
                     currency: "coins";
+                    /**
+                     * @description Lo que desbloquea además de las Monedas: un aspecto, un emblema o un título
+                     * @example Título «Sierra en mano»
+                     */
+                    unlock?: string;
                 };
                 /** Format: date-time */
                 unlockedAt: string | null;
