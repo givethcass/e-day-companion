@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.8.0
+  version: 0.9.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -24,6 +24,9 @@ tags:
   - name: Clanes
   - name: Notificaciones
   - name: Noticias
+  - name: Guías
+  - name: Comunidad
+  - name: Colaboraciones
 paths:
   /me:
     get:
@@ -514,6 +517,92 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Leaderboard' }
+  /guides:
+    get:
+      tags: [Guías]
+      summary: Guías oficiales y de creadores, las más recientes primero
+      operationId: listGuides
+      parameters:
+        - name: section
+          in: query
+          schema: { $ref: '#/components/schemas/GuideSection' }
+        - name: role
+          in: query
+          description: Solo las guías de una clase de Horde Siege
+          schema: { $ref: '#/components/schemas/HordeRole' }
+      responses:
+        '200':
+          description: Guías
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/GuideSummary' }
+  /guides/{guideId}:
+    get:
+      tags: [Guías]
+      summary: Una guía completa
+      operationId: getGuide
+      parameters:
+        - name: guideId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Guía
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Guide' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /creators:
+    get:
+      tags: [Comunidad]
+      summary: Creadores de contenido destacados, primero los que transmiten en vivo
+      operationId: listCreators
+      parameters:
+        - name: language
+          in: query
+          schema: { type: string, examples: [es] }
+      responses:
+        '200':
+          description: Creadores
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Creator' }
+  /promos:
+    get:
+      tags: [Colaboraciones]
+      summary: Espacios patrocinados y colaboraciones para un lugar de la app
+      operationId: listPromos
+      parameters:
+        - name: placement
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/PromoPlacement' }
+      responses:
+        '200':
+          description: Espacios
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Promo' }
+  /me/achievements:
+    get:
+      tags: [Servicio]
+      summary: Logros del jugador con su Gamerscore
+      operationId: listMyAchievements
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Logros
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AchievementList' }
 components:
   securitySchemes:
     bearerAuth:
@@ -710,7 +799,7 @@ components:
         unlockedAt: { type: string, format: date-time }
     ServiceRecord:
       type: object
-      required: [gamertag, level, title, career, versus, horde, campaign, medals, equipped, trivia]
+      required: [gamertag, level, title, career, versus, horde, campaign, classes, medals, equipped, trivia]
       properties:
         gamertag: { type: string }
         level: { type: integer }
@@ -808,6 +897,10 @@ components:
             attempts: { type: integer }
             hoursPlayed: { type: number }
             kills: { type: integer }
+        classes:
+          type: array
+          description: Nivel de cada clase de Horde Siege, la más jugada primero
+          items: { $ref: '#/components/schemas/ClassLevel' }
         medals:
           type: object
           required: [earned, total, seriesCompleted, seriesTotal, latest]
@@ -1058,3 +1151,129 @@ components:
         upcomingSessions:
           type: array
           items: { $ref: '#/components/schemas/SquadSession' }
+    ClassLevel:
+      type: object
+      required: [role, level, maxLevel, xp, levelXp, nextLevelXp, matches]
+      properties:
+        role: { $ref: '#/components/schemas/HordeRole' }
+        level: { type: integer, minimum: 1 }
+        maxLevel: { type: integer }
+        xp: { type: integer, description: Experiencia total de la clase }
+        levelXp: { type: integer, description: Experiencia donde empieza el nivel actual }
+        nextLevelXp: { type: [integer, 'null'], description: 'Experiencia del siguiente nivel; null en el nivel máximo' }
+        matches: { type: integer, description: Partidas de Horde Siege con esta clase }
+    Achievement:
+      type: object
+      required: [id, name, description, gamerscore, goal, progress, rarity, unlockedAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        gamerscore: { type: integer }
+        goal: { type: integer }
+        progress: { type: integer }
+        rarity: { type: number, description: Parte de los jugadores que lo tiene, de 0 a 1 }
+        unlockedAt: { type: [string, 'null'], format: date-time }
+    AchievementList:
+      type: object
+      required: [gamerscore, gamerscoreTotal, unlocked, items]
+      properties:
+        gamerscore: { type: integer }
+        gamerscoreTotal: { type: integer }
+        unlocked: { type: integer }
+        items:
+          type: array
+          description: Los obtenidos primero, el más reciente arriba; luego los que faltan, el más avanzado arriba
+          items: { $ref: '#/components/schemas/Achievement' }
+    GuideSection:
+      type: string
+      enum: [classes, weapons, maps, collectibles, builds]
+    GuideSummary:
+      type: object
+      required: [id, section, title, summary, author, readMinutes, updatedAt]
+      properties:
+        id: { type: string }
+        section: { $ref: '#/components/schemas/GuideSection' }
+        title: { type: string }
+        summary: { type: string }
+        author:
+          type: object
+          required: [name, kind]
+          properties:
+            name: { type: string }
+            kind: { type: string, enum: [official, creator] }
+            creatorId: { type: string }
+        readMinutes: { type: integer, minimum: 1 }
+        updatedAt: { type: string, format: date-time }
+        role: { $ref: '#/components/schemas/HordeRole' }
+        map: { type: string }
+        patch: { type: string, description: 'Parche con el que se revisó, "2 nov"' }
+    Guide:
+      allOf:
+        - $ref: '#/components/schemas/GuideSummary'
+        - type: object
+          required: [facts, sections]
+          properties:
+            facts:
+              type: array
+              description: Datos clave para leer de un vistazo
+              items:
+                type: object
+                required: [label, value]
+                properties:
+                  label: { type: string }
+                  value: { type: string }
+            sections:
+              type: array
+              items:
+                type: object
+                properties:
+                  heading: { type: string }
+                  paragraphs: { type: array, items: { type: string } }
+                  bullets: { type: array, items: { type: string } }
+            cta:
+              type: object
+              required: [label, link]
+              properties:
+                label: { type: string }
+                link: { type: string }
+    Creator:
+      type: object
+      required: [id, name, platform, language, followers, focus, live, latest]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        platform: { type: string, enum: [youtube, twitch] }
+        language: { type: string }
+        followers: { type: integer }
+        focus: { type: string }
+        live: { type: boolean }
+        latest:
+          type: object
+          required: [title, publishedAt]
+          properties:
+            title: { type: string }
+            minutes: { type: integer, description: 0 si es una transmisión en vivo }
+            publishedAt: { type: string, format: date-time }
+        guides: { type: integer, description: Guías suyas en la app }
+    PromoPlacement:
+      type: string
+      enum: [home, news, guides, community]
+    Promo:
+      type: object
+      description: Espacio patrocinado o colaboración. En la demo las marcas son inventadas y nada se vende.
+      required: [id, placement, kind, partner, title, body, cta]
+      properties:
+        id: { type: string }
+        placement: { $ref: '#/components/schemas/PromoPlacement' }
+        kind: { type: string, enum: [sponsored, collab], description: '"Patrocinado" o "Colaboración"' }
+        partner: { type: string }
+        title: { type: string }
+        body: { type: string }
+        cta:
+          type: object
+          required: [label]
+          properties:
+            label: { type: string }
+            link: { type: string, description: Ruta dentro de la app; sin link sería una página del socio }
+        glow: { type: string, description: Color del arte de la tarjeta }

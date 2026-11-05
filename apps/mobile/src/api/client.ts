@@ -2,7 +2,7 @@
 // With EXPO_PUBLIC_API_URL set it calls the HTTP mock; otherwise the simulated backend runs inside the app,
 // which is what the static web demo uses.
 import type {
-  CalendarEntry, Challenge, Medal, MedalUnlock, ServiceRecord, Clan, Event, JoinRequest, Leaderboard, LeaderboardScope, MatchPage, MatchReport, Mode, NewSquadSession,
+  AchievementList, CalendarEntry, Challenge, Creator, Guide, GuideSection, GuideSummary, HordeRole, Promo, PromoPlacement, Medal, MedalUnlock, ServiceRecord, Clan, Event, JoinRequest, Leaderboard, LeaderboardScope, MatchPage, MatchReport, Mode, NewSquadSession,
   NewsArticle, NewsSummary, NewsTag, Notification, NotificationPrefs, Player, Season, SessionFilters, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport,
 } from '@eday/api-types';
 import { createApi, type Api } from '@eday/api-mock';
@@ -77,6 +77,11 @@ export const api = {
   getMyWallet: (asOf?: string) => call<Wallet>('GET', '/me/wallet', { query: { asOf } }),
   getNotificationPrefs: () => call<NotificationPrefs>('GET', '/me/notification-prefs'),
   setNotificationPrefs: (prefs: NotificationPrefs) => call<NotificationPrefs>('PUT', '/me/notification-prefs', { body: prefs }),
+  listMyAchievements: (asOf?: string) => call<AchievementList>('GET', '/me/achievements', { query: { asOf } }),
+  listGuides: (q: { section?: GuideSection; role?: HordeRole } = {}) => call<GuideSummary[]>('GET', '/guides', { query: q }),
+  getGuide: (guideId: string) => call<Guide>('GET', `/guides/${enc(guideId)}`),
+  listCreators: (q: { language?: string } = {}) => call<Creator[]>('GET', '/creators', { query: q }),
+  listPromos: (placement: PromoPlacement) => call<Promo[]>('GET', '/promos', { query: { placement } }),
   getServiceRecord: (asOf?: string) => call<ServiceRecord>('GET', '/me/service-record', { query: { asOf } }),
   listMyMedals: (asOf?: string) => call<Medal[]>('GET', '/me/medals', { query: { asOf } }),
   getMyMedal: (medalId: string, asOf?: string) => call<Medal>('GET', `/me/medals/${enc(medalId)}`, { query: { asOf } }),

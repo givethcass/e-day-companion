@@ -469,6 +469,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/guides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Guías oficiales y de creadores, las más recientes primero */
+        get: operations["listGuides"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guides/{guideId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Una guía completa */
+        get: operations["getGuide"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/creators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Creadores de contenido destacados, primero los que transmiten en vivo */
+        get: operations["listCreators"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/promos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Espacios patrocinados y colaboraciones para un lugar de la app */
+        get: operations["listPromos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/achievements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Logros del jugador con su Gamerscore */
+        get: operations["listMyAchievements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -704,6 +789,8 @@ export interface components {
                 hoursPlayed: number;
                 kills: number;
             };
+            /** @description Nivel de cada clase de Horde Siege, la más jugada primero */
+            classes: components["schemas"]["ClassLevel"][];
             medals: {
                 /** @description Niveles obtenidos en todas las series */
                 earned: number;
@@ -905,6 +992,116 @@ export interface components {
             memberCount: number;
             language?: string;
             upcomingSessions?: components["schemas"]["SquadSession"][];
+        };
+        ClassLevel: {
+            role: components["schemas"]["HordeRole"];
+            level: number;
+            maxLevel: number;
+            /** @description Experiencia total de la clase */
+            xp: number;
+            /** @description Experiencia donde empieza el nivel actual */
+            levelXp: number;
+            /** @description Experiencia del siguiente nivel; null en el nivel máximo */
+            nextLevelXp: number | null;
+            /** @description Partidas de Horde Siege con esta clase */
+            matches: number;
+        };
+        Achievement: {
+            id: string;
+            name: string;
+            description: string;
+            gamerscore: number;
+            goal: number;
+            progress: number;
+            /** @description Parte de los jugadores que lo tiene */
+            rarity: number;
+            /** Format: date-time */
+            unlockedAt: string | null;
+        };
+        AchievementList: {
+            gamerscore: number;
+            gamerscoreTotal: number;
+            unlocked: number;
+            /** @description Los obtenidos primero, el más reciente arriba; luego los que faltan, el más avanzado arriba */
+            items: components["schemas"]["Achievement"][];
+        };
+        /** @enum {string} */
+        GuideSection: "classes" | "weapons" | "maps" | "collectibles" | "builds";
+        GuideSummary: {
+            id: string;
+            section: components["schemas"]["GuideSection"];
+            title: string;
+            summary: string;
+            author: {
+                name: string;
+                /** @enum {string} */
+                kind: "official" | "creator";
+                creatorId?: string;
+            };
+            readMinutes: number;
+            /** Format: date-time */
+            updatedAt: string;
+            role?: components["schemas"]["HordeRole"];
+            map?: string;
+            /** @description Parche con el que se revisó, "2 nov" */
+            patch?: string;
+        };
+        Guide: components["schemas"]["GuideSummary"] & {
+            /** @description Datos clave para leer de un vistazo */
+            facts: {
+                label: string;
+                value: string;
+            }[];
+            sections: {
+                heading?: string;
+                paragraphs?: string[];
+                bullets?: string[];
+            }[];
+            cta?: {
+                label: string;
+                link: string;
+            };
+        };
+        Creator: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            platform: "youtube" | "twitch";
+            language: string;
+            followers: number;
+            focus: string;
+            live: boolean;
+            latest: {
+                title: string;
+                /** @description 0 si es una transmisión en vivo */
+                minutes?: number;
+                /** Format: date-time */
+                publishedAt: string;
+            };
+            /** @description Guías suyas en la app */
+            guides?: number;
+        };
+        /** @enum {string} */
+        PromoPlacement: "home" | "news" | "guides" | "community";
+        /** @description Espacio patrocinado o colaboración. En la demo las marcas son inventadas y nada se vende. */
+        Promo: {
+            id: string;
+            placement: components["schemas"]["PromoPlacement"];
+            /**
+             * @description "Patrocinado" o "Colaboración"
+             * @enum {string}
+             */
+            kind: "sponsored" | "collab";
+            partner: string;
+            title: string;
+            body: string;
+            cta: {
+                label: string;
+                /** @description Ruta dentro de la app; sin link sería una página del socio */
+                link?: string;
+            };
+            /** @description Color del arte de la tarjeta */
+            glow?: string;
         };
     };
     responses: {
@@ -1648,6 +1845,120 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Leaderboard"];
+                };
+            };
+        };
+    };
+    listGuides: {
+        parameters: {
+            query?: {
+                section?: components["schemas"]["GuideSection"];
+                /** @description Solo las guías de una clase de Horde Siege */
+                role?: components["schemas"]["HordeRole"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Guías */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuideSummary"][];
+                };
+            };
+        };
+    };
+    getGuide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guideId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Guía */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Guide"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listCreators: {
+        parameters: {
+            query?: {
+                language?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Creadores */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Creator"][];
+                };
+            };
+        };
+    };
+    listPromos: {
+        parameters: {
+            query: {
+                placement: components["schemas"]["PromoPlacement"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Espacios */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Promo"][];
+                };
+            };
+        };
+    };
+    listMyAchievements: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logros */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AchievementList"];
                 };
             };
         };

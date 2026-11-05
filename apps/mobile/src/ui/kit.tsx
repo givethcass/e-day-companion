@@ -78,6 +78,20 @@ export function Readouts({ items }: { items: { label: string; value: string; ton
   );
 }
 
+/** Red square bullets, as in patch notes and guides. */
+export function Bullets({ items }: { items: string[] }) {
+  return (
+    <View style={{ gap: 8 }}>
+      {items.map((b) => (
+        <View key={b} style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ width: 6, height: 6, marginTop: 8, backgroundColor: color.primary }} />
+          <Text style={{ flex: 1 }}>{b}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 /** Label / value line, as in "Tiempo estimado ~45 min". */
 export function DataLine({ label, value, tone = 'text' }: { label: string; value: string; tone?: keyof typeof color }) {
   return (

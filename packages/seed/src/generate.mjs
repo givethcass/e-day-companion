@@ -6,6 +6,9 @@ import {
 } from './constants.mjs';
 import { NEWS, GIFT_AT } from './news.mjs';
 import { MEDAL_SERIES, MEDAL_REWARDS, CAMPAIGN_CHAPTERS } from './medals.mjs';
+import { GUIDES, CREATORS } from './guides.mjs';
+import { PROMOS } from './promos.mjs';
+import { ACHIEVEMENTS } from './achievements.mjs';
 
 const iso = (ms) => new Date(ms).toISOString();
 const round = (x, digits = 0) => Number(x.toFixed(digits));
@@ -457,5 +460,9 @@ export function generate({ seed = SEED } = {}) {
     wallets,
     news: NEWS,
     medalSeries: MEDAL_SERIES,
+    guides: GUIDES,
+    creators: CREATORS,
+    promos: PROMOS,
+    achievements: ACHIEVEMENTS,
   };
 }

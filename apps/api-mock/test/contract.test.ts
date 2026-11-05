@@ -45,6 +45,11 @@ const calls: [string, string, { query?: Record<string, string>; body?: unknown }
   ['POST', '/sessions/sess_friday/deploy'],
   ['GET', '/clans/c_00'],
   ['GET', '/clans/c_00/leaderboard'],
+  ['GET', '/me/achievements'],
+  ['GET', '/guides', { query: { section: 'classes' } }],
+  ['GET', '/guides/g_medic'],
+  ['GET', '/creators', { query: { language: 'es' } }],
+  ['GET', '/promos', { query: { placement: 'home' } }],
 ];
 
 const api = createApi();

@@ -1,4 +1,5 @@
-// Comunidad: squad sessions with the filters players asked for (Spanish, no mic, today). Clan and creators come next.
+// Comunidad: the next session, squads with the filters players asked for (Spanish, no mic, today), the clan,
+// creators and one collaboration slot.
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -9,7 +10,9 @@ import { useNow } from '@/lib/clock';
 import { difficultyLabel, modeLabel } from '@/lib/demo';
 import { clock, countdown, dayTime, zoneLabel } from '@/lib/time';
 import { Button, Card, Chip, DataLine, Loader, Row, Screen, Section, Text } from '@/ui/kit';
-import { space } from '@/ui/theme';
+import { CreatorRow } from '@/ui/Creator';
+import { PromoCard } from '@/ui/Promo';
+import { color, space } from '@/ui/theme';
 
 const FILTERS = ['Todas', 'Español', 'Sin micro', 'Hoy'] as const;
 const endOfDay = (now: string, tz: string) => {
@@ -29,8 +32,12 @@ export default function Comunidad() {
     ...(filter === 'Sin micro' ? { micRequired: false } : {}),
     ...(filter === 'Hoy' ? { startsBefore: endOfDay(now, tz) } : {}),
   }), [filter, now]);
+  const { data: extra } = useApi(async () => {
+    const [clan, creators, promos] = await Promise.all([player!.clanId ? api.getClan(player!.clanId) : null, api.listCreators(), api.listPromos('community')]);
+    return { clan, creators, promo: promos[0] };
+  }, []);
   const mine = data?.find((s) => s.members.some((m) => m.gamertag === player!.gamertag));
-  const open = data?.filter((s) => s !== mine && s.status === 'open').slice(0, 12) ?? [];
+  const open = data?.filter((s) => s !== mine && s.status === 'open').slice(0, 6) ?? [];
 
   return (
     <Screen overline={`Horas en tu zona: ${zoneLabel(tz)}`} title="Comunidad">
@@ -58,6 +65,23 @@ export default function Comunidad() {
         ))}
         {data && open.length === 0 && <Text tone="textMuted">No hay sesiones con ese filtro.</Text>}
       </Section>
+      {extra?.clan && (
+        <Section title="Tu clan">
+          <Row tag={`[${extra.clan.tag}]`} tagTone="primary" title={extra.clan.name}
+            subtitle={`${extra.clan.memberCount} miembros · ${(n => `${n} ${n === 1 ? 'sesión próxima' : 'sesiones próximas'}`)(extra.clan.upcomingSessions?.length ?? 0)} · clasificación de Horde`}
+            onPress={() => router.push('/comunidad/clan')} />
+        </Section>
+      )}
+      {extra?.promo && <PromoCard p={extra.promo} />}
+      {extra && (
+        <View>
+          <Text variant="section" style={{ paddingBottom: 6 }}>Creadores</Text>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
+            {extra.creators.slice(0, 3).map((c) => <CreatorRow key={c.id} c={c} />)}
+          </View>
+          <View style={{ marginTop: 12 }}><Button kind="secondary" label="Ver todos los creadores" onPress={() => router.push('/comunidad/creadores')} /></View>
+        </View>
+      )}
     </Screen>
   );
 }

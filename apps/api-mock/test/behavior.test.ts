@@ -1,7 +1,7 @@
 // The demo story and the six fixes from the synthetic test hold in the simulated backend.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import type { CalendarEntry, Leaderboard, Medal, MedalUnlock, ServiceRecord, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
+import type { AchievementList, Creator, Guide, GuideSummary, Promo, CalendarEntry, Leaderboard, Medal, MedalUnlock, ServiceRecord, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
 import { generate } from '@eday/seed';
 import { createApi } from '../src/index.ts';
 
@@ -189,3 +189,43 @@ test('only earned medals can be equipped, three at most', () => {
   const record = api.handle({ method: 'GET', path: '/me/service-record', playerId: 'p_demo' }).body as ServiceRecord;
   assert.deepEqual(record.equipped.map((m) => m.medalId), ['md_chapters', 'md_lancer']);
 });
+
+test('class levels follow Horde matches, the main class first', () => {
+  const r = call<ServiceRecord>('GET', '/me/service-record');
+  assert.equal(r.classes.length, 4);
+  assert.equal(r.classes[0].role, r.horde.mainRole);
+  for (const c of r.classes) {
+    assert.ok(c.xp >= c.levelXp && (c.nextLevelXp === null || c.xp < c.nextLevelXp), c.role);
+    assert.ok(c.level >= 1 && c.level <= c.maxLevel);
+  }
+  assert.ok(r.classes[0].level > r.classes[3].level);
+});
+
+test('achievements add up to 1,000 Gamerscore and unlock on a match', () => {
+  const list = call<AchievementList>('GET', '/me/achievements');
+  assert.equal(list.gamerscoreTotal, 1000);
+  assert.equal(list.unlocked, list.items.filter((a) => a.unlockedAt).length);
+  assert.equal(list.gamerscore, list.items.filter((a) => a.unlockedAt).reduce((s, a) => s + a.gamerscore, 0));
+  for (const a of list.items) assert.equal(Boolean(a.unlockedAt), a.progress >= a.goal, a.id);
+  // The anniversary mission only exists from Nov 3.
+  assert.equal(list.items.find((a) => a.id === 'ach_queen')!.unlockedAt, null);
+  const later = call<AchievementList>('GET', '/me/achievements', { query: { asOf: '2026-11-04T12:00:00.000Z' } });
+  assert.ok(later.gamerscore >= list.gamerscore);
+});
+
+test('guides filter by section and class; creators and promos come from the seed', () => {
+  const classes = call<GuideSummary[]>('GET', '/guides', { query: { section: 'classes' } });
+  assert.deepEqual(classes.map((g) => g.role).filter(Boolean).sort(), ['assault', 'breacher', 'marksman', 'medic']);
+  const medic = call<GuideSummary[]>('GET', '/guides', { query: { role: 'medic' } });
+  assert.ok(medic.length >= 2 && medic.every((g) => g.role === 'medic'));
+  const g = call<Guide>('GET', '/guides/g_build_wave30');
+  assert.equal(g.author.kind, 'creator');
+  assert.ok(g.facts.length > 0 && g.sections.length > 0);
+  const creators = call<Creator[]>('GET', '/creators', { query: { language: 'es' } });
+  assert.ok(creators[0].live, 'live creators first');
+  assert.ok(creators.find((c) => c.id === 'cr_cobertura')!.guides! >= 2);
+  for (const placement of ['home', 'news', 'guides', 'community']) {
+    assert.equal(call<Promo[]>('GET', '/promos', { query: { placement } }).length, 1, placement);
+  }
+});
+

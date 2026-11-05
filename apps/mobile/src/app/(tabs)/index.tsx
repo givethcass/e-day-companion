@@ -18,6 +18,7 @@ import { Art, Band, Button, Glow, IconButton, Loader, Readouts, Row, Screen, Sec
 import { MedalBadge } from '@/ui/Medal';
 import { Emblem, StatGrid, modeCells } from '@/ui/Service';
 import { Featured, NewsRow } from '@/ui/News';
+import { PromoCard } from '@/ui/Promo';
 import { color, space } from '@/ui/theme';
 
 function Tile({ label, glow, title, body, cta, onPress }: { label: string; glow: string; title: string; body: string; cta: string; onPress: () => void }) {
@@ -36,19 +37,19 @@ export default function Inicio() {
   const tz = player!.timezone;
   const now = useNow();
   const { data, error, reload } = useApi(async () => {
-    const [week, wallet, season, sessions, rotation, news, calendar, notifications, clan, history, record] = await Promise.all([
+    const [week, wallet, season, sessions, rotation, news, calendar, notifications, clan, history, record, promos] = await Promise.all([
       api.getMyWeek(now), api.getMyWallet(now), api.getCurrentSeason(), api.listSessions({ startsAfter: now }),
       api.getStoreRotation(now), api.listNews({ limit: 8, asOf: now }), api.listCalendar(now), api.listMyNotifications(now),
-      player!.clanId ? api.getClan(player!.clanId) : null, api.listMyMatches({ limit: 1, asOf: now }), api.getServiceRecord(now),
+      player!.clanId ? api.getClan(player!.clanId) : null, api.listMyMatches({ limit: 1, asOf: now }), api.getServiceRecord(now), api.listPromos('home'),
     ]);
     const last = history.items[0] ? await api.getMatch(history.items[0].id, now) : null;
-    return { week, wallet, season, sessions, rotation, news, calendar, clan, last, record, unread: notifications.filter((n) => !n.read).length };
+    return { week, wallet, season, sessions, rotation, news, calendar, clan, last, record, promo: promos[0], unread: notifications.filter((n) => !n.read).length };
   }, [now]);
   // null: open on the mode the player spends the most time in.
   const [pick, setPick] = useState<number | null>(null);
 
   if (!data) return <Screen title="Inicio"><Loader error={error} onRetry={reload} /></Screen>;
-  const { week, wallet, season, sessions, rotation, news, calendar, clan, last, record, unread } = data;
+  const { week, wallet, season, sessions, rotation, news, calendar, clan, last, record, promo, unread } = data;
   const weekNo = Math.floor((Date.parse(now) - Date.parse(season.startsAt)) / (7 * 864e5)) + 1;
   const weeks = Math.round((Date.parse(season.endsAt) - Date.parse(season.startsAt)) / (7 * 864e5));
   const tab = pick ?? FAMILIES.findIndex(([f]) => f === mainFamily(record));
@@ -124,6 +125,8 @@ export default function Inicio() {
       </View>
       <Button kind="secondary" label="Todas las noticias" onPress={() => router.push('/noticias')} />
 
+      {promo && <PromoCard p={promo} />}
+
       <Band title="Esta semana" subtitle="Tu escuadra y tu tienda" />
       <View style={{ flexDirection: 'row', gap: 14 }}>
         {s0 && me && (
@@ -170,7 +173,7 @@ export default function Inicio() {
           <Row tag="Rival" title={`${week.rival.gamertag}${week.rival.rank ? `, ${week.rival.rank}` : ''}`}
             subtitle={`Te lleva ${number(week.rival.pointsAhead ?? 0)} puntos`} onPress={() => router.push('/servicio/clasificacion')} />
         )}
-        <Row tag="Semana" title={`${week.matchesPlayed} partidas · ${week.hoursPlayed} h`}
+        <Row tag="Semana" title={week.matchesPlayed ? `${week.matchesPlayed} partidas · ${week.hoursPlayed} h` : 'Semana nueva: la tienda y los retos acaban de rotar'}
           subtitle={`Llevas el ${Math.round((week.seasonProgress ?? 0) * 100)}% de la temporada. Termina el ${day(season.endsAt, tz)}.`}
           onPress={() => router.push('/servicio')} />
       </Section>

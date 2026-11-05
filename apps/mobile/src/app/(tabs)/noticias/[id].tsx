@@ -1,28 +1,14 @@
 // One news story: art, headline, sections, known issues for patches, and a link to where it matters in the app.
 import type { Href } from 'expo-router';
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { api } from '@/api/client';
 import { useApi } from '@/api/useApi';
 import { useSession } from '@/api/session';
 import { useNow } from '@/lib/clock';
 import { NEWS_TAG } from '@/lib/news';
 import { day } from '@/lib/time';
-import { Art, Button, Card, IconButton, Loader, Screen, Text } from '@/ui/kit';
-import { color } from '@/ui/theme';
-
-function Bullets({ items }: { items: string[] }) {
-  return (
-    <View style={{ gap: 8 }}>
-      {items.map((b) => (
-        <View key={b} style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={styles.bullet} />
-          <Text style={{ flex: 1 }}>{b}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
+import { Art, Bullets, Button, Card, IconButton, Loader, Screen, Text } from '@/ui/kit';
 
 export default function Noticia() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -55,7 +41,3 @@ export default function Noticia() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  bullet: { width: 6, height: 6, marginTop: 8, backgroundColor: color.primary },
-});

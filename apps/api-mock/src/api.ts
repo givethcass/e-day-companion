@@ -1,10 +1,10 @@
 // The simulated backend. Every route in contract/openapi.yaml is answered here from the seed,
 // with the demo clock as "now" unless the request passes asOf.
 import type {
-  CalendarEntry, Challenge, Clan, Medal, MedalTier, MedalUnlock, ServiceRecord, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
+  Achievement, AchievementList, CalendarEntry, Challenge, Clan, ClassLevel, Creator, Guide, GuideSection, GuideSummary, Medal, Promo, PromoPlacement, MedalTier, MedalUnlock, ServiceRecord, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
   NewsSummary, NewsTag, NewSquadSession, Notification, NotificationPrefs, Player, SquadSession, StoreItem, WeeklyReport,
 } from '@eday/api-types';
-import { CAMPAIGN_CHAPTERS, GIFT_AT, HORDE_WAVE_GOAL, MEDAL_REWARDS, generate, type SeedData, type SeedMatch, type SeedMedalSeries, type SeedPlayer, type SeedSession } from '@eday/seed';
+import { CAMPAIGN_CHAPTERS, GIFT_AT, HORDE_WAVE_GOAL, MEDAL_REWARDS, generate, type SeedData, type SeedMatch, type SeedAchievement, type SeedMedalSeries, type SeedPlayer, type SeedSession } from '@eday/seed';
 import { DAY, clock, day, dayMonth, difficultyLabel, localDate, rankLabel, roleLabel, weekday } from './format.ts';
 import { createRouter, error, noContent, ok, type Query } from './router.ts';
 
@@ -24,6 +24,8 @@ const ROLE_GAP: Record<HordeRole, string> = {
   assault: 'Sin Asalto nadie aturdió al enemigo.',
 };
 const MEDAL_TIERS: MedalTier[] = ['bronze', 'silver', 'gold', 'onyx', 'diamond'];
+// Part of a player's Horde matches played with each class: most with the main one, the rest spread unevenly.
+const roleShare = (role: HordeRole, main: HordeRole) => (role === main ? 0.7 : [0.13, 0.1, 0.07][ROLES.filter((r) => r !== main).indexOf(role)]);
 // What one match adds to a medal series.
 const medalStep = (s: SeedMedalSeries, m: SeedMatch, role: HordeRole) => {
   const versus = m.mode.startsWith('versus');
@@ -38,7 +40,7 @@ const medalStep = (s: SeedMedalSeries, m: SeedMatch, role: HordeRole) => {
     case 'versusMatches': return versus ? k : 0;
     case 'hordeMatches': return horde ? k : 0;
     // Most Horde matches go to the player's main class, the rest spread over the other three.
-    case 'role': return horde ? (s.role === role ? 0.7 : 0.1) : 0;
+    case 'role': return horde ? roleShare(s.role!, role) : 0;
     case 'waves': return (m.wavesCleared ?? 0) * k;
     case 'hordeCompleted': return Number(horde && m.result === 'completed') * k;
     case 'versusWins': return Number(versus && m.result === 'win') * k;
@@ -187,6 +189,48 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     ];
   };
 
+  // Class XP comes from Horde matches: waves cleared plus a bonus for finishing, most of it to the main class.
+  const CLASS_MAX = 20;
+  const levelStart = (level: number) => 125 * level * (level - 1);
+  const classesOf = (p: SeedPlayer, played: SeedMatch[]): ClassLevel[] => {
+    const main = roleOf(p);
+    const horde = played.filter((m) => m.mode === 'horde_siege');
+    return ROLES.map((role): ClassLevel => {
+      const k = roleShare(role, main);
+      const xp = Math.round(horde.reduce((s, m) => s + ((m.wavesCleared ?? 0) * 10 + (m.result === 'completed' ? 200 : 0)) * k, 0));
+      let level = 1;
+      while (level < CLASS_MAX && xp >= levelStart(level + 1)) level++;
+      return { role, level, maxLevel: CLASS_MAX, xp, levelXp: levelStart(level), nextLevelXp: level < CLASS_MAX ? levelStart(level + 1) : null,
+        matches: Math.round(horde.length * k) };
+    }).sort((a, b) => b.xp - a.xp);
+  };
+
+  // Achievements count progress match by match, so each one has the date of the match that unlocked it.
+  const achievementsOf = (p: SeedPlayer, now: string): AchievementList => {
+    const played = playedBy(p.id, now);
+    const role = roleOf(p);
+    const tz = p.timezone;
+    const items = data.achievements.map((a: SeedAchievement): Achievement => {
+      let raw = 0, unlockedAt: string | null = null, streak = 0, prevDay = '';
+      for (const m of played) {
+        if (a.metric === 'bestWave') raw = Math.max(raw, m.wavesCleared ?? 0);
+        else if (a.metric === 'hours') raw += m.durationSeconds / 3600;
+        else if (a.metric === 'streak') {
+          const d = localDate(m.endedAt, tz);
+          if (d !== prevDay) { streak = prevDay && Date.parse(d) - Date.parse(prevDay) === DAY ? streak + 1 : 1; prevDay = d; }
+          raw = Math.max(raw, streak);
+        } else raw += medalStep(a as unknown as SeedMedalSeries, m, role);
+        if (!unlockedAt && Math.floor(raw) >= a.goal) unlockedAt = m.endedAt;
+      }
+      return { id: a.id, name: a.name, description: a.description, gamerscore: a.gamerscore, goal: a.goal,
+        progress: Math.min(a.goal, Math.floor(raw)), rarity: a.rarity, unlockedAt };
+    });
+    const got = items.filter((x) => x.unlockedAt).sort((a, b) => b.unlockedAt!.localeCompare(a.unlockedAt!));
+    const left = items.filter((x) => !x.unlockedAt).sort((a, b) => b.progress / b.goal - a.progress / a.goal);
+    return { gamerscore: got.reduce((s, x) => s + x.gamerscore, 0), gamerscoreTotal: items.reduce((s, x) => s + x.gamerscore, 0),
+      unlocked: got.length, items: [...got, ...left] };
+  };
+
   const serviceRecord = (p: SeedPlayer, now: string): ServiceRecord => {
     const tz = p.timezone;
     const played = playedBy(p.id, now);
@@ -257,6 +301,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
         chaptersCompleted: new Set(campaign.filter((m) => m.result === 'completed').map((m) => m.map)).size, chaptersTotal: CAMPAIGN_CHAPTERS,
         attempts: campaign.length, hoursPlayed: hours(campaign), kills: sum(campaign, (m) => m.kills),
       },
+      classes: classesOf(p, played),
       medals: {
         earned: unlocks.length, total: medals.length * MEDAL_TIERS.length,
         seriesCompleted: medals.filter((m) => m.tiers.every((t) => t.unlockedAt)).length, seriesTotal: medals.length, latest: unlocks.slice(0, 6),
@@ -469,6 +514,25 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   });
 
   r.add('GET', '/me/service-record', ({ playerId, query }) => ok(serviceRecord(me(playerId), nowOf(query))));
+  r.add('GET', '/me/achievements', ({ playerId, query }) => ok(achievementsOf(me(playerId), nowOf(query))));
+
+  const guideSummary = ({ facts: _f, sections: _s, cta: _c, ...g }: SeedData['guides'][number]): GuideSummary => g;
+  r.add('GET', '/guides', ({ query }) => ok(data.guides
+    .filter((g) => (!query.section || g.section === (query.section as GuideSection)) && (!query.role || g.role === (query.role as HordeRole)))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).map(guideSummary)));
+  r.add('GET', '/guides/{guideId}', ({ params }) => {
+    const g = data.guides.find((x) => x.id === params.guideId);
+    if (!g) return error(404, 'not_found', `No existe la guía ${params.guideId}`);
+    return ok({ ...structuredClone(g), facts: g.facts.map(([label, value]) => ({ label, value })) } satisfies Guide);
+  });
+  r.add('GET', '/creators', ({ query }) => ok(data.creators
+    .filter((c) => !query.language || c.language === query.language)
+    .map((c): Creator => ({ ...structuredClone(c), guides: data.guides.filter((g) => g.author.creatorId === c.id).length }))
+    .sort((a, b) => Number(b.live) - Number(a.live) || b.followers - a.followers)));
+  r.add('GET', '/promos', ({ query }) => {
+    if (!query.placement) return error(400, 'bad_request', 'Falta placement');
+    return ok(data.promos.filter((x) => x.placement === (query.placement as PromoPlacement)).map((x): Promo => structuredClone(x)));
+  });
   r.add('GET', '/me/medals', ({ playerId, query }) => ok([...medalsOf(me(playerId), nowOf(query))]));
   r.add('GET', '/me/medals/{medalId}', ({ playerId, params, query }) => {
     const m = medalsOf(me(playerId), nowOf(query)).find((x) => x.id === params.medalId);

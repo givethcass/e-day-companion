@@ -59,6 +59,32 @@ export interface SeedData {
   wallets: SeedWallet[];
   news: SeedNews[];
   medalSeries: SeedMedalSeries[];
+  guides: SeedGuide[];
+  creators: SeedCreator[];
+  promos: SeedPromo[];
+  achievements: SeedAchievement[];
+}
+
+export interface SeedGuide {
+  id: string; section: 'classes' | 'weapons' | 'maps' | 'collectibles' | 'builds'; title: string; summary: string;
+  author: { name: string; kind: 'official' | 'creator'; creatorId?: string }; readMinutes: number; updatedAt: Iso;
+  role?: Role; map?: string; patch?: string; facts: [string, string][];
+  sections: { heading?: string; paragraphs?: string[]; bullets?: string[] }[]; cta?: { label: string; link: string };
+}
+
+export interface SeedCreator {
+  id: string; name: string; platform: 'youtube' | 'twitch'; language: string; followers: number; focus: string; live: boolean;
+  latest: { title: string; minutes: number; publishedAt: Iso };
+}
+
+export interface SeedPromo {
+  id: string; placement: 'home' | 'news' | 'guides' | 'community'; kind: 'sponsored' | 'collab'; partner: string;
+  title: string; body: string; cta: { label: string; link?: string }; glow: string;
+}
+
+export interface SeedAchievement {
+  id: string; name: string; description: string; gamerscore: number; goal: number; rarity: number;
+  metric: SeedMedalSeries['metric'] | 'bestWave' | 'streak' | 'hours'; share?: number; from?: Iso; to?: Iso;
 }
 
 /** Waves that complete a Horde Siege map. */

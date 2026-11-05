@@ -35,6 +35,15 @@ export type MedalTier = S['MedalTier'];
 export type MedalCategory = S['MedalCategory'];
 export type MedalUnlock = S['MedalUnlock'];
 export type ServiceRecord = S['ServiceRecord'];
+export type ClassLevel = S['ClassLevel'];
+export type Achievement = S['Achievement'];
+export type AchievementList = S['AchievementList'];
+export type GuideSection = S['GuideSection'];
+export type GuideSummary = S['GuideSummary'];
+export type Guide = S['Guide'];
+export type Creator = S['Creator'];
+export type PromoPlacement = S['PromoPlacement'];
+export type Promo = S['Promo'];
 export type ApiError = S['Error'];
 
 export type MatchPage = operations['listMyMatches']['responses']['200']['content']['application/json'];

@@ -1,6 +1,6 @@
 # Information architecture
 
-> **Current structure (v0.8.0, week 4).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060) and [Service record and medals (v0.7.0)](#service-record-and-medals-v070), with the full medal catalogue in v0.8.0.
+> **Current structure (v0.9.0, week 5).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060) and [Service record and medals (v0.7.0)](#service-record-and-medals-v070), with the full medal catalogue in v0.8.0 and [week 5 (v0.9.0)](#guides-class-levels-achievements-clan-creators-and-partner-slots-v090).
 
 Week 1. Five tabs, each one answering a single question, plus the profile in the top corner. Every screen ends in an action, and the main one is **Deploy** (open the game).
 
@@ -76,9 +76,9 @@ Player research (2026-10-28) showed that what players look for outside the game 
 | --- | --- | --- | --- |
 | Inicio | "What matters to me this week?" | Mission, figures, latest news, squad and store cards, season calendar, recap | `getMyWeek`, `listNews`, `listCalendar`, `getStoreRotation`, `listSessions` |
 | Noticias | "What changed in the game?" | News list with filters, story with known issues and a link into the app | `listNews`, `getNews` |
-| Guías | "How do I play this better?" | Placeholder listing the sections (week 5) | – |
+| Guías | "How do I play this better?" | Guides by section, the player's class first, guide detail (week 5) | `listGuides`, `getGuide` |
 | Servicio | "How did I do?" | Service record with history, match report, leaderboards | `listMyMatches`, `getMatch`, `getLeaderboard` |
-| Comunidad | "Who am I playing with?" | Squad sessions, Horde planner (clan and creators in week 5) | `listSessions`, `getSession`, `joinSession`, `deploySession` |
+| Comunidad | "Who am I playing with?" | Squad sessions, Horde planner, clan, creators (week 5) | `listSessions`, `getSession`, `joinSession`, `deploySession` |
 
 The store is no longer a tab: it opens over the tabs from Inicio and from news stories (`/tienda`). Routes moved with the tabs, and every in-app `link` the API returns follows them: `/comunidad/escuadra/{id}`, `/servicio/partidas/{id}`, `/servicio/clasificacion`, `/noticias/{id}`.
 
@@ -101,4 +101,18 @@ Medal progress is computed from the player's matches, so every tier's unlock dat
 **Demo player (2026-11-05).** Delta_Rojo is now a veteran instead of the player who left after week 1, so the service record and medals have something to show: about 100 hours since launch, playing most nights, 300 matches, a Versus K/D near 3.3, Ónix in Ranked and the campaign finished. Medal goals grew to match (Diamante takes thousands of kills), so even this player has tiers to chase. Delta_Rojo's matches come from their own random stream, so changing their schedule never reshuffles the rest of the seed.
 
 **Full medal catalogue (v0.8.0).** E-Day launched with more than 80 medal series, so the demo now has 74 in ten groups: Armas (16 weapons, with the game's 100 / 500 / 1,500 / 3,000 / 5,000 kill tiers), Granadas y minas, Tipo de baja, Apoyo, Horde Siege (including one per class), Enemigos, Versus, Campaña, Progresión (Re-up) and Eventos. Every tier pays Coins; Oro and Ónix also unlock a cosmetic and Diamante a player title (`reward.unlock`). The Medallas screen adds a row of group chips and lists each group closest-to-next-tier first. Counts the seed does not record per match (revives, headshots, enemy types, tags) are estimated from kills and matches with fixed ratios.
+
+## Guides, class levels, achievements, clan, creators and partner slots (v0.9.0)
+
+Week 5 fills the last placeholders.
+
+| Where | What it adds | Contract operations |
+| --- | --- | --- |
+| Guías | 17 guides in five sections (classes, weapons, maps, collectibles, community builds), official or by a creator, with key facts, the body and related guides. The guides for the player's main class open the list | `listGuides`, `getGuide` |
+| Mi servicio | Level 1 to 20 for each Horde class, from waves cleared and finished maps; a Logros row | `getServiceRecord` (`classes`) |
+| Logros | 30 Xbox-style achievements worth 1,000 Gamerscore, with unlock date, progress and rarity | `listMyAchievements` |
+| Comunidad | The player's clan (sessions and Horde ranking) and creators, live first | `getClan`, `getClanLeaderboard`, `listCreators` |
+| Inicio, Noticias, Guías, Comunidad | One partner slot each, labelled "Patrocinado" or "Colaboración" | `listPromos` |
+
+Partner slots show where an official app could carry sponsorships and collaborations. In the demo the brands are invented, nothing is sold and there is no ad network; the slots are dashed and labelled so they never read as official content. Creators are invented people too.
 

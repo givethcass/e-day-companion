@@ -15,7 +15,7 @@ import { FAMILIES, type Family, mainFamily, pct, rankLabel, TIER } from '@/lib/s
 import { day, dayTime } from '@/lib/time';
 import { Icon } from '@/ui/Icon';
 import { Button, Chip, DataLine, Loader, Readouts, Row, Screen, Section, Tabs, Text } from '@/ui/kit';
-import { MedalBadge, UnlockRow } from '@/ui/Medal';
+import { MedalBadge, Progress, UnlockRow } from '@/ui/Medal';
 import { Emblem } from '@/ui/Service';
 import { color, size, space } from '@/ui/theme';
 
@@ -83,8 +83,9 @@ export default function Servicio() {
   const tz = player!.timezone;
   const now = useNow();
   const { data, error, reload } = useApi(async () => {
-    const [page, season, record] = await Promise.all([api.listMyMatches({ limit: 100, asOf: now }), api.getCurrentSeason(), api.getServiceRecord(now)]);
-    return { matches: page.items, season, record };
+    const [page, season, record, achievements] = await Promise.all([api.listMyMatches({ limit: 100, asOf: now }), api.getCurrentSeason(),
+      api.getServiceRecord(now), api.listMyAchievements(now)]);
+    return { matches: page.items, season, record, achievements };
   }, [now]);
   // Medals equipped on the Medallas screens show here on the way back (the first focus is the initial load).
   const focused = useRef(false);
@@ -92,7 +93,7 @@ export default function Servicio() {
   const [filter, setFilter] = useState(0);
   const [pick, setPick] = useState<number | null>(null);
   if (!data) return <Screen title="Mi servicio"><Loader error={error} onRetry={reload} /></Screen>;
-  const { matches, season, record: r } = data;
+  const { matches, season, record: r, achievements } = data;
   const c = r.career;
   const tab = pick ?? FAMILIES.findIndex(([f]) => f === mainFamily(r));
   const modes = FILTERS[filter][1];
@@ -155,6 +156,27 @@ export default function Servicio() {
         <ModeDetail r={r} f={FAMILIES[tab][0]} />
       </View>
 
+      <Section title="Clases de Horde">
+        {r.classes.map((k) => (
+          <View key={k.role} style={styles.klass}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <Text variant="bodyStrong">{roleLabel(k.role)}</Text>
+              <Text variant="data" tone={k.level === k.maxLevel ? 'primary' : 'text'}>{`Nivel ${k.level} de ${k.maxLevel}`}</Text>
+            </View>
+            <Progress value={k.nextLevelXp === null ? 1 : k.xp - k.levelXp} goal={k.nextLevelXp === null ? 1 : k.nextLevelXp - k.levelXp} />
+            <Text variant="caption" tone="textSubtle">
+              {k.nextLevelXp === null ? `Nivel máximo · ${k.matches} partidas` : `${number(k.nextLevelXp - k.xp)} XP para el nivel ${k.level + 1} · ${k.matches} partidas`}
+            </Text>
+          </View>
+        ))}
+      </Section>
+
+      <Section title="Logros">
+        <Row icon="trophy" tagTone="primary" title={`${number(achievements.gamerscore)} de ${number(achievements.gamerscoreTotal)} Gamerscore`}
+          subtitle={`${achievements.unlocked} de ${achievements.items.length} logros · el último: ${achievements.items[0]?.unlockedAt ? achievements.items[0].name : 'ninguno'}`}
+          onPress={() => router.push('/servicio/logros')} />
+      </Section>
+
       <Section title="Medallas">
         <Row icon="trophy" tagTone="primary" title={`${r.medals.earned} de ${r.medals.total} niveles`}
           subtitle={`${r.medals.seriesCompleted} de ${r.medals.seriesTotal} series completas · ve las que te faltan`}
@@ -196,6 +218,7 @@ const styles = StyleSheet.create({
   callout: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, backgroundColor: color.surface, borderWidth: 1, borderColor: color.border, borderLeftWidth: size.heroRule, borderLeftColor: color.primary },
   card: { gap: 14, padding: 14, backgroundColor: color.surface, borderWidth: 1, borderColor: color.border, borderLeftWidth: size.heroRule, borderLeftColor: color.primary },
   slot: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 10, paddingHorizontal: 4, borderWidth: 1, borderColor: color.border, backgroundColor: color.bg },
+  klass: { gap: 6, paddingVertical: 12, borderTopWidth: 1, borderTopColor: color.border },
   lines: { gap: 10, paddingVertical: 12, borderTopWidth: 1, borderTopColor: color.border },
   trivia: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderBottomWidth: 1, borderColor: color.border },
   fact: { width: '50%', paddingVertical: 12, paddingRight: 10, gap: 3 },
