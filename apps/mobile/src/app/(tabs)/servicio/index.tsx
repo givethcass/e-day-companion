@@ -98,7 +98,7 @@ export default function Servicio() {
   const modes = FILTERS[filter][1];
   const items = matches.filter((m) => !modes || modes.includes(m.mode));
   const slots = [0, 1, 2].map((i) => r.equipped[i] ?? null);
-  const last = c.daysSinceLastMatch == null ? '–' : c.daysSinceLastMatch === 0 ? 'Hoy' : `Hace ${c.daysSinceLastMatch} días`;
+  const last = c.daysSinceLastMatch == null ? '–' : c.daysSinceLastMatch === 0 ? 'En las últimas 24 h' : `Hace ${c.daysSinceLastMatch} días`;
   return (
     <Screen overline={`Temporada ${season.number}`} title="Mi servicio" meta={`Nivel ${r.level}`}>
       <View style={styles.card}>
@@ -128,7 +128,7 @@ export default function Servicio() {
       <Readouts items={[
         { label: 'Partidas', value: String(c.matches) },
         { label: 'Horas', value: String(c.hoursPlayed) },
-        { label: 'K/D', value: c.kd.toFixed(2), tone: 'primary' },
+        { label: 'K/D Versus', value: r.versus.kd.toFixed(2), tone: 'primary' },
       ]} />
       {!player!.rank && (
         <Pressable accessibilityRole="button" onPress={() => openLaunchUrl('edaycompanion://launch?mode=versus_ranked')} style={styles.callout}>
@@ -159,7 +159,7 @@ export default function Servicio() {
         <Row icon="trophy" tagTone="primary" title={`${r.medals.earned} de ${r.medals.total} niveles`}
           subtitle={`${r.medals.seriesCompleted} de ${r.medals.seriesTotal} series completas · ve las que te faltan`}
           onPress={() => router.push('/servicio/medallas')} />
-        {r.medals.latest.slice(0, 3).map((u) => <UnlockRow key={`${u.medalId}-${u.tier}`} u={u} tz={tz} />)}
+        {r.medals.latest.filter((u, i, all) => all.findIndex((x) => x.medalId === u.medalId) === i).slice(0, 3).map((u) => <UnlockRow key={`${u.medalId}-${u.tier}`} u={u} tz={tz} />)}
       </Section>
 
       {r.trivia.length > 0 && (

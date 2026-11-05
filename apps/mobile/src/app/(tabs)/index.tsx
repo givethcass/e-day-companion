@@ -56,7 +56,7 @@ export default function Inicio() {
   const c = record.career;
   const newest = record.medals.latest[0];
   const caption = [`${c.hoursPlayed} h`, `${c.matches} partidas`,
-    c.daysSinceLastMatch === null ? null : c.daysSinceLastMatch === 0 ? 'jugó hoy' : `última hace ${c.daysSinceLastMatch} días`].filter(Boolean).join(' · ');
+    c.daysSinceLastMatch === null ? null : c.daysSinceLastMatch === 0 ? 'última hace horas' : `última hace ${c.daysSinceLastMatch} días`].filter(Boolean).join(' · ');
   const mine = sessions.filter((s) => s.members.some((x) => x.gamertag === player!.gamertag));
   const wished = rotation.items.filter((i) => i.wishlisted);
   const lead = news.find((n) => n.featured) ?? news[0];

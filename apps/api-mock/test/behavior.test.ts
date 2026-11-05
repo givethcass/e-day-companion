@@ -15,11 +15,12 @@ const { call } = fresh();
 
 test("Delta_Rojo's mission follows how they play and offers the other two", () => {
   const week = call<WeeklyReport>('GET', '/me/week');
-  assert.equal(week.daysSinceLastMatch, 15);
+  assert.equal(week.daysSinceLastMatch, 0);
   assert.equal(week.nextMission.mode, 'versus_ranked');
-  assert.match(week.nextMission.reason!, /13 oct/);
+  assert.equal(week.nextMission.reason, 'Defiende tu rango esta semana');
   assert.deepEqual(week.nextMission.alternatives!.map((a) => a.mode), ['horde_siege', 'campaign']);
   assert.equal(week.nextMission.alternatives![0].title, 'Horde en español hoy, 22:30');
+  assert.equal(week.nextMission.alternatives![1].title, 'Rejuega la campaña en Locura', 'the campaign is finished');
 });
 
 test('a Horde-first player gets a Horde mission', () => {
@@ -36,7 +37,8 @@ test('notifications are opt-in beyond squad and wishlist', () => {
   const kinds = (ns: Notification[]) => [...new Set(ns.map((n) => n.kind))].sort();
   assert.deepEqual(kinds(c<Notification[]>('GET', '/me/notifications')), ['session', 'wishlist']);
   c('PUT', '/me/notification-prefs', { body: { rival: true, events: true, ranked: true } });
-  assert.deepEqual(kinds(c<Notification[]>('GET', '/me/notifications')), ['event', 'mission', 'rival', 'session', 'wishlist']);
+  // Delta_Rojo is ranked and leads their friends, so there is no Ranked nudge and no rival.
+  assert.deepEqual(kinds(c<Notification[]>('GET', '/me/notifications')), ['event', 'session', 'wishlist']);
 });
 
 test('times in copy are local to the player (Mexico City)', () => {
@@ -60,16 +62,16 @@ test('joining with a role confirms the spot', () => {
 test('Horde leaderboard ranks by best wave and includes the player', () => {
   const lb = call<Leaderboard>('GET', '/leaderboards/horde_siege', { query: { scope: 'friends' } });
   assert.equal(lb.metric, 'best_wave');
-  assert.equal(lb.me?.points, 27);
+  assert.equal(lb.me?.points, 30);
   const ranked = call<Leaderboard>('GET', '/leaderboards/versus_ranked', { query: { scope: 'friends' } });
   assert.equal(ranked.metric, 'rank_points');
-  assert.equal(ranked.me, undefined, 'unranked players have no ranked row');
+  assert.equal(ranked.me?.position, 1, 'Delta_Rojo leads their friends in Ranked');
 });
 
 test('wishlist flags follow adds and removes', () => {
   const { call: c } = fresh();
   const flagged = () => c<StoreRotation>('GET', '/store/rotation').items.filter((i) => i.wishlisted).map((i) => i.id);
-  assert.deepEqual(flagged(), ['item_010'], 'Paquete Tundra is wishlisted and on sale');
+  assert.deepEqual(flagged(), ['item_005'], 'Armadura Ámbar is wishlisted and on sale');
   const second = c<StoreRotation>('GET', '/store/rotation').items.find((i) => !i.wishlisted)!;
   c('POST', '/me/wishlist', { body: { itemId: second.id } });
   assert.ok(flagged().includes(second.id));
@@ -134,19 +136,28 @@ test('the calendar lists what comes next, in order', () => {
 
 test("the service record is counted from Delta_Rojo's matches", () => {
   const r = call<ServiceRecord>('GET', '/me/service-record');
-  assert.equal(r.career.matches, 21);
-  assert.equal(r.career.daysSinceLastMatch, 15);
-  assert.equal(r.versus.matches + r.horde.matches + r.campaign.attempts, 21);
+  assert.ok(r.career.matches > 250);
+  assert.ok(r.career.hoursPlayed >= 90);
+  assert.equal(r.career.daysSinceLastMatch, 0);
+  assert.equal(r.versus.matches + r.horde.matches + r.campaign.attempts, r.career.matches);
   assert.equal(r.versus.wins + r.versus.losses + r.versus.draws, r.versus.matches);
-  assert.equal(r.horde.bestWave, 27);
-  assert.equal(r.campaign.chaptersCompleted, 3);
-  assert.equal(r.versus.rank, null);
+  assert.ok(r.versus.kd > 3 && r.versus.kd < 3.5, `K/D ${r.versus.kd}`);
+  assert.equal(r.versus.rank?.tier, 'onyx');
+  assert.equal(r.title, 'Veterano de Versus');
+  assert.equal(r.horde.bestWave, 30);
+  assert.equal(r.horde.mainRole, 'assault');
+  assert.equal(r.campaign.chaptersCompleted, 12);
   assert.ok(r.trivia.length >= 8);
 });
 
 test('each medal tier carries the date of the match that earned it', () => {
   const medals = call<Medal[]>('GET', '/me/medals');
-  const matches = call<{ items: { endedAt: string }[] }>('GET', '/me/matches', { query: { limit: '100' } }).items.map((m) => m.endedAt);
+  const matches: string[] = [];
+  for (let cursor: string | null = '0'; cursor !== null;) {
+    const page: MatchPage = call<MatchPage>('GET', '/me/matches', { query: { limit: '100', cursor } });
+    matches.push(...page.items.map((m) => m.endedAt));
+    cursor = page.nextCursor ?? null;
+  }
   for (const m of medals) {
     for (const [i, t] of m.tiers.entries()) {
       assert.equal(Boolean(t.unlockedAt), m.progress >= t.goal, `${m.id} ${t.tier}`);
@@ -154,15 +165,16 @@ test('each medal tier carries the date of the match that earned it', () => {
       if (i > 0 && t.unlockedAt) assert.ok(t.unlockedAt >= m.tiers[i - 1].unlockedAt!);
     }
   }
-  // Ranked never played and no event matches: those series are still locked.
-  assert.equal(medals.find((m) => m.id === 'md_ranked')!.progress, 0);
+  // The anniversary event starts on Nov 3, so on Oct 27 that series is still locked; a veteran still has tiers to chase.
+  assert.equal(medals.find((m) => m.id === 'md_anniversary')!.progress, 0);
+  assert.ok(medals.some((m) => m.tiers.some((t) => !t.unlockedAt) && m.progress > 0));
   assert.equal(medals.filter((m) => m.equipped).length, 3);
 });
 
 test('only earned medals can be equipped, three at most', () => {
   const { api } = fresh();
   const put = (medalIds: string[]) => api.handle({ method: 'PUT', path: '/me/medals/equipped', playerId: 'p_demo', body: { medalIds } });
-  assert.equal(put(['md_ranked']).status, 400);
+  assert.equal(put(['md_anniversary']).status, 400);
   assert.equal(put(['md_lancer', 'md_waves', 'md_wins', 'md_chapters']).status, 400);
   const ok = put(['md_chapters', 'md_lancer']);
   assert.equal(ok.status, 200);

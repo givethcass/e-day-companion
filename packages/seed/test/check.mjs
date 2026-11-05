@@ -10,7 +10,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { parse } from 'yaml';
 import { generate } from '../src/generate.mjs';
-import { RANKED_START, DEMO_NOW, PLAYTIME_BUCKETS } from '../src/constants.mjs';
+import { DAY, RANKED_START, DEMO_NOW, PLAYTIME_BUCKETS } from '../src/constants.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const contractPath = join(root, 'contract', 'openapi.yaml');
@@ -65,15 +65,17 @@ validateAll('challenge progress rows', 'Challenge', data.challengeProgress.map((
 
 // 4. The demo story
 const demoMatches = data.matches.filter((m) => m.playerId === 'p_demo');
-check('Delta_Rojo stopped playing before Ranked opened', () => {
-  assert.ok(demoMatches.length > 10, `only ${demoMatches.length} matches`);
-  assert.ok(Date.parse(demoMatches.at(-1).endedAt) < RANKED_START);
+check('Delta_Rojo is a veteran: 90+ hours by the demo date and played last night', () => {
+  const before = demoMatches.filter((m) => m.endedAt <= DEMO_NOW);
+  const hours = before.reduce((s, m) => s + m.durationSeconds, 0) / 3600;
+  assert.ok(hours >= 90, `only ${hours.toFixed(1)} hours`);
+  assert.ok(Date.parse(DEMO_NOW) - Date.parse(before.at(-1).endedAt) < DAY, 'did not play in the last day');
 });
-check('Delta_Rojo is unranked and has a ranked friend to chase', () => {
-  const byId = new Map(data.players.map((p) => [p.id, p]));
-  assert.equal(byId.get('p_demo').rank, null);
-  const friends = data.friendships.filter((f) => f.playerId === 'p_demo').map((f) => byId.get(f.friendId));
-  assert.ok(friends.some((f) => f.rank), 'no ranked friend');
+check('Delta_Rojo has a Versus K/D around 3 and is ranked Onyx', () => {
+  const versus = demoMatches.filter((m) => m.mode.startsWith('versus') && m.endedAt <= DEMO_NOW);
+  const kd = versus.reduce((s, m) => s + m.kills, 0) / versus.reduce((s, m) => s + m.deaths, 0);
+  assert.ok(kd > 2.8 && kd < 3.6, `K/D ${kd.toFixed(2)}`);
+  assert.equal(data.players.find((p) => p.id === 'p_demo').rank?.tier, 'onyx');
 });
 check('Friday Horde Siege has 9 of 12, Delta_Rojo in squad 2', () => {
   const friday = data.sessions.find((s) => s.id === 'sess_friday');

@@ -1,7 +1,7 @@
 // Service record pieces: the level emblem, a 2x2 grid of figures and the per-mode summary used on Inicio.
 import type { ServiceRecord } from '@eday/api-types';
 import { StyleSheet, View } from 'react-native';
-import { roleLabel } from '@/lib/demo';
+import { number, roleLabel } from '@/lib/demo';
 import { type Family, pct, rankLabel } from '@/lib/service';
 import { Text } from './kit';
 import { color } from './theme';
@@ -38,7 +38,7 @@ export function modeCells(r: ServiceRecord, f: Family): Cell[] {
     const v = r.versus;
     return [
       { label: 'Victorias', value: pct(v.winRate), note: `${v.wins} de ${v.matches} partidas`, tone: 'primary' },
-      { label: 'K/D', value: v.kd.toFixed(2), note: `${v.kills} bajas · ${v.deaths} caídas` },
+      { label: 'K/D', value: v.kd.toFixed(2), note: `${number(v.kills)} bajas · ${number(v.deaths)} caídas` },
       { label: 'Rango', value: rankLabel(v.rank), note: v.rank ? `${v.rank.points} puntos` : 'Juega 3 partidas de Ranked' },
       { label: 'Mejor racha', value: String(v.bestWinStreak), note: 'victorias seguidas' },
     ];
@@ -47,7 +47,7 @@ export function modeCells(r: ServiceRecord, f: Family): Cell[] {
     const h = r.horde;
     return [
       { label: 'Mejor oleada', value: `${h.bestWave}/${h.waveGoal}`, note: h.byMap[0]?.map ?? 'Sin partidas', tone: 'primary' },
-      { label: 'Oleadas', value: String(h.wavesCleared), note: 'superadas en total' },
+      { label: 'Oleadas', value: number(h.wavesCleared), note: 'superadas en total' },
       { label: 'Completas', value: `${h.completed} de ${h.matches}`, note: `las ${h.waveGoal} oleadas` },
       { label: 'Clase', value: h.mainRole ? roleLabel(h.mainRole) : '–', note: `${h.hoursPlayed} h jugadas` },
     ];
@@ -55,7 +55,7 @@ export function modeCells(r: ServiceRecord, f: Family): Cell[] {
   const c = r.campaign;
   return [
     { label: 'Capítulos', value: `${c.chaptersCompleted}/${c.chaptersTotal}`, note: `${pct(c.chaptersCompleted / c.chaptersTotal)} de la historia`, tone: 'primary' },
-    { label: 'Bajas', value: String(c.kills), note: 'en campaña' },
+    { label: 'Bajas', value: number(c.kills), note: 'en campaña' },
     { label: 'Horas', value: String(c.hoursPlayed), note: 'jugadas' },
     { label: 'Intentos', value: String(c.attempts), note: 'capítulos jugados' },
   ];

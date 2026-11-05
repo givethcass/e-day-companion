@@ -25,7 +25,7 @@ export function rankFromPoints(points) {
 }
 
 export function generate({ seed = SEED } = {}) {
-  const rng = createRng(seed);
+  let rng = createRng(seed);
 
   // ---------- Players ----------
   const usedTags = new Set();
@@ -40,7 +40,7 @@ export function generate({ seed = SEED } = {}) {
 
   // Named characters from the brief and the prototype.
   const scripted = [
-    { id: 'p_demo', gamertag: 'Delta_Rojo', platform: 'xbox', country: 'MX', accessType: 'game_pass', skill: 0.3 },
+    { id: 'p_demo', gamertag: 'Delta_Rojo', platform: 'xbox', country: 'MX', accessType: 'game_pass', skill: 2.0 },
     { id: 'p_capi', gamertag: 'Capi_Hierro', platform: 'xbox', country: 'MX', accessType: 'purchase', skill: 0.9 },
     { id: 'p_marla', gamertag: 'Marla_X', platform: 'pc', country: 'MX', accessType: 'purchase', skill: 0.6 },
   ];
@@ -51,7 +51,9 @@ export function generate({ seed = SEED } = {}) {
 
   for (const s of scripted) {
     players.push({ id: s.id, gamertag: s.gamertag, platform: s.platform, country: s.country, accessType: s.accessType });
-    profiles.set(s.id, { skill: s.skill, scripted: true, modePref: [['versus', 1], ['horde', 1], ['campaign', 0.3]] });
+    // Delta_Rojo finishes the campaign in the first days, then plays mostly Versus with Horde on the side.
+    profiles.set(s.id, { skill: s.skill, scripted: true, modePref: s.id === 'p_demo' ? [['versus', 3], ['horde', 1]] : [['versus', 1], ['horde', 1], ['campaign', 0.3]],
+      ranked: s.id === 'p_demo' ? 0.5 : 0.4 });
   }
 
   while (players.length < PLAYER_COUNT) {
@@ -77,6 +79,7 @@ export function generate({ seed = SEED } = {}) {
   // ---------- Matches ----------
   const matches = [];
   const rankPoints = new Map(players.map((p) => [p.id, 1200 + Math.round(profiles.get(p.id).skill * 150)]));
+  rankPoints.set('p_demo', 1750); // placed high after a strong first week
   const startPoints = new Map(rankPoints);
   const chapter = new Map();
   let matchSeq = 0;
@@ -126,7 +129,7 @@ export function generate({ seed = SEED } = {}) {
     const kind = rng.weighted(profiles.get(playerId).modePref);
     if (kind === 'horde') return 'horde_siege';
     if (kind === 'campaign') return 'campaign';
-    if (at >= RANKED_START && rng.chance(0.4)) return 'versus_ranked';
+    if (at >= RANKED_START && rng.chance(profiles.get(playerId).ranked ?? 0.4)) return 'versus_ranked';
     return rng.chance(0.55) ? 'versus_tdm' : 'versus_conquest';
   };
 
@@ -149,17 +152,23 @@ export function generate({ seed = SEED } = {}) {
 
   const eveningUtc = (dayMs) => dayMs + (rng.chance(0.6) ? rng.int(0, 5) : rng.int(18, 23)) * 3600e3 + rng.int(0, 59) * 60e3;
 
-  // Delta_Rojo: ~9 hours in the first week, then stops before Ranked opens (the churn case).
-  const demoDays = [
-    ['2026-10-07', 150, ['horde_siege', 'versus_tdm']],
-    ['2026-10-08', 120, ['campaign']],
-    ['2026-10-09', 90, ['versus_tdm', 'versus_conquest']],
-    ['2026-10-11', 120, ['horde_siege']],
-    ['2026-10-12', 60, ['versus_conquest']],
-  ];
-  for (const [day, minutes, modes] of demoDays) {
-    playSession('p_demo', Date.parse(`${day}T01:30:00.000Z`), minutes, modes);
+  // Delta_Rojo: a veteran who has played most nights since launch, about 6 hours a night, with a Versus K/D
+  // around 3. Their matches come from their own random stream, so their schedule never reshuffles anyone else's data.
+  const mainRng = rng;
+  rng = createRng(seed + 1);
+  const eve = Math.floor((Date.parse(DEMO_NOW) - SEASON_START) / DAY) - 1; // the night before the demo opens
+  for (let d = 0; d < 56; d++) {
+    if (d > 0 && d !== eve && rng.chance(0.12)) continue; // the odd night off
+    const start = SEASON_START + d * DAY + (8 + rng.int(0, 2)) * 3600e3 + rng.int(0, 59) * 60e3; // starts 17:00 to 19:59 in Mexico City
+    if ((chapter.get('p_demo') ?? 0) < CAMPAIGN_CHAPTERS) {
+      const left = CAMPAIGN_CHAPTERS - (chapter.get('p_demo') ?? 0);
+      playSession('p_demo', start, Math.min(left, 3) * 45, ['campaign']);
+      playSession('p_demo', start + 4 * 3600e3, rng.int(120, 200));
+    } else {
+      playSession('p_demo', start, rng.int(330, 480));
+    }
   }
+  rng = mainRng;
 
   // Capi_Hierro and Marla_X are steady weekly players.
   for (const id of ['p_capi', 'p_marla']) {
@@ -421,8 +430,8 @@ export function generate({ seed = SEED } = {}) {
     coinsWeeklyCap: COINS.weeklyCap,
     capResetsAt: rotationNow.endsAt,
   }));
-  // Delta_Rojo can afford a cheap emblem but not every coin item this week.
-  Object.assign(wallets.find((w) => w.playerId === 'p_demo'), { coins: 16000, iron: 400, coinsThisWeek: 0 });
+  // Delta_Rojo spends as fast as they earn: a cheap emblem fits, not every coin item this week.
+  Object.assign(wallets.find((w) => w.playerId === 'p_demo'), { coins: 16000, iron: 400 });
 
   const events = EVENTS.map((e) => ({ ...e, modes: ['versus_tdm', 'horde_siege'], rewards: [`Emblema ${e.name}`, `Estandarte ${e.name}`] }));
 

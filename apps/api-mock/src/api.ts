@@ -97,7 +97,9 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   const summary = ({ id, mode, map, endedAt, result, kills, deaths, rankDelta, durationSeconds, wavesCleared }: SeedMatch): MatchSummary =>
     ({ id, mode, map, endedAt, result, kills, deaths, rankDelta, durationSeconds, wavesCleared, waveGoal: mode === 'horde_siege' ? HORDE_WAVE_GOAL : null });
 
-  const roleOf = (p: SeedPlayer): HordeRole => [...sessions.values()].flatMap((s) => s.members).find((x) => x.gamertag === p.gamertag && x.role)?.role
+  // The class the player signed up with most recently.
+  const roleOf = (p: SeedPlayer): HordeRole => [...sessions.values()].sort((a, b) => b.startsAt.localeCompare(a.startsAt)).flatMap((s) => s.members)
+    .find((x) => x.gamertag === p.gamertag && x.role)?.role
     ?? ROLES[Math.floor(hashRng(p.id)() * ROLES.length)];
 
   // Medal progress is counted from the player's matches up to `now`; each tier carries the date of the match that earned it.
@@ -148,7 +150,8 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     })[0];
     const weeks = new Map<string, SeedMatch[]>();
     for (const m of played) {
-      const d = new Date(m.endedAt);
+      // Weeks run Monday to Sunday on the player's own calendar; noon keeps the label on the right day.
+      const d = new Date(`${localDate(m.endedAt, tz)}T12:00:00.000Z`);
       const monday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - ((d.getUTCDay() + 6) % 7), 12)).toISOString();
       (weeks.get(monday) ?? weeks.set(monday, []).get(monday)!).push(m);
     }
@@ -156,7 +159,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     const weekDays = new Set(weekMatches.map((m) => localDate(m.endedAt, tz))).size;
     const blood = kills * 4.7;
     return [
-      { id: 'blood', label: 'Sangre derramada', value: `${n(blood)} litros`, detail: blood > 2500 ? 'Alcanza para una piscina chica' : `Unas ${n(blood / 150)} tinas llenas` },
+      { id: 'blood', label: 'Sangre derramada', value: `${n(blood)} litros`, detail: blood >= 25000 ? `Llenarías ${n(blood / 25000)} albercas de casa` : blood > 2500 ? 'Alcanza para una piscina chica' : `Unas ${n(blood / 150)} tinas llenas` },
       { id: 'shots', label: 'Balas disparadas', value: n(shots), detail: `Unas ${n(shots / 300)} cajas de munición` },
       { id: 'distance', label: 'Kilómetros corriendo agachado', value: `${round(km)} km`, detail: `Como ir del Zócalo a Chapultepec ${Math.max(1, Math.round(km / 5))} veces` },
       { id: 'stomps', label: 'Locust pisoteados', value: n(kills * 0.03), detail: 'Cráneos bajo tu bota' },
@@ -240,7 +243,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
       },
       medals: {
         earned: unlocks.length, total: medals.length * MEDAL_TIERS.length,
-        seriesCompleted: medals.filter((m) => m.tiers.every((t) => t.unlockedAt)).length, seriesTotal: medals.length, latest: unlocks.slice(0, 3),
+        seriesCompleted: medals.filter((m) => m.tiers.every((t) => t.unlockedAt)).length, seriesTotal: medals.length, latest: unlocks.slice(0, 6),
       },
       equipped: medals.chosen.map((id) => unlockOf(medals.find((m) => m.id === id)!)!),
     };
@@ -280,6 +283,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
       && s.members.some((m) => m.gamertag === p.gamertag)).sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
     const best = bestWave(p.id, now);
     const chapter = Math.max(1, ...played.filter((m) => m.mode === 'campaign').map((m) => Number(/(\d+)$/.exec(m.map)?.[1] ?? 1)));
+    const finished = new Set(played.filter((m) => m.mode === 'campaign' && m.result === 'completed').map((m) => m.map)).size >= CAMPAIGN_CHAPTERS;
     const rival = rivalOf(p);
     const options: Record<keyof typeof counts, Mission> = {
       versus: !p.rank && now >= RANKED_OPENED
@@ -297,8 +301,11 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
             launchUrl: launch({ session: tonight.id }) }
         : { title: 'Juega una partida de Horde Siege', mode: 'horde_siege', estimatedMinutes: 40, reward: '+Monedas',
             reason: best ? `Tu mejor oleada es la ${best}. Ve por la ${best + 1}.` : 'Sobrevive tus primeras oleadas', launchUrl: launch({ mode: 'horde_siege' }) },
-      campaign: { title: `Sigue en el capítulo ${chapter}`, mode: 'campaign', estimatedMinutes: 50, reward: '+1500 XP',
-        reason: 'Retoma desde tu último punto de control', launchUrl: launch({ mode: 'campaign' }) },
+      campaign: finished
+        ? { title: 'Rejuega la campaña en Locura', mode: 'campaign', estimatedMinutes: 50, reward: '+1500 XP',
+            reason: `Ya terminaste los ${CAMPAIGN_CHAPTERS} capítulos`, launchUrl: launch({ mode: 'campaign' }) }
+        : { title: `Sigue en el capítulo ${chapter}`, mode: 'campaign', estimatedMinutes: 50, reward: '+1500 XP',
+            reason: 'Retoma desde tu último punto de control', launchUrl: launch({ mode: 'campaign' }) },
     };
     const order = (Object.keys(counts) as (keyof typeof counts)[]).sort((a, b) => Number(b === 'horde' && !!booked) - Number(a === 'horde' && !!booked) || counts[b] - counts[a]);
     return {

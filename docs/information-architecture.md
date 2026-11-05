@@ -97,3 +97,5 @@ Feedback on 2026-11-05: the mission hero on Inicio felt like a launcher, not lik
 
 Medal progress is computed from the player's matches, so every tier's unlock date is the end of the match that crossed its goal. The profile card holds up to 3 medals; without a choice it shows the 3 with the most tiers. Curiosities (blood spilled, bullets fired, distance run in cover, latest night played, busiest week) are derived from the same matches and come already worded from the API. The full list of metrics a game like E-Day could expose is in the "Métricas de jugador" doc.
 
+
+**Demo player (2026-11-05).** Delta_Rojo is now a veteran instead of the player who left after week 1, so the service record and medals have something to show: about 100 hours since launch, playing most nights, 300 matches, a Versus K/D near 3.3, Ónix in Ranked and the campaign finished. Medal goals grew to match (Diamante takes thousands of kills), so even this player has tiers to chase. Delta_Rojo's matches come from their own random stream, so changing their schedule never reshuffles the rest of the seed.
