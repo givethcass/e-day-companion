@@ -41,7 +41,12 @@ function List() {
             </a>
           </Reveal>
         ))}
-        {promo && !tag && <Reveal className="col-span-3"><PromoCard promo={promo} wide /></Reveal>}
+        {promo && !tag && (() => {
+          // Fill whatever the last row leaves free, so the grid never ends with a hole.
+          const free = 3 - ((items.length + 1) % 3 || 3);
+          const span = free === 0 ? 3 : free;
+          return <Reveal className={span === 3 ? 'col-span-3' : span === 2 ? 'col-span-2' : ''}><PromoCard promo={promo} wide={span > 1} /></Reveal>;
+        })()}
       </div>
     </>
   );

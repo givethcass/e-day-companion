@@ -24,7 +24,8 @@ import { Columns } from '@/ui/layout';
 
 function Tile({ label, glow, title, body, cta, onPress }: { label: string; glow: string; title: string; body: string; cta: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={{ flex: 1, gap: 6 }}>
+    // The whole tile is tappable, but only its button is a control, so screen readers and the keyboard meet one target.
+    <Pressable onPress={onPress} focusable={false} accessible={false} style={{ flex: 1, gap: 6 }}>
       <Art label={label} glow={glow} />
       <Text variant="headline" tone="textSubtle" style={{ fontSize: 20, lineHeight: 21, textTransform: 'none' }}>{title}</Text>
       <Text variant="caption" tone="textMuted" style={{ flexGrow: 1 }}>{body}</Text>

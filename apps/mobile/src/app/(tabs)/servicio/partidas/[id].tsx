@@ -25,7 +25,7 @@ function headline(m: MatchReport) {
 /** One block per wave: filled up to the wave reached. */
 function Waves({ cleared, goal }: { cleared: number; goal: number }) {
   return (
-    <View style={{ flexDirection: 'row', gap: 2 }} accessibilityLabel={`${cleared} de ${goal} oleadas`}>
+    <View style={{ flexDirection: 'row', gap: 2 }} accessibilityRole="image" accessibilityLabel={`${cleared} de ${goal} oleadas`}>
       {Array.from({ length: goal }, (_, i) => <View key={i} style={{ flex: 1, height: 8, backgroundColor: i < cleared ? color.primary : color.disabled }} />)}
     </View>
   );

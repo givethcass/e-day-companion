@@ -54,7 +54,7 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
 /** Text tabs with a red underline on the selected one, as in the site's media section. */
 export function Tabs({ items, selected, onSelect }: { items: string[]; selected: number; onSelect: (i: number) => void }) {
   return (
-    <View style={{ flexDirection: 'row', gap: 18 }}>
+    <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 18 }}>
       {items.map((label, i) => (
         <Pressable key={label} accessibilityRole="tab" accessibilityState={{ selected: i === selected }} onPress={() => onSelect(i)}
           style={{ paddingBottom: 6, borderBottomWidth: 2, borderBottomColor: i === selected ? color.primary : 'transparent' }}>
@@ -229,14 +229,14 @@ export function Screen({ title, overline, meta, right, children, edges = ['top']
   const { wide, gutter } = useLayout();
   return (
     <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: color.bg }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: space.xxl }}>
+      <ScrollView role="main" contentContainerStyle={{ paddingBottom: space.xxl }}>
         {bleed}
         <View style={[styles.content, { paddingHorizontal: gutter }, wide && { paddingTop: space.xl, gap: 18, width: '100%', maxWidth: 1180, alignSelf: 'center' }]}>
           {title && (
             <View style={styles.header}>
               <View style={{ flex: 1, gap: 4 }}>
                 {overline && <Text variant="overline" tone="textSubtle">{overline}</Text>}
-                <Text variant="display" numberOfLines={2}>{title}</Text>
+                <Text variant="display" accessibilityRole="header" numberOfLines={2}>{title}</Text>
               </View>
               {meta ? <Text variant="overline" tone="textSubtle" style={{ textAlign: 'right', fontSize: 13, letterSpacing: 0.6 }}>{meta}</Text> : null}
               {right}

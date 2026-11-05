@@ -17,8 +17,8 @@ export const colorsFor = (slices: Slice[]) => {
   return slices.map((s) => (isOther(s.label) ? OTHER : SERIES[i++ % SERIES.length]));
 };
 const pctOf = (v: number, total: number) => Math.round((v / Math.max(1, total)) * 100);
-// Yellow is the one fill that needs dark text on it.
-const inkOn = (fill: string) => (fill === SERIES[2] ? '#0B0B0B' : '#FFFFFF');
+// Every series colour is light enough that near-black text clears 4.5:1 on it; only the grey «Otras» takes white.
+const inkOn = (fill: string) => (fill === OTHER ? '#FFFFFF' : '#0B0B0B');
 
 export function ChartCard({ title, note, children, className = '' }: { title: string; note?: string; children: ReactNode; className?: string }) {
   return (
@@ -54,7 +54,7 @@ export function Donut({ slices, colors = colorsFor(slices), unit, center, size =
         <svg width={size} height={size} className="-rotate-90" role="img" aria-label={slices.map((s) => `${s.label} ${num(s.value)}`).join(', ')}>
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgb(255 255 255 / 0.06)" strokeWidth={20} />
           {parts.map(({ i, start, len }) => (
-            <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={colors[i]}
+            <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={colors[i]} role="img"
               strokeWidth={hot === i ? 28 : 20} strokeDasharray={`${seen ? len : 0} ${c}`} strokeDashoffset={-start}
               opacity={hot === null || hot === i ? 1 : 0.35} tabIndex={0} aria-label={`${slices[i].label}: ${format(slices[i].value)}`}
               onMouseEnter={() => setHot(i)} onMouseLeave={() => setHot(null)} onFocus={() => setHot(i)} onBlur={() => setHot(null)}

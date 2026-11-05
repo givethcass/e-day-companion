@@ -79,7 +79,7 @@ export function PromoCard({ promo, wide = false }: { promo: Promo; wide?: boolea
   const toast = useToast();
   const label = promo.kind === 'sponsored' ? 'Patrocinado' : 'Colaboración';
   return (
-    <aside {...spotlight} aria-label={`${label}: ${promo.partner}`}
+    <article {...spotlight} aria-label={`${label}: ${promo.partner}`}
       className={`spotlight group relative border border-dashed border-white/25 hover:border-white/50 transition-colors overflow-hidden ${wide ? 'grid grid-cols-[1.1fr_1fr]' : ''}`}>
       <Art glow={promo.glow ?? '#E50F11'} className={wide ? 'min-h-56' : 'h-40'}>
         <div className="absolute left-6 bottom-5 display text-3xl text-white/90">{promo.partner}</div>
@@ -92,7 +92,7 @@ export function PromoCard({ promo, wide = false }: { promo: Promo; wide?: boolea
           {promo.cta.label}<Arrow />
         </button>
       </div>
-    </aside>
+    </article>
   );
 }
 

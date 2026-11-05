@@ -89,7 +89,8 @@ export function SplitBar({ parts, colors = colorsFor(parts) }: { parts: Slice[];
         accessibilityLabel={parts.map((p) => `${p.label} ${share(p.value, total)}`).join(', ')}>
         {shown.map((p) => {
           const width = (p.value / Math.max(1, total)) * (w - 2 * (shown.length - 1));
-          const dark = colors[p.i] === SERIES[2];
+          // Near-black text clears 4.5:1 on every series colour; only the grey «Otras» takes white.
+          const dark = colors[p.i] !== OTHER;
           return (
             <View key={p.label} style={{ width, backgroundColor: colors[p.i], borderRadius: 4, justifyContent: 'center', paddingHorizontal: 6 }}>
               {width > 40 && <Text variant="data" style={{ fontSize: 13, color: dark ? '#0B0B0B' : '#FFFFFF' }} numberOfLines={1}>{share(p.value, total)}</Text>}

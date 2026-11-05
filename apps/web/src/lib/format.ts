@@ -44,3 +44,13 @@ export const STORE_TYPE: Record<string, string> = {
 };
 export const CAL_KIND: Record<string, string> = { event: 'Evento', store: 'Tienda', gift: 'Regalo', season: 'Temporada' };
 export const plural = (n: number, one: string, many: string) => `${num(n)} ${n === 1 ? one : many}`;
+export const minutes = (s?: number) => `${Math.round((s ?? 0) / 60)} min`;
+/** Same rule as the app: coins come from playing, about 1,100 per match; iron is bought in the game. */
+export const COINS_PER_MATCH = 1100;
+export function affordability(item: { price: { amount: number; currency: string } }, wallet: { coins: number; iron: number }) {
+  if (item.price.currency === 'iron') return wallet.iron >= item.price.amount ? 'Te alcanza con Hierro' : 'Solo con Hierro';
+  const short = item.price.amount - wallet.coins;
+  if (short <= 0) return 'Te alcanza';
+  const n = Math.ceil(short / COINS_PER_MATCH);
+  return `Te faltan ${num(short)} · ${n === 1 ? 'una partida' : `unas ${n} partidas`}`;
+}

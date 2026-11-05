@@ -101,7 +101,7 @@ function ModeDetail({ r, f }: { r: ServiceRecord; f: Family }) {
           <Donut unit="bajas" slices={r.breakdown.killsByEnemy} />
         </Chart>
         <Chart title="Mejor oleada por mapa" note={`Meta: ${h.waveGoal} oleadas`}>
-          <RankBars max={h.waveGoal} items={h.byMap.map((x) => ({ label: x.map, value: x.bestWave, note: `${x.matches} partidas` }))} />
+          <RankBars max={h.waveGoal} items={h.byMap.map((x) => ({ label: x.map, value: x.bestWave, note: `${x.matches} ${x.matches === 1 ? 'partida' : 'partidas'}` }))} />
         </Chart>
       </Columns>
     );
@@ -122,6 +122,8 @@ function ModeDetail({ r, f }: { r: ServiceRecord; f: Family }) {
 
 const WEEK = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const WEEK_NAME = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+/** Matches shown at first in Historial; the button adds this many more. */
+const PAGE = 15;
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 
 export default function Servicio() {
@@ -137,6 +139,7 @@ export default function Servicio() {
   const focused = useRef(false);
   useFocusEffect(useCallback(() => { if (focused.current) reload(); focused.current = true; }, [reload]));
   const [filter, setFilter] = useState(0);
+  const [shown, setShown] = useState(PAGE);
   const [pick, setPick] = useState<number | null>(null);
   if (!data) return <Screen title="Mi servicio"><Loader error={error} onRetry={reload} /></Screen>;
   const { matches, season, record: r, achievements } = data;
@@ -242,7 +245,7 @@ export default function Servicio() {
             </View>
             <Progress value={k.nextLevelXp === null ? 1 : k.xp - k.levelXp} goal={k.nextLevelXp === null ? 1 : k.nextLevelXp - k.levelXp} />
             <Text variant="caption" tone="textSubtle">
-              {k.nextLevelXp === null ? `Nivel máximo · ${k.matches} partidas` : `${number(k.nextLevelXp - k.xp)} XP para el nivel ${k.level + 1} · ${k.matches} partidas`}
+              {`${k.nextLevelXp === null ? 'Nivel máximo' : `${number(k.nextLevelXp - k.xp)} XP para el nivel ${k.level + 1}`} · ${k.matches} ${k.matches === 1 ? 'partida' : 'partidas'}`}
             </Text>
           </View>
         ))}
@@ -280,12 +283,15 @@ export default function Servicio() {
       <Row icon="bars" title="Clasificaciones" subtitle="Horde por mejor oleada y Ranked por puntos" onPress={() => router.push('/servicio/clasificacion')} />
       <Text variant="section">Historial</Text>
       <View style={{ flexDirection: 'row', gap: space.sm }}>
-        {FILTERS.map(([label], i) => <View key={label} style={{ flex: 1 }}><Chip label={label} selected={i === filter} onPress={() => setFilter(i)} /></View>)}
+        {FILTERS.map(([label], i) => <View key={label} style={{ flex: 1 }}><Chip label={label} selected={i === filter} onPress={() => { setFilter(i); setShown(PAGE); }} /></View>)}
       </View>
       <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
-        <Columns>{items.map((m) => <MatchRow key={m.id} m={m} tz={tz} />)}</Columns>
+        <Columns>{items.slice(0, shown).map((m) => <MatchRow key={m.id} m={m} tz={tz} />)}</Columns>
         {items.length === 0 && <Text tone="textMuted" style={{ paddingVertical: space.md }}>Sin partidas de este modo todavía.</Text>}
       </View>
+      {items.length > shown && (
+        <Button kind="secondary" label={`Ver ${Math.min(PAGE, items.length - shown)} más · ${items.length - shown} sin mostrar`} onPress={() => setShown(shown + PAGE)} />
+      )}
     </Screen>
   );
 }

@@ -15,7 +15,8 @@ export default function Clasificacion() {
   const [mode, setMode] = useState(0);
   const [scope, setScope] = useState(0);
   const { data, error, reload } = useApi(() => api.getLeaderboard(MODES[mode][1], { scope: SCOPES[scope][1], limit: 20 }), [mode, scope]);
-  const unit = MODES[mode][1] === 'horde_siege' ? 'oleada' : 'pts';
+  const horde = MODES[mode][1] === 'horde_siege';
+  const score = (n: number) => (horde ? `Oleada ${n}` : `${n.toLocaleString('en-US')} pts`);
   return (
     <Screen overline="Temporada 1" title="Clasificaciones"
       right={<IconButton icon="back" label="Volver" onPress={() => (router.canGoBack() ? router.back() : router.replace('/servicio'))} />}>
@@ -28,7 +29,7 @@ export default function Clasificacion() {
       {data?.me ? (
         <Card priority>
           <Text variant="overline" tone="primary">Tu posición</Text>
-          <Text variant="stat">#{data.me.position} · {data.me.points} {unit}</Text>
+          <Text variant="stat">#{data.me.position} · {score(data.me.points)}</Text>
         </Card>
       ) : data ? (
         <Card><Text tone="textMuted">Aún no apareces aquí. Juega 3 partidas de Ranked para tener rango.</Text></Card>
@@ -37,13 +38,13 @@ export default function Clasificacion() {
         <Section title={`${SCOPES[scope][0]} · ${MODES[mode][0]}`}>
           {data.entries.map((e) => (
             <Row key={e.gamertag} tag={`#${String(e.position).padStart(2, '0')}`} tagTone={e.gamertag === data.me?.gamertag ? 'primary' : 'textSubtle'}
-              title={e.gamertag} subtitle={[e.country, e.clanTag].filter(Boolean).join(' · ')} trailing={`${e.points} ${unit}`}
+              title={e.gamertag} subtitle={[e.country, e.clanTag].filter(Boolean).join(' · ')} trailing={score(e.points)}
               trailingTone={e.gamertag === data.me?.gamertag ? 'primary' : 'text'} />
           ))}
         </Section>
       )}
       <Text variant="caption" tone="textSubtle">
-        {unit === 'oleada' ? 'Horde se ordena por la mejor oleada de la temporada.' : 'Ranked se ordena por puntos de rango.'} E-Day aún no tiene clasificaciones: la app las ofrecería primero.
+        {horde ? 'Horde se ordena por la mejor oleada de la temporada.' : 'Ranked se ordena por puntos de rango.'} E-Day aún no tiene clasificaciones: la app las ofrecería primero.
       </Text>
     </Screen>
   );

@@ -1,7 +1,7 @@
 // The website talks to the same simulated backend as the mobile app, in the browser, as Delta_Rojo.
 import type {
   AchievementList, CalendarEntry, Clan, Creator, Guide, GuideSummary, Leaderboard, MatchPage, Medal, MedalUnlock, NewsArticle,
-  NewsSummary, Notification, Player, Promo, PromoPlacement, ServiceRecord, SquadSession, StoreRotation, Wallet, WeeklyReport,
+  HordeRole, MatchReport, NewsSummary, Notification, Player, Promo, PromoPlacement, ServiceRecord, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport,
 } from '@eday/api-types';
 import { createApi } from '@eday/api-mock';
 
@@ -26,16 +26,22 @@ export const api = {
   equip: (ids: string[], asOf: string) => call<MedalUnlock[]>('PUT', '/me/medals/equipped', { asOf }, { medalIds: ids }),
   achievements: (asOf: string) => call<AchievementList>('GET', '/me/achievements', { asOf }),
   matches: (asOf: string, limit = 30) => call<MatchPage>('GET', '/me/matches', { asOf, limit }),
+  match: (id: string, asOf: string) => call<MatchReport>('GET', `/matches/${id}`, { asOf }),
   news: (asOf: string, tag?: string) => call<NewsSummary[]>('GET', '/news', { asOf, tag, limit: 50 }),
   article: (id: string, asOf: string) => call<NewsArticle>('GET', `/news/${id}`, { asOf }),
   calendar: (asOf: string) => call<CalendarEntry[]>('GET', '/calendar', { asOf }),
   store: (asOf: string) => call<StoreRotation>('GET', '/store/rotation', { asOf }),
+  wishlist: () => call<StoreItem[]>('GET', '/me/wishlist'),
+  wish: (itemId: string, on: boolean) => (on ? call('POST', '/me/wishlist', {}, { itemId }) : call('DELETE', `/me/wishlist/${itemId}`)),
   guides: () => call<GuideSummary[]>('GET', '/guides'),
   guide: (id: string) => call<Guide>('GET', `/guides/${id}`),
   creators: () => call<Creator[]>('GET', '/creators'),
   promos: (placement: PromoPlacement) => call<Promo[]>('GET', '/promos', { placement }),
   sessions: (startsAfter: string) => call<SquadSession[]>('GET', '/sessions', { startsAfter }),
+  session: (id: string) => call<SquadSession>('GET', `/sessions/${id}`),
+  join: (id: string, body: { squad?: number; role?: HordeRole }) => call<SquadSession>('POST', `/sessions/${id}/join`, {}, body),
+  deploy: (id: string) => call<{ launchUrl: string }>('POST', `/sessions/${id}/deploy`),
   clan: (id: string) => call<Clan>('GET', `/clans/${id}`),
   clanBoard: (id: string) => call<Leaderboard>('GET', `/clans/${id}/leaderboard`),
-  leaderboard: (mode: string, scope: string) => call<Leaderboard>('GET', `/leaderboards/${mode}`, { scope, limit: 10 }),
+  leaderboard: (mode: string, scope: string, limit = 10) => call<Leaderboard>('GET', `/leaderboards/${mode}`, { scope, limit }),
 };

@@ -59,7 +59,7 @@ function List() {
           <div className="sticky top-24 flex flex-col gap-6">
             <div className="border border-line">
               <div className="eyebrow text-subtle px-5 pt-5 pb-3">Creadores con guías</div>
-              {creators.map((c) => (
+              {creators.filter((c) => (c.guides ?? 0) > 0).map((c) => (
                 <a key={c.id} href="#/comunidad" className="flex items-center gap-3 px-5 py-3 border-t border-line hover:bg-surface transition-colors">
                   <span className="relative size-9 grid place-items-center bg-raised display">
                     {c.name.slice(0, 2)}

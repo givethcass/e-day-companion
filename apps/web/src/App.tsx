@@ -5,10 +5,13 @@ import { AppProvider, PRESETS, useApp, useData } from './lib/app';
 import { dayTime, rankLabel } from './lib/format';
 import { ToastProvider } from './ui/fx';
 import { Comunidad } from './pages/Comunidad';
+import { Escuadra } from './pages/Escuadra';
 import { Guias } from './pages/Guias';
 import { Inicio } from './pages/Inicio';
 import { Noticias } from './pages/Noticias';
+import { Partida } from './pages/Partida';
 import { Servicio } from './pages/Servicio';
+import { Tienda } from './pages/Tienda';
 
 const TABS = [['inicio', 'Inicio'], ['noticias', 'Noticias'], ['guias', 'Guías'], ['servicio', 'Mi servicio'], ['comunidad', 'Comunidad']] as const;
 
@@ -32,8 +35,11 @@ function Shell() {
       <main id="main" key={route.join('/')} className="flex-1 animate-rise">
         {page === 'noticias' ? <Noticias id={route[1]} />
           : page === 'guias' ? <Guias id={route[1]} />
+          : page === 'servicio' && route[1] === 'partidas' && route[2] ? <Partida id={route[2]} />
           : page === 'servicio' ? <Servicio sub={route[1]} />
+          : page === 'comunidad' && route[1] === 'escuadra' && route[2] ? <Escuadra id={route[2]} />
           : page === 'comunidad' ? <Comunidad />
+          : page === 'tienda' ? <Tienda id={route[1]} />
           : <Inicio />}
       </main>
       <Footer />
@@ -99,7 +105,7 @@ function Nav() {
                 <div className="eyebrow text-subtle px-5 pt-4 pb-2">Notificaciones · {dayTime(now)}</div>
                 {notes.length === 0 && <p className="px-5 pb-5 text-muted">Nada nuevo por ahora.</p>}
                 {notes.map((n) => (
-                  <a key={n.id} href={`#${n.link ?? '/inicio'}`} className="block px-5 py-3 border-t border-line hover:bg-raised transition-colors">
+                  <a key={n.id} href={`#${!n.link || n.link === '/' ? '/inicio' : n.link}`} className="block px-5 py-3 border-t border-line hover:bg-raised transition-colors">
                     <div className="flex items-center gap-2 font-semibold">{!n.read && <span className="size-1.5 bg-primary rounded-full" />}{n.title}</div>
                     <div className="text-sm text-muted mt-0.5">{n.body}</div>
                   </a>

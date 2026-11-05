@@ -42,25 +42,27 @@ export function Comunidad() {
           } /></Reveal>
           <div key={mode ?? 'all'} className="grid grid-cols-3 gap-5">
             {list.map((s, i) => {
-              const isIn = joined.has(s.id);
-              const taken = s.members.length + (isIn ? 1 : 0);
+              const isIn = joined.has(s.id) || s.members.some((m) => m.gamertag === me.gamertag);
+              const taken = s.members.length + (joined.has(s.id) && !s.members.some((m) => m.gamertag === me.gamertag) ? 1 : 0);
               return (
                 <article key={s.id} {...spotlight} className="spotlight border border-line bg-surface p-6 hover:border-white/30 transition-colors animate-rise" style={{ animationDelay: `${i * 50}ms` }}>
                   <div className="flex items-center justify-between">
                     <span className="eyebrow text-primary text-[12px]">{MODE[s.mode]}{s.difficulty ? ` · ${DIFF[s.difficulty]}` : ''}</span>
                     <span className="text-sm text-subtle">{countdown(s.startsAt, now)}</span>
                   </div>
-                  <h3 className="display text-2xl mt-2">{s.map ?? MODE[s.mode]} · {day(s.startsAt)}, {clock(s.startsAt)}</h3>
+                  <h3 className="display text-2xl mt-2"><a href={`#/comunidad/escuadra/${s.id}`} className="hover:text-primary transition-colors">{s.map ?? MODE[s.mode]} · {day(s.startsAt)}, {clock(s.startsAt)}</a></h3>
                   <p className="text-muted text-sm mt-1">Organiza {s.hostGamertag} · {s.micRequired ? 'con micrófono' : 'sin micrófono'}{s.clanId ? ' · solo clan' : ''}</p>
                   <div className="mt-4 flex -space-x-2">
                     {s.members.slice(0, 8).map((m) => <span key={m.gamertag} title={`${m.gamertag}${m.role ? ' · ' + ROLE[m.role] : ''}`} className="size-8 grid place-items-center rounded-full bg-raised border-2 border-surface text-[11px] font-semibold hover:-translate-y-1 hover:z-10 transition-transform">{m.gamertag.slice(0, 2)}</span>)}
-                    {isIn && <span className="size-8 grid place-items-center rounded-full bg-primary border-2 border-surface text-[11px] font-semibold animate-rise">DR</span>}
+                    {joined.has(s.id) && !s.members.some((m) => m.gamertag === me.gamertag) && <span className="size-8 grid place-items-center rounded-full bg-primary border-2 border-surface text-[11px] font-semibold animate-rise">DR</span>}
                   </div>
                   <div className="mt-4 flex gap-1">{Array.from({ length: s.slots }, (_, k) => <span key={k} className={`h-1.5 flex-1 transition-colors duration-500 ${k < taken ? 'bg-primary' : 'bg-white/10'}`} />)}</div>
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-sm text-subtle">{taken} de {s.slots}</span>
-                    {taken >= s.slots && !isIn ? <span className="eyebrow text-[13px] text-subtle px-4 py-2 border border-line">Llena</span> : <button onClick={() => { const next = new Set(joined); if (isIn) next.delete(s.id); else next.add(s.id); setJoined(next); toast(isIn ? 'Saliste de la escuadra' : `Pediste lugar con ${s.hostGamertag}`); }}
-                      className={`eyebrow text-[13px] px-4 py-2 transition-colors active:scale-95 ${isIn ? 'border border-white/40 hover:bg-white/10' : 'bg-ink text-bg hover:bg-primary hover:text-ink'}`}>{isIn ? 'Salir' : 'Unirme'}</button>}
+                    {isIn ? <a href={`#/comunidad/escuadra/${s.id}`} className="eyebrow text-[13px] px-4 py-2 border border-primary text-primary hover:bg-action hover:text-ink transition-colors">Ya estás · ver</a>
+                      : taken >= s.slots ? <span className="eyebrow text-[13px] text-subtle px-4 py-2 border border-line">Llena</span>
+                      : <button onClick={() => { try { api.join(s.id, {}); setJoined(new Set(joined).add(s.id)); toast(`Pediste lugar con ${s.hostGamertag}`); } catch (e) { toast((e as Error).message); } }}
+                          className="eyebrow text-[13px] px-4 py-2 bg-ink text-bg hover:bg-action hover:text-ink transition-colors active:scale-95">Unirme</button>}
                   </div>
                 </article>
               );

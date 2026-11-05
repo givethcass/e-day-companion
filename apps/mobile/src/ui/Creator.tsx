@@ -18,7 +18,7 @@ export function CreatorRow({ c }: { c: Creator }) {
           {[c.live ? 'En vivo ahora' : c.platform === 'twitch' ? 'Twitch' : 'YouTube', `${compact(c.followers)} seguidores`, c.language === 'es' ? 'Español' : 'Inglés'].join(' · ')}
         </Text>
         <Text variant="bodyStrong">{c.name}</Text>
-        <Text variant="caption" tone="textSubtle">{c.focus}{c.guides ? ` · ${c.guides} guías en la app` : ''}</Text>
+        <Text variant="caption" tone="textSubtle">{c.focus}{c.guides ? ` · ${c.guides} ${c.guides === 1 ? 'guía' : 'guías'} en la app` : ''}</Text>
         <Text variant="caption" tone="textMuted" numberOfLines={2}>{c.live ? `Transmitiendo: ${c.latest.title}` : `Último video: ${c.latest.title}${c.latest.minutes ? ` (${c.latest.minutes} min)` : ''}`}</Text>
       </View>
     </View>

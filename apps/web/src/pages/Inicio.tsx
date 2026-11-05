@@ -3,10 +3,11 @@ import type { ServiceRecord } from '@eday/api-types';
 import { useState } from 'react';
 import { api } from '../lib/api';
 import { PRESETS, useApp, useData } from '../lib/app';
-import { CAL_KIND, clock, countdown, day, DIFF, MODE, NEWS_TAG, num, pct, rankLabel, ROLE, STORE_TYPE } from '../lib/format';
+import { CAL_KIND, clock, countdown, day, DIFF, MODE, NEWS_TAG, num, pct, rankLabel, ROLE } from '../lib/format';
 import { Arrow, Art, MoreLink, PromoCard, SectionHead } from '../ui/bits';
-import { Bar, CountUp, Magnetic, Reveal, spotlight, useTilt, useToast } from '../ui/fx';
+import { Bar, CountUp, Magnetic, Reveal, spotlight, useToast } from '../ui/fx';
 import { HeroScene } from '../ui/HeroScene';
+import { StoreCard } from '../ui/StoreCard';
 
 type Family = 'versus' | 'horde' | 'campaign';
 const FAMILIES: [Family, string][] = [['versus', 'Versus'], ['horde', 'Horde'], ['campaign', 'Campaña']];
@@ -61,7 +62,7 @@ export function Inicio() {
         <div className="flex w-max animate-marquee hover:[animation-play-state:paused]">
           {[...news, ...news].map((n, i) => (
             <a key={i} href={`#/noticias/${n.id}`} className="flex items-center gap-4 px-8 py-3 whitespace-nowrap hover:bg-black/20 transition-colors">
-              <span className="eyebrow text-[12px] text-white/70">{NEWS_TAG[n.tag].label}</span>
+              <span className="eyebrow text-[12px] text-white/90">{NEWS_TAG[n.tag].label}</span>
               <span className="font-semibold">{n.title}</span>
               <span className="size-1.5 rotate-45 bg-white/60" />
             </a>
@@ -191,40 +192,13 @@ function PlayerStats({ record, level, rank }: { record: ServiceRecord; level: nu
   );
 }
 
-function StoreCard({ item, i }: { item: ReturnType<typeof api.store>['items'][number]; i: number }) {
-  const tilt = useTilt(10);
-  const toast = useToast();
-  const [wish, setWish] = useState(!!item.wishlisted);
-  const glows = ['#D9A93B', '#7AA0BE', '#E50F11', '#3FA7A0', '#E5730F', '#8E8E8E'];
-  return (
-    <Reveal delay={i * 60}>
-      <article ref={tilt.ref as never} onMouseMove={tilt.onMouseMove} onMouseLeave={tilt.onMouseLeave} style={tilt.style} className="spotlight group border border-line bg-surface hover:border-white/30">
-        <Art glow={glows[i % glows.length]} className="h-48">
-          <button onClick={() => { setWish(!wish); toast(wish ? 'Quitado de tu lista de deseos' : 'Agregado a tu lista de deseos'); }} aria-pressed={wish} aria-label="Lista de deseos"
-            className="absolute right-3 top-3 size-9 grid place-items-center bg-black/60 hover:bg-black transition-colors active:scale-90">
-            <svg viewBox="0 0 24 24" className={`size-5 transition-transform ${wish ? 'scale-110 text-primary' : ''}`} fill={wish ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" /></svg>
-          </button>
-        </Art>
-        <div className="p-4">
-          <div className="text-xs text-subtle">{STORE_TYPE[item.type]}</div>
-          <div className="font-display font-semibold uppercase text-lg leading-tight mt-0.5">{item.name}</div>
-          <div className="mt-3 flex items-center gap-2 font-semibold">
-            <span className={`size-2.5 rotate-45 ${item.price.currency === 'iron' ? 'bg-silver' : 'bg-gold'}`} />
-            {num(item.price.amount)} {item.price.currency === 'iron' ? 'Hierro' : 'Monedas'}
-          </div>
-        </div>
-      </article>
-    </Reveal>
-  );
-}
-
 function Store() {
   const { now } = useApp();
   const store = useData((n) => api.store(n));
   return (
     <section className="pt-24">
-      <Reveal><SectionHead over={`Rotación · cambia ${countdown(store.endsAt, now)}`} title="Tienda de la semana" /></Reveal>
-      <div className="grid grid-cols-6 gap-5">{store.items.map((it, i) => <StoreCard key={it.id} item={it} i={i} />)}</div>
+      <Reveal><SectionHead over={`Rotación · cambia ${countdown(store.endsAt, now)}`} title="Tienda de la semana" action={<MoreLink href="#/tienda">Ver la tienda</MoreLink>} /></Reveal>
+      <div className="grid grid-cols-6 gap-5">{store.items.map((it, i) => <Reveal key={it.id} delay={i * 60}><StoreCard item={it} i={i} /></Reveal>)}</div>
     </section>
   );
 }
@@ -259,7 +233,6 @@ function Calendar() {
 function Squads() {
   const { now } = useApp();
   const sessions = useData((n) => api.sessions(n).slice(0, 3));
-  const toast = useToast();
   return (
     <section className="pt-24">
       <Reveal><SectionHead over="Escuadras" title="Juega con alguien hoy" action={<MoreLink href="#/comunidad">Ver Comunidad</MoreLink>} /></Reveal>
@@ -273,14 +246,14 @@ function Squads() {
                   <span className="eyebrow text-primary text-[12px]">{MODE[s.mode]}{s.difficulty ? ` · ${DIFF[s.difficulty]}` : ''}</span>
                   <span className="text-sm text-subtle">{countdown(s.startsAt, now)}</span>
                 </div>
-                <h3 className="display text-2xl mt-2">{s.map ?? MODE[s.mode]}, {clock(s.startsAt)}</h3>
+                <h3 className="display text-2xl mt-2"><a href={`#/comunidad/escuadra/${s.id}`} className="hover:text-primary transition-colors">{s.map ?? MODE[s.mode]}, {clock(s.startsAt)}</a></h3>
                 <p className="text-muted text-sm mt-1">Organiza {s.hostGamertag} · {s.micRequired ? 'con micrófono' : 'sin micrófono'} · {s.language === 'es' ? 'español' : 'inglés'}</p>
                 <div className="mt-5 flex gap-1">
                   {Array.from({ length: s.slots }, (_, k) => <span key={k} className={`h-2 flex-1 transition-colors ${k < taken ? 'bg-primary' : 'bg-white/10'}`} style={{ transitionDelay: `${k * 30}ms` }} />)}
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-sm text-subtle">{taken} de {s.slots} lugares</span>
-                  <button onClick={() => toast(`Demo: pedirías lugar con ${s.hostGamertag}`)} className="eyebrow text-[13px] px-4 py-2 bg-ink text-bg hover:bg-primary hover:text-ink transition-colors active:scale-95">Unirme</button>
+                  <a href={`#/comunidad/escuadra/${s.id}`} className="eyebrow text-[13px] px-4 py-2 bg-ink text-bg hover:bg-action hover:text-ink transition-colors active:scale-95">Ver escuadra</a>
                 </div>
               </article>
             </Reveal>

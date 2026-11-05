@@ -3,17 +3,18 @@ import type { Medal } from '@eday/api-types';
 import { useState } from 'react';
 import { api } from '../lib/api';
 import { useApp, useData } from '../lib/app';
-import { day, dayTime, MEDAL_GROUP, MODE, matchTitle, num, outcome, pct, rankLabel, ROLE, TIER } from '../lib/format';
-import { earned, MedalBadge, nextTier, SectionHead, TierPips, topTier } from '../ui/bits';
+import { day, dayTime, MEDAL_GROUP, MODE, matchTitle, num, outcome, pct, plural, rankLabel, ROLE, TIER } from '../lib/format';
+import { Arrow, earned, MedalBadge, nextTier, SectionHead, TierPips, topTier } from '../ui/bits';
 import { Bar, CountUp, Reveal, spotlight, useSeen, useToast } from '../ui/fx';
 import { HeroScene } from '../ui/HeroScene';
+import { Clasificacion } from './Clasificacion';
 import { ChartCard, Columns, Donut, MODE_COLOR, OTHER, RankBars, ROLE_COLOR, SERIES, SplitBar } from '../ui/charts';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const WEEK = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const WEEK_NAME = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-const SUBS = [['', 'Resumen'], ['medallas', 'Medallas'], ['logros', 'Logros']] as const;
+const SUBS = [['', 'Resumen'], ['medallas', 'Medallas'], ['logros', 'Logros'], ['clasificacion', 'Clasificaciones']] as const;
 
 export function Servicio({ sub = '' }: { sub?: string }) {
   const [version, setVersion] = useState(0);
@@ -59,6 +60,7 @@ export function Servicio({ sub = '' }: { sub?: string }) {
       <div className="max-w-[1440px] mx-auto px-10 pt-14">
         {sub === 'medallas' ? <Medals onChange={() => setVersion((v) => v + 1)} version={version} />
           : sub === 'logros' ? <Achievements />
+          : sub === 'clasificacion' ? <Clasificacion />
           : <Summary />}
       </div>
     </>
@@ -81,7 +83,6 @@ function Ring({ value, size = 160, label, children }: { value: number; size?: nu
 }
 
 function Summary() {
-  const { now } = useApp();
   const r = useData((n) => api.record(n));
   const ach = useData((n) => api.achievements(n));
   const matches = useData((n) => api.matches(n, 12).items);
@@ -164,7 +165,7 @@ function Summary() {
             </div>
             <div>
               <div className="eyebrow text-muted mb-4">Mejor oleada por mapa · meta {h.waveGoal}</div>
-              <RankBars max={h.waveGoal} fill={SERIES[2]} items={h.byMap.map((m) => ({ label: m.map, value: m.bestWave ?? 0, note: `${m.matches} partidas` }))} />
+              <RankBars max={h.waveGoal} fill={SERIES[2]} items={h.byMap.map((m) => ({ label: m.map, value: m.bestWave ?? 0, note: plural(m.matches, 'partida', 'partidas') }))} />
             </div>
           </div>
         </Reveal>
@@ -254,13 +255,13 @@ function Summary() {
             {matches.map((m) => {
               const res = outcome(m);
               return (
-                <tr key={m.id} className="border-b border-line hover:bg-surface transition-colors">
-                  <td className="py-3.5 font-semibold">{matchTitle(m)}</td>
+                <tr key={m.id} onClick={() => { location.hash = `/servicio/partidas/${m.id}`; }} className="group border-b border-line hover:bg-surface transition-colors cursor-pointer">
+                  <td className="py-3.5 font-semibold"><a href={`#/servicio/partidas/${m.id}`} onClick={(e) => e.stopPropagation()} className="group-hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-primary">{matchTitle(m)}</a></td>
                   <td className={res === 'Victoria' ? 'text-primary' : res === 'Derrota' ? 'text-subtle' : ''}>{res}{m.rankDelta ? <span className="text-subtle text-sm"> · {m.rankDelta > 0 ? '+' : ''}{m.rankDelta}</span> : null}</td>
                   <td className="tabular-nums">{m.kills}</td>
                   <td className="tabular-nums text-subtle">{m.deaths}</td>
                   <td className="tabular-nums text-subtle">{Math.round((m.durationSeconds ?? 0) / 60)} min</td>
-                  <td className="text-subtle">{dayTime(m.endedAt)}</td>
+                  <td className="text-subtle"><span className="inline-flex items-center gap-2">{dayTime(m.endedAt)}<Arrow className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,translate]" /></span></td>
                 </tr>
               );
             })}
@@ -344,7 +345,7 @@ function Medals({ onChange, version }: { onChange: () => void; version: number }
         </div>
         <div className="flex border border-line shrink-0">
           {([['all', 'Todas'], ['earned', 'Obtenidas'], ['next', 'Más cerca']] as const).map(([k, l]) => (
-            <button key={k} onClick={() => setView(k)} className={`px-4 py-2 text-sm transition-colors ${view === k ? 'bg-primary text-ink' : 'text-muted hover:text-ink'}`}>{l}</button>
+            <button key={k} onClick={() => setView(k)} className={`px-4 py-2 text-sm transition-colors ${view === k ? 'bg-action text-ink' : 'text-muted hover:text-ink'}`}>{l}</button>
           ))}
         </div>
       </div>
@@ -370,7 +371,7 @@ function Achievements() {
           <div className="display text-2xl mt-6">{ach.unlocked} de {ach.items.length} logros</div>
           <div className="mt-6 flex border border-line w-full">
             {([['all', 'Todos'], ['done', 'Hechos'], ['todo', 'Faltan']] as const).map(([k, l]) => (
-              <button key={k} onClick={() => setFilter(k)} className={`flex-1 py-2 text-sm transition-colors ${filter === k ? 'bg-primary' : 'text-muted hover:text-ink'}`}>{l}</button>
+              <button key={k} onClick={() => setFilter(k)} className={`flex-1 py-2 text-sm transition-colors ${filter === k ? 'bg-action' : 'text-muted hover:text-ink'}`}>{l}</button>
             ))}
           </div>
         </div>
