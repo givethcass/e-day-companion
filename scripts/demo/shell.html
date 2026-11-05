@@ -1,0 +1,138 @@
+<meta charset="utf-8">
+<title>E-Day Companion · Demo</title>
+<meta name="description" content="Concepto no oficial con datos simulados. Cambia entre móvil, tablet y web.">
+<style>
+  :root { color-scheme: dark; --bg: #0a0a0a; --line: #262626; --ink: #fff; --muted: #b4b2b2; --subtle: #8a8888; --primary: #f0473a; --action: #bf0a0a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; overflow: hidden; }
+  body { display: flex; flex-direction: column;
+    background: radial-gradient(60% 50% at 50% 0%, rgb(128 0 0 / 0.35), transparent 70%), linear-gradient(var(--bg), var(--bg));
+  }
+  body::before { content: ''; position: fixed; inset: 0; pointer-events: none; opacity: 0.35;
+    background-image: linear-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+    background-size: 48px 48px; mask-image: radial-gradient(70% 70% at 50% 40%, #000, transparent); }
+  header { position: relative; z-index: 2; height: 64px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 20px; border-bottom: 1px solid var(--line); background: rgb(0 0 0 / 0.6); backdrop-filter: blur(8px); }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-size: 14px; white-space: nowrap; }
+  .brand i { width: 14px; height: 14px; border: 2px solid var(--primary); transform: rotate(45deg); display: inline-block; position: relative; }
+  .brand i::after { content: ''; position: absolute; inset: 2px; background: var(--primary); }
+  .brand span { color: var(--primary); }
+  .seg { position: relative; display: flex; margin: 0 auto; padding: 4px; border: 1px solid var(--line); background: #000; }
+  .seg button { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border: 0; background: none; color: var(--muted);
+    font: 600 13px/1 system-ui, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: color 0.2s; }
+  .seg button:hover { color: var(--ink); }
+  .seg button:focus { outline: none; }
+  .seg button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+  .seg button[aria-pressed='true'] { color: var(--ink); }
+  .seg button svg { width: 16px; height: 16px; }
+  .seg kbd { font: 11px/1 ui-monospace, monospace; color: var(--subtle); border: 1px solid #333; padding: 2px 4px; }
+  .seg .pill { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; background: var(--action); transition: transform 0.45s cubic-bezier(.2,.7,.2,1), width 0.45s cubic-bezier(.2,.7,.2,1); }
+  .spec { font-size: 13px; color: var(--subtle); white-space: nowrap; min-width: 220px; text-align: right; }
+  .spec b { color: var(--muted); font-weight: 600; }
+  main { position: relative; flex: 1; min-height: 0; }
+  .device { position: absolute; left: 50%; top: 50%; transform-origin: center; opacity: 0; pointer-events: none; visibility: hidden;
+    transition: opacity 0.35s ease, transform 0.5s cubic-bezier(.2,.7,.2,1), visibility 0s linear 0.35s; }
+  .device.on { opacity: 1; pointer-events: auto; visibility: visible; transition: opacity 0.35s ease 0.1s, transform 0.5s cubic-bezier(.2,.7,.2,1), visibility 0s; }
+  .device iframe { display: block; border: 0; background: #000; }
+  .phone { padding: 12px; background: #050505; border-radius: 60px; box-shadow: 0 0 0 1px #333, 0 0 0 4px #111, 0 30px 80px rgb(0 0 0 / 0.7); }
+  .phone iframe { border-radius: 48px; }
+  .tablet { padding: 18px; background: #050505; border-radius: 40px; box-shadow: 0 0 0 1px #333, 0 0 0 4px #111, 0 30px 80px rgb(0 0 0 / 0.7); }
+  .tablet iframe { border-radius: 22px; }
+  .web { border: 1px solid #333; background: #111; box-shadow: 0 30px 80px rgb(0 0 0 / 0.7); border-radius: 10px; overflow: hidden; }
+  .chrome { height: 40px; display: flex; align-items: center; gap: 14px; padding: 0 14px; background: #161616; border-bottom: 1px solid #262626; }
+  .dots { display: flex; gap: 7px; } .dots i { width: 11px; height: 11px; border-radius: 50%; background: #333; } .dots i:first-child { background: var(--action); }
+  .url { flex: 1; max-width: 520px; margin: 0 auto; height: 26px; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #0a0a0a; border: 1px solid #262626; border-radius: 6px; color: var(--muted); font-size: 12.5px; }
+  .url svg { width: 12px; height: 12px; color: var(--subtle); }
+  .viewport { position: relative; overflow: hidden; }
+  .viewport iframe { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  @media (max-width: 900px) { .spec { display: none; } }
+  @media (max-width: 720px) { .seg kbd, .brand b { display: none; } .seg button { padding: 0 10px; } }
+  @media (max-width: 440px) { header { padding: 0 10px; gap: 8px; } .seg button { padding: 0 8px; gap: 6px; letter-spacing: 0.04em; font-size: 12px; } .seg button svg { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .device, .device.on, .seg .pill { transition: none; } }
+</style>
+<header>
+  <div class="brand"><i></i><b>E-Day <span>Companion</span></b></div>
+  <div class="seg" role="group" aria-label="Dispositivo">
+    <span class="pill" aria-hidden="true"></span>
+    <button data-d="movil" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>Móvil<kbd>1</kbd></button>
+    <button data-d="tablet" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M11 18.5h2"/></svg>Tablet<kbd>2</kbd></button>
+    <button data-d="web" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>Web<kbd>3</kbd></button>
+  </div>
+  <div class="spec" aria-live="polite"></div>
+</header>
+<main>
+  <div class="device phone" data-d="movil"><iframe title="E-Day Companion en un teléfono" data-src="mobile.html?embed=movil" width="440" height="956"></iframe></div>
+  <div class="device tablet" data-d="tablet"><iframe title="E-Day Companion en una tablet" data-src="mobile.html?embed=tablet" width="820" height="1180"></iframe></div>
+  <div class="device web" data-d="web">
+    <div class="chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="1"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>eday-companion.app</span><span style="width:47px"></span></div>
+    <div class="viewport"><iframe title="E-Day Companion en la web" data-src="web.html"></iframe></div>
+  </div>
+</main>
+<script>
+  (function () {
+    var SPEC = {
+      movil: '<b>Teléfono</b> · 440 × 956 · la app Expo',
+      tablet: '<b>Tablet</b> · 820 × 1180 · la misma app, en columnas',
+      web: '<b>Web</b> · React, Tailwind y three.js'
+    };
+    var main = document.querySelector('main');
+    var devices = {};
+    document.querySelectorAll('.device').forEach(function (el) { devices[el.dataset.d] = el; });
+    var buttons = document.querySelectorAll('.seg button');
+    var pill = document.querySelector('.seg .pill');
+    var spec = document.querySelector('.spec');
+    var current = null;
+
+    function load(el) {
+      var f = el.querySelector('iframe');
+      if (!f.src) f.src = f.dataset.src;
+    }
+    function layout() {
+      var W = main.clientWidth - 32, H = main.clientHeight - 48;
+      ['movil', 'tablet'].forEach(function (d) {
+        var el = devices[d];
+        var s = Math.min(1, W / el.offsetWidth, H / el.offsetHeight);
+        el.style.transform = 'translate(-50%, -50%) scale(' + s + ')' + (d === current ? '' : ' translateY(24px)');
+      });
+      var web = devices.web, vp = web.querySelector('.viewport'), f = vp.querySelector('iframe');
+      var w = Math.max(320, W), h = Math.max(300, H - 40);
+      var logical = Math.max(1280, w), s = w / logical;
+      web.style.width = w + 'px';
+      vp.style.height = h + 'px';
+      f.style.width = logical + 'px';
+      f.style.height = h / s + 'px';
+      f.style.transform = 'scale(' + s + ')';
+      web.style.transform = 'translate(-50%, -50%)' + (current === 'web' ? '' : ' translateY(24px)');
+    }
+    function placePill() {
+      var b = document.querySelector('.seg button[data-d="' + current + '"]');
+      if (b) { pill.style.width = b.offsetWidth + 'px'; pill.style.transform = 'translateX(' + b.offsetLeft + 'px)'; }
+    }
+    function pick(d, remember) {
+      if (!devices[d]) d = 'movil';
+      current = d;
+      load(devices[d]);
+      Object.keys(devices).forEach(function (k) { devices[k].classList.toggle('on', k === d); });
+      buttons.forEach(function (b) {
+        var on = b.dataset.d === d;
+        b.setAttribute('aria-pressed', String(on));
+      });
+      placePill();
+      spec.innerHTML = SPEC[d];
+      layout();
+      if (remember) { try { localStorage.setItem('eday-device', d); } catch (e) {} }
+    }
+    buttons.forEach(function (b) { b.addEventListener('click', function () { pick(b.dataset.d, true); }); });
+    window.addEventListener('keydown', function (e) {
+      if (e.target && /input|select|textarea/i.test(e.target.tagName)) return;
+      var d = { '1': 'movil', '2': 'tablet', '3': 'web' }[e.key];
+      if (d) pick(d, true);
+    });
+    window.addEventListener('resize', function () { layout(); placePill(); });
+    var saved = null;
+    try { saved = localStorage.getItem('eday-device'); } catch (e) {}
+    var q = /[?&]device=(\w+)/.exec(location.search);
+    pick((q && q[1]) || saved || 'movil', false);
+    // Warm up the other two once the first one is showing, so switching is instant.
+    setTimeout(function () { Object.keys(devices).forEach(function (k) { load(devices[k]); }); }, 2500);
+  })();
+</script>

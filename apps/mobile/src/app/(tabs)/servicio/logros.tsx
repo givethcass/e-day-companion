@@ -13,6 +13,7 @@ import { day } from '@/lib/time';
 import { Chip, IconButton, Loader, Readouts, Screen, Text } from '@/ui/kit';
 import { Progress } from '@/ui/Medal';
 import { color, space } from '@/ui/theme';
+import { Columns } from '@/ui/layout';
 
 const FILTERS = ['Todos', 'Obtenidos', 'Por obtener'] as const;
 const rarity = (r: number) => (r < 0.05 ? `Ultra raro · ${(r * 100).toFixed(0)}%` : r < 0.15 ? `Raro · ${Math.round(r * 100)}%` : `${Math.round(r * 100)}% de los jugadores`);
@@ -57,7 +58,7 @@ export default function Logros() {
         {FILTERS.map((label, i) => <View key={label} style={{ flex: 1 }}><Chip label={label} selected={i === filter} onPress={() => setFilter(i)} /></View>)}
       </View>
       <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
-        {items.map((a) => <AchievementRow key={a.id} a={a} tz={player!.timezone} />)}
+        <Columns>{items.map((a) => <AchievementRow key={a.id} a={a} tz={player!.timezone} />)}</Columns>
       </View>
       <Text variant="caption" tone="textSubtle">{`De ${number(data.gamerscoreTotal)} Gamerscore posibles. Los porcentajes de rareza son ilustrativos.`}</Text>
     </Screen>

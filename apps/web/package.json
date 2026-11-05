@@ -1,0 +1,29 @@
+{
+  "name": "@eday/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Desktop website version of E-Day Companion: the same simulated backend, with Tailwind and a three.js scene.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@eday/api-mock": "*",
+    "@eday/api-types": "*",
+    "@fontsource/barlow": "^5.3.0",
+    "@fontsource/barlow-condensed": "^5.3.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.4",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "tailwindcss": "^4.3.4",
+    "vite": "^8.3.5"
+  }
+}

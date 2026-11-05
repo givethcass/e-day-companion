@@ -7,6 +7,7 @@ import { useApi } from '@/api/useApi';
 import { Button, Chip, IconButton, Loader, Screen, Text } from '@/ui/kit';
 import { CreatorRow } from '@/ui/Creator';
 import { color, space } from '@/ui/theme';
+import { Columns } from '@/ui/layout';
 
 const FILTERS: [string, string | undefined][] = [['Todos', undefined], ['Español', 'es'], ['Inglés', 'en']];
 
@@ -21,7 +22,7 @@ export default function Creadores() {
       </View>
       {!data ? <Loader error={error} onRetry={reload} /> : (
         <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
-          {data.map((c) => <CreatorRow key={c.id} c={c} />)}
+          <Columns>{data.map((c) => <CreatorRow key={c.id} c={c} />)}</Columns>
         </View>
       )}
       <Button kind="secondary" label="Ver sus guías" onPress={() => router.push('/guias')} />

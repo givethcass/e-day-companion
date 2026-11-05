@@ -5,7 +5,7 @@ import { DEMO_NOW } from './demo';
 
 /** Moments that tell the story, in order. */
 export const CLOCK_PRESETS = [
-  { at: DEMO_NOW, note: '15 días sin jugar. Ranked ya abrió y no tienes rango.' },
+  { at: DEMO_NOW, note: 'Saliste de una noche de seis horas. Ranked te espera.' },
   { at: '2026-10-28T03:30:00.000Z', note: 'Una hora antes de Horde en español, sin micrófono.' },
   { at: '2026-10-31T02:00:00.000Z', note: 'Una hora antes de tu sesión de Horde con el clan.' },
   { at: '2026-11-03T16:00:00.000Z', note: 'Tienda nueva y empieza el evento 20 Years of Gears.' },

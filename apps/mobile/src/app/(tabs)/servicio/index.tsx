@@ -18,6 +18,7 @@ import { Button, Chip, DataLine, Loader, Readouts, Row, Screen, Section, Tabs, T
 import { MedalBadge, Progress, UnlockRow } from '@/ui/Medal';
 import { Emblem } from '@/ui/Service';
 import { color, size, space } from '@/ui/theme';
+import { Columns } from '@/ui/layout';
 
 const FILTERS: [string, Mode[] | null][] = [['Todo', null], ['Versus', ['versus_tdm', 'versus_conquest', 'versus_ranked']], ['Horde', ['horde_siege']], ['Campaña', ['campaign']]];
 
@@ -206,7 +207,7 @@ export default function Servicio() {
         {FILTERS.map(([label], i) => <View key={label} style={{ flex: 1 }}><Chip label={label} selected={i === filter} onPress={() => setFilter(i)} /></View>)}
       </View>
       <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
-        {items.map((m) => <MatchRow key={m.id} m={m} tz={tz} />)}
+        <Columns>{items.map((m) => <MatchRow key={m.id} m={m} tz={tz} />)}</Columns>
         {items.length === 0 && <Text tone="textMuted" style={{ paddingVertical: space.md }}>Sin partidas de este modo todavía.</Text>}
       </View>
     </Screen>

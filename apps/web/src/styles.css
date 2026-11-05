@@ -1,0 +1,62 @@
+@import 'tailwindcss';
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow-condensed/500.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/barlow-condensed/700.css';
+
+/* Direction C tokens (packages/tokens), as Tailwind theme values. */
+@theme {
+  --color-bg: #000000;
+  --color-surface: #0e0e0e;
+  --color-raised: #161616;
+  --color-line: #262626;
+  --color-band: #800000;
+  --color-ink: #ffffff;
+  --color-muted: #b4b2b2;
+  --color-subtle: #959393;
+  --color-primary: #f0473a;
+  --color-action: #bf0a0a;
+  --color-ember: #e50f11;
+  --color-bronze: #b0703f;
+  --color-silver: #c3cad2;
+  --color-gold: #d9a93b;
+  --color-onyx: #1c1c1c;
+  --color-diamond: #8fd3f2;
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Barlow', sans-serif;
+  --animate-rise: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-pulse-dot: pulse-dot 1.6s ease-out infinite;
+}
+
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgb(240 71 58 / 0.7); } 100% { box-shadow: 0 0 0 10px rgb(240 71 58 / 0); } }
+
+html { color-scheme: dark; background: #000; }
+body { @apply bg-bg text-ink font-sans antialiased; }
+::selection { background: #bf0a0a; color: #fff; }
+
+/* Subtle film grain over solid backgrounds. */
+.grain::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.06; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* A spotlight that follows the cursor across a card (--x / --y set from JS). */
+.spotlight { position: relative; isolation: isolate; }
+.spotlight::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity 0.3s;
+  background: radial-gradient(260px circle at var(--x, 50%) var(--y, 50%), rgb(240 71 58 / 0.16), transparent 70%);
+}
+.spotlight:hover::before { opacity: 1; }
+
+.band { background: linear-gradient(180deg, #800000 0%, #2a0000 55%, #000 100%); }
+.display { @apply font-display font-bold uppercase tracking-wide leading-[0.95]; }
+.eyebrow { @apply font-display font-semibold uppercase tracking-[0.12em] text-[13px]; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+@keyframes wiggle { 0%, 80%, 100% { transform: rotate(0); } 84% { transform: rotate(14deg); } 88% { transform: rotate(-12deg); } 92% { transform: rotate(8deg); } 96% { transform: rotate(-4deg); } }

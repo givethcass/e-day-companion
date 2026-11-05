@@ -13,6 +13,7 @@ import { Button, Card, Chip, DataLine, Loader, Row, Screen, Section, Text } from
 import { CreatorRow } from '@/ui/Creator';
 import { PromoCard } from '@/ui/Promo';
 import { color, space } from '@/ui/theme';
+import { Columns } from '@/ui/layout';
 
 const FILTERS = ['Todas', 'Español', 'Sin micro', 'Hoy'] as const;
 const endOfDay = (now: string, tz: string) => {
@@ -57,12 +58,12 @@ export default function Comunidad() {
         {FILTERS.map((f) => <Chip key={f} label={f} selected={f === filter} onPress={() => setFilter(f)} />)}
       </View>
       <Section title="Escuadras abiertas">
-        {!data ? <Loader error={error} onRetry={reload} /> : open.map((s) => (
+        {!data ? <Loader error={error} onRetry={reload} /> : <Columns>{open.map((s) => (
           <Row key={s.id} tag={dayTime(s.startsAt, tz).split(' ').slice(0, 2).join(' ').toUpperCase()} tagTone={s.mode === 'horde_siege' ? 'primary' : 'text'}
             title={`${modeLabel(s.mode)}${s.map ? ` · ${s.map}` : ''}`}
             subtitle={`${clock(s.startsAt, tz)} · ${s.language === 'es' ? 'Español' : 'Inglés'}${s.micRequired ? ' · micrófono' : ' · sin micro'}${s.difficulty ? ` · ${difficultyLabel(s.difficulty)}` : ''}`}
             trailing={`${s.members.length}/${s.slots}`} onPress={() => router.push(`/comunidad/escuadra/${s.id}`)} />
-        ))}
+        ))}</Columns>}
         {data && open.length === 0 && <Text tone="textMuted">No hay sesiones con ese filtro.</Text>}
       </Section>
       {extra?.clan && (
@@ -77,7 +78,7 @@ export default function Comunidad() {
         <View>
           <Text variant="section" style={{ paddingBottom: 6 }}>Creadores</Text>
           <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
-            {extra.creators.slice(0, 3).map((c) => <CreatorRow key={c.id} c={c} />)}
+            <Columns>{extra.creators.slice(0, 3).map((c) => <CreatorRow key={c.id} c={c} />)}</Columns>
           </View>
           <View style={{ marginTop: 12 }}><Button kind="secondary" label="Ver todos los creadores" onPress={() => router.push('/comunidad/creadores')} /></View>
         </View>

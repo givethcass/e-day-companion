@@ -10,6 +10,7 @@ import { Chip, Loader, Screen, Text } from '@/ui/kit';
 import { Featured, NewsRow } from '@/ui/News';
 import { PromoCard } from '@/ui/Promo';
 import { color, space } from '@/ui/theme';
+import { Columns } from '@/ui/layout';
 
 const FILTERS: [string, NewsTag | undefined][] = [['Todo', undefined], ['Parches', 'patch'], ['Eventos', 'event'], ['Comunidad', 'community']];
 
@@ -32,9 +33,9 @@ export default function Noticias() {
         <>
           {lead && <Featured n={lead} tz={tz} />}
           <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
-            {rest.slice(0, 3).map((n) => <NewsRow key={n.id} n={n} tz={tz} />)}
+            <Columns>{rest.slice(0, 3).map((n) => <NewsRow key={n.id} n={n} tz={tz} />)}</Columns>
             {promos?.[0] && <View style={{ paddingVertical: 10, borderTopWidth: 1, borderTopColor: color.border }}><PromoCard p={promos[0]} /></View>}
-            {rest.slice(3).map((n) => <NewsRow key={n.id} n={n} tz={tz} />)}
+            <Columns>{rest.slice(3).map((n) => <NewsRow key={n.id} n={n} tz={tz} />)}</Columns>
             {rest.length === 0 && <Text tone="textMuted" style={{ paddingVertical: space.md }}>Nada publicado de este tipo todavía.</Text>}
           </View>
         </>

@@ -12,6 +12,7 @@ import { GuideRow } from '@/ui/Guide';
 import { Chip, Loader, Screen, Text } from '@/ui/kit';
 import { PromoCard } from '@/ui/Promo';
 import { color, space } from '@/ui/theme';
+import { Columns } from '@/ui/layout';
 
 export default function Guias() {
   const now = useNow();
@@ -29,7 +30,7 @@ export default function Guias() {
       {mine.length > 0 && (
         <View style={{ gap: 6 }}>
           <Text variant="overline" tone="textSubtle">{`Para tu clase · ${roleLabel(role!)}`}</Text>
-          <View style={styles.box}>{mine.map((g) => <GuideRow key={g.id} g={g} />)}</View>
+          <View style={styles.box}><Columns>{mine.map((g) => <GuideRow key={g.id} g={g} />)}</Columns></View>
         </View>
       )}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
@@ -40,7 +41,7 @@ export default function Guias() {
       {GUIDE_SECTIONS.filter((s) => shown.some((g) => g.section === s)).map((s) => (
         <View key={s}>
           <Text variant="section" style={{ paddingBottom: 6 }}>{GUIDE_SECTION[s].label}</Text>
-          <View style={styles.box}>{shown.filter((g) => g.section === s).map((g) => <GuideRow key={g.id} g={g} />)}</View>
+          <View style={styles.box}><Columns>{shown.filter((g) => g.section === s).map((g) => <GuideRow key={g.id} g={g} />)}</Columns></View>
         </View>
       ))}
     </Screen>

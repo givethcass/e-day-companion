@@ -20,3 +20,5 @@ jobs:
       - run: npm run export:web
         env:
           CI: '1'
+      - run: npm run build -w @eday/web
+      - run: node scripts/demo/bundle.mjs

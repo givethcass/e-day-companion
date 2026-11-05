@@ -15,7 +15,8 @@ Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its
 | 2 | App base and simulated backend | Done |
 | 3 | Your week, match history, match report, demo clock | Done |
 | 4 | Waypoint-style structure (five tabs), Home, News, season calendar | Done |
-| 5 | Guides, service record, community | Not started |
+| 5 | Guides, service record, community, partner slots | Done |
+| 5+ | Tablet layout, desktop website, device switcher in the demo | Done |
 | 6 | Polish, demo video, case study | Not started |
 
 ## Repository
@@ -25,7 +26,9 @@ contract/openapi.yaml    API contract (OpenAPI 3.1), written before any code
 packages/api-types       TypeScript types generated from the contract
 packages/seed            Deterministic simulated data + checks against the contract
 packages/tokens          Design tokens (direction C, official-site look) + WCAG contrast checks
-apps/mobile              Expo app (iOS, Android, web)
+apps/mobile              Expo app (iOS, Android, web), phone and tablet layouts
+apps/web                 Desktop website: React, Tailwind and three.js on the same simulated backend
+scripts/demo             Device switcher (phone, tablet, web) that bundles both builds into one demo page
 apps/api-mock            Simulated backend: every contract operation, in the app or over HTTP
 docs/adr                 Architecture decision records
 docs/case-study.md       Case study draft
@@ -42,6 +45,8 @@ npm run seed    # writes packages/seed/out/*.json
 npm run check       # contract, determinism, schemas, demo story, color contrast, backend tests
 npm run typecheck   # TypeScript across the workspace
 npm run web         # the app in a browser, with the simulated backend inside it
+npm run site        # the desktop website (Vite dev server)
+npm run demo:bundle # dist-demo/: the switcher, mobile.html (phone and tablet) and web.html
 npm run api         # the simulated backend over HTTP on :8787
 ```
 

@@ -13,6 +13,7 @@ import { CATEGORY, earned, nextTier, TIER, topTier } from '@/lib/service';
 import { Chip, IconButton, Loader, Readouts, Screen, Text } from '@/ui/kit';
 import { MedalBadge, MedalRow } from '@/ui/Medal';
 import { color, space } from '@/ui/theme';
+import { Columns } from '@/ui/layout';
 
 const FILTERS = ['Todas', 'Obtenidas', 'Por obtener'] as const;
 
@@ -76,7 +77,7 @@ export default function Medallas() {
             <Text variant="data" tone="textSubtle" style={{ fontSize: 13 }}>{tally(cat)}</Text>
           </View>
           <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
-            {shown.filter((m) => m.category === cat).sort((a, b) => left(a) - left(b)).map((m) => <MedalRow key={m.id} m={m} tz={tz} />)}
+            <Columns>{shown.filter((m) => m.category === cat).sort((a, b) => left(a) - left(b)).map((m) => <MedalRow key={m.id} m={m} tz={tz} />)}</Columns>
           </View>
         </View>
       ))}

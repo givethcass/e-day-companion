@@ -15,7 +15,9 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "api": "npm start -w @eday/api-mock",
     "web": "npm run web -w @eday/mobile",
-    "export:web": "npm run export:web -w @eday/mobile"
+    "export:web": "npm run export:web -w @eday/mobile",
+    "site": "npm run dev -w @eday/web",
+    "demo:bundle": "npm run export:web && npm run build -w @eday/web && node scripts/demo/bundle.mjs"
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^13.1.0",

@@ -20,6 +20,7 @@ import { Emblem, StatGrid, modeCells } from '@/ui/Service';
 import { Featured, NewsRow } from '@/ui/News';
 import { PromoCard } from '@/ui/Promo';
 import { color, space } from '@/ui/theme';
+import { Columns } from '@/ui/layout';
 
 function Tile({ label, glow, title, body, cta, onPress }: { label: string; glow: string; title: string; body: string; cta: string; onPress: () => void }) {
   return (
@@ -121,7 +122,7 @@ export default function Inicio() {
       <Band title="Lo último" subtitle="Noticias oficiales de la temporada" />
       {lead && <Featured n={lead} tz={tz} />}
       <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
-        {latest.map((n) => <NewsRow key={n.id} n={n} tz={tz} />)}
+        <Columns>{latest.map((n) => <NewsRow key={n.id} n={n} tz={tz} />)}</Columns>
       </View>
       <Button kind="secondary" label="Todas las noticias" onPress={() => router.push('/noticias')} />
 
@@ -157,11 +158,11 @@ export default function Inicio() {
       </View>
 
       <Section title="Calendario">
-        {calendar.slice(0, 5).map((e) => (
+        <Columns>{calendar.slice(0, 5).map((e) => (
           <Row key={e.id} tag={shortDay(e.at)} tagTone={e.kind === 'event' ? 'primary' : 'textSubtle'} title={e.title}
             subtitle={`${dayTime(e.at, tz)} tu hora`} trailing={inDays(e.at)} trailingTone="text"
             onPress={e.link ? () => router.push(e.link as Href) : undefined} />
-        ))}
+        ))}</Columns>
       </Section>
 
       <Section title="Tu resumen">

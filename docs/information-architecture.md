@@ -1,6 +1,6 @@
 # Information architecture
 
-> **Current structure (v0.9.0, week 5).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060) and [Service record and medals (v0.7.0)](#service-record-and-medals-v070), with the full medal catalogue in v0.8.0 and [week 5 (v0.9.0)](#guides-class-levels-achievements-clan-creators-and-partner-slots-v090).
+> **Current structure (v0.9.0, week 5, with tablet and web).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060) and [Service record and medals (v0.7.0)](#service-record-and-medals-v070), with the full medal catalogue in v0.8.0 and [week 5 (v0.9.0)](#guides-class-levels-achievements-clan-creators-and-partner-slots-v090).
 
 Week 1. Five tabs, each one answering a single question, plus the profile in the top corner. Every screen ends in an action, and the main one is **Deploy** (open the game).
 
@@ -115,4 +115,18 @@ Week 5 fills the last placeholders.
 | Inicio, Noticias, Guías, Comunidad | One partner slot each, labelled "Patrocinado" or "Colaboración" | `listPromos` |
 
 Partner slots show where an official app could carry sponsorships and collaborations. In the demo the brands are invented, nothing is sold and there is no ad network; the slots are dashed and labelled so they never read as official content. Creators are invented people too.
+
+## Tablet and desktop (no contract change)
+
+The demo now switches between three devices. Nothing new was needed from the API: every screen reads the same operations.
+
+- **Phone** (440 × 956). Unchanged.
+- **Tablet** (from 700 points wide, shown at 820 × 1180). The same Expo app with wider margins, a centred column up to 1,180 points, labels beside the tab icons, and long lists (news, guides, medals, achievements, matches, squads, creators, calendar) in two columns, three from 1,100. `apps/mobile/src/ui/layout.tsx`.
+- **Web** (`apps/web`, laid out for 1,280 and up). Same five sections as top navigation, each opening on a solid red band:
+  - Inicio: full-bleed hero with a three.js medal and rising embers that lean toward the cursor, the mode tabs with counting stats, a headline ticker, the week and next mission, a news mosaic, the partner slot, the store with tilting cards and a wishlist toggle, the calendar as a timeline, and open squads.
+  - Noticias: tag filters over a card grid; articles with a reading progress bar.
+  - Guías: section filters, a creator sidebar, and guides with the key facts pinned beside the text.
+  - Mi servicio: career summary, Versus and Horde breakdowns, class levels, medal and Gamerscore rings, trivia and a match table; Medallas with all 74 series, tier tooltips and equip on click (up to three, like the API); Logros with filters.
+  - Comunidad: squads you can join or leave, the clan and its board, creators (live ones pulse), the partner slot and the global ranked board.
+  - Micro-interactions: sliding nav underline, magnetic buttons, cursor spotlight on cards, reveal on scroll, count-up numbers, toasts. All of them stand still under reduced motion.
 

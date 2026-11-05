@@ -9,6 +9,7 @@ import { useSession } from '@/api/session';
 import { useClock } from '@/lib/clock';
 import { dayTime } from '@/lib/time';
 import { Icon, type IconName } from './Icon';
+import { useLayout } from './layout';
 import { color, radius, size, space, type } from './theme';
 
 export function Text({ variant = 'body', tone, style, ...rest }: TextProps & { variant?: keyof typeof type; tone?: keyof typeof color }) {
@@ -225,11 +226,12 @@ export function DemoClock() {
 export function Screen({ title, overline, meta, right, children, edges = ['top'], bleed }: {
   title?: string; overline?: string; meta?: string; right?: ReactNode; children: ReactNode; edges?: ('top' | 'bottom')[]; bleed?: ReactNode;
 }) {
+  const { wide, gutter } = useLayout();
   return (
     <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: color.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: space.xxl }}>
         {bleed}
-        <View style={styles.content}>
+        <View style={[styles.content, { paddingHorizontal: gutter }, wide && { paddingTop: space.xl, gap: 18, width: '100%', maxWidth: 1180, alignSelf: 'center' }]}>
           {title && (
             <View style={styles.header}>
               <View style={{ flex: 1, gap: 4 }}>

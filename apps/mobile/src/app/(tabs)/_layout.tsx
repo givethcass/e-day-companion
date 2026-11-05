@@ -2,6 +2,7 @@ import { Redirect, Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { useSession } from '@/api/session';
 import { Icon, type IconName } from '@/ui/Icon';
+import { useLayout } from '@/ui/layout';
 import { color, fontFamily } from '@/ui/theme';
 
 const TABS: { name: string; title: string; icon: IconName }[] = [
@@ -14,17 +15,18 @@ const TABS: { name: string; title: string; icon: IconName }[] = [
 
 export default function TabsLayout() {
   const { ready, player } = useSession();
+  const { wide } = useLayout();
   if (!ready) return null;
   if (!player) return <Redirect href="/login" />;
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        // Always a phone layout: on a wide browser the demo sits in a phone frame, but the window is wide.
-        tabBarLabelPosition: 'below-icon',
+        // Labels sit under the icons on a phone and beside them on a tablet (the phone demo frame is 440 wide).
+        tabBarLabelPosition: wide ? 'beside-icon' : 'below-icon',
         tabBarActiveTintColor: color.text,
         tabBarInactiveTintColor: color.textSubtle,
-        tabBarStyle: { backgroundColor: color.bg, borderTopColor: color.border, height: 76, paddingTop: 6, paddingBottom: 18 },
+        tabBarStyle: { backgroundColor: color.bg, borderTopColor: color.border, height: wide ? 64 : 76, paddingTop: 6, paddingBottom: wide ? 6 : 18 },
         tabBarLabelStyle: { fontFamily: fontFamily.labelStrong, fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase' },
         sceneStyle: { backgroundColor: color.bg },
       }}

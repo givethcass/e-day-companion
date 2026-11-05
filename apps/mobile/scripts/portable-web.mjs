@@ -43,6 +43,10 @@ const fit = `<script>
     fit();
   })();
 </script>`;
+// Inside the demo's device switcher the page already sits in a drawn device, so it drops its own frame.
+const embed = `<script>
+  if (/[?&]embed=/.test(location.search)) { var f = document.getElementById('phone-frame'); if (f) f.remove(); }
+</script>`;
 const boot = `<script>
   // Pin relative URLs to the folder this page was served from, then start the router at "/".
   (function () {
@@ -57,6 +61,7 @@ await writeFile(join(out, 'index.html'), `<title>E-Day Companion</title>
 <meta name="description" content="Concepto no oficial con datos simulados.">
 ${style.replace('<style id="expo-reset">', '<style id="expo-reset">\n      :root { color-scheme: dark; }\n      body { background: #000000; }')}
 ${frame}
+${embed}
 ${boot}
 <noscript>Necesitas JavaScript para usar esta demo.</noscript>
 <div id="root"></div>
