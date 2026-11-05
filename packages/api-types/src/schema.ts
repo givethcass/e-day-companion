@@ -93,6 +93,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/service-record": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Récord de servicio del jugador hasta asOf, calculado de sus partidas */
+        get: operations["getServiceRecord"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/medals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Series de medallas con el progreso del jugador y la fecha de cada nivel obtenido */
+        get: operations["listMyMedals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/medals/{medalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Una serie de medallas */
+        get: operations["getMyMedal"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/medals/equipped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Elegir hasta 3 medallas para la tarjeta de perfil (solo series con al menos un nivel obtenido) */
+        put: operations["setEquippedMedals"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/matches": {
         parameters: {
             query?: never;
@@ -521,6 +589,137 @@ export interface components {
                 to?: string;
             };
         };
+        /** @enum {string} */
+        MedalTier: "bronze" | "silver" | "gold" | "onyx" | "diamond";
+        /** @enum {string} */
+        MedalCategory: "weapon" | "horde" | "versus" | "campaign" | "event";
+        /** @description Una serie de medallas de cinco niveles, como en la personalización del juego */
+        Medal: {
+            id: string;
+            /** @example Bajas con Lancer MK1 */
+            name: string;
+            category: components["schemas"]["MedalCategory"];
+            /** @description Lo que se cuenta, para leer "Consigue 250 bajas con el Lancer MK1" */
+            unit: string;
+            progress: number;
+            equipped: boolean;
+            tiers: {
+                tier: components["schemas"]["MedalTier"];
+                goal: number;
+                reward: {
+                    amount: number;
+                    /** @enum {string} */
+                    currency: "coins";
+                };
+                /** Format: date-time */
+                unlockedAt: string | null;
+            }[];
+        };
+        MedalUnlock: {
+            medalId: string;
+            name: string;
+            tier: components["schemas"]["MedalTier"];
+            /** Format: date-time */
+            unlockedAt: string;
+        };
+        ServiceRecord: {
+            gamertag: string;
+            level: number;
+            /** @description Título de perfil */
+            title: string;
+            career: {
+                matches: number;
+                hoursPlayed: number;
+                daysPlayed: number;
+                bestDayStreak: number;
+                daysSinceLastMatch?: number | null;
+                /** Format: date-time */
+                firstMatchAt?: string | null;
+                /** @description Hora local en que más juega, "21:00" */
+                favoriteHour?: string | null;
+                /** @description Día de la semana en que más juega */
+                favoriteWeekday?: string | null;
+                kills: number;
+                deaths: number;
+                kd: number;
+                /** @description Promedio de 0 a 1 */
+                accuracy: number;
+                /** @description Parte del tiempo jugado por modo, de 0 a 1 */
+                share: {
+                    versus: number;
+                    horde: number;
+                    campaign: number;
+                };
+            };
+            versus: {
+                matches: number;
+                wins: number;
+                losses: number;
+                draws: number;
+                winRate: number;
+                bestWinStreak: number;
+                kills: number;
+                deaths: number;
+                kd: number;
+                accuracy: number;
+                hoursPlayed: number;
+                /** @description Más bajas en una partida */
+                bestKills?: number | null;
+                rank?: components["schemas"]["Rank"] | null;
+                byMode: {
+                    mode: components["schemas"]["Mode"];
+                    matches: number;
+                    wins: number;
+                }[];
+                bestMap?: {
+                    map: string;
+                    matches: number;
+                    wins: number;
+                } | null;
+            };
+            horde: {
+                matches: number;
+                completed: number;
+                bestWave: number;
+                waveGoal: number;
+                wavesCleared: number;
+                kills: number;
+                hoursPlayed: number;
+                mainRole?: components["schemas"]["HordeRole"] | null;
+                byMap: {
+                    map: string;
+                    matches: number;
+                    bestWave: number;
+                }[];
+            };
+            campaign: {
+                chaptersCompleted: number;
+                chaptersTotal: number;
+                attempts: number;
+                hoursPlayed: number;
+                kills: number;
+            };
+            medals: {
+                /** @description Niveles obtenidos en todas las series */
+                earned: number;
+                total: number;
+                seriesCompleted: number;
+                seriesTotal: number;
+                /** @description Los niveles más recientes, el último primero */
+                latest: components["schemas"]["MedalUnlock"][];
+            };
+            equipped: components["schemas"]["MedalUnlock"][];
+            /** @description Curiosidades al estilo GTA, ya redactadas para mostrarse */
+            trivia: {
+                id: string;
+                /** @example Balas disparadas */
+                label: string;
+                /** @example 48,210 */
+                value: string;
+                /** @example Unas 160 cajas de munición */
+                detail?: string;
+            }[];
+        };
         MatchSummary: {
             id: string;
             mode: components["schemas"]["Mode"];
@@ -713,6 +912,15 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
+        /** @description Petición inválida */
+        BadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
     };
     parameters: {
         /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
@@ -859,6 +1067,108 @@ export interface operations {
                     "application/json": components["schemas"]["NotificationPrefs"];
                 };
             };
+        };
+    };
+    getServiceRecord: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Récord de servicio */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceRecord"];
+                };
+            };
+        };
+    };
+    listMyMedals: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Medallas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Medal"][];
+                };
+            };
+        };
+    };
+    getMyMedal: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path: {
+                medalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Medalla */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Medal"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    setEquippedMedals: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    medalIds: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Medallas equipadas, en orden */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedalUnlock"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
         };
     };
     listMyMatches: {

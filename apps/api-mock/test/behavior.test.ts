@@ -1,7 +1,7 @@
 // The demo story and the six fixes from the synthetic test hold in the simulated backend.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import type { CalendarEntry, Leaderboard, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
+import type { CalendarEntry, Leaderboard, Medal, MedalUnlock, ServiceRecord, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
 import { generate } from '@eday/seed';
 import { createApi } from '../src/index.ts';
 
@@ -130,4 +130,43 @@ test('the calendar lists what comes next, in order', () => {
   assert.equal(entries.at(-1)!.title, 'Termina la Temporada 1');
   const after = call<CalendarEntry[]>('GET', '/calendar', { query: { asOf: '2026-11-08T12:00:00.000Z' } });
   assert.ok(!after.some((e) => e.kind === 'gift' || e.title.includes('Halloween')));
+});
+
+test("the service record is counted from Delta_Rojo's matches", () => {
+  const r = call<ServiceRecord>('GET', '/me/service-record');
+  assert.equal(r.career.matches, 21);
+  assert.equal(r.career.daysSinceLastMatch, 15);
+  assert.equal(r.versus.matches + r.horde.matches + r.campaign.attempts, 21);
+  assert.equal(r.versus.wins + r.versus.losses + r.versus.draws, r.versus.matches);
+  assert.equal(r.horde.bestWave, 27);
+  assert.equal(r.campaign.chaptersCompleted, 3);
+  assert.equal(r.versus.rank, null);
+  assert.ok(r.trivia.length >= 8);
+});
+
+test('each medal tier carries the date of the match that earned it', () => {
+  const medals = call<Medal[]>('GET', '/me/medals');
+  const matches = call<{ items: { endedAt: string }[] }>('GET', '/me/matches', { query: { limit: '100' } }).items.map((m) => m.endedAt);
+  for (const m of medals) {
+    for (const [i, t] of m.tiers.entries()) {
+      assert.equal(Boolean(t.unlockedAt), m.progress >= t.goal, `${m.id} ${t.tier}`);
+      if (t.unlockedAt) assert.ok(matches.includes(t.unlockedAt));
+      if (i > 0 && t.unlockedAt) assert.ok(t.unlockedAt >= m.tiers[i - 1].unlockedAt!);
+    }
+  }
+  // Ranked never played and no event matches: those series are still locked.
+  assert.equal(medals.find((m) => m.id === 'md_ranked')!.progress, 0);
+  assert.equal(medals.filter((m) => m.equipped).length, 3);
+});
+
+test('only earned medals can be equipped, three at most', () => {
+  const { api } = fresh();
+  const put = (medalIds: string[]) => api.handle({ method: 'PUT', path: '/me/medals/equipped', playerId: 'p_demo', body: { medalIds } });
+  assert.equal(put(['md_ranked']).status, 400);
+  assert.equal(put(['md_lancer', 'md_waves', 'md_wins', 'md_chapters']).status, 400);
+  const ok = put(['md_chapters', 'md_lancer']);
+  assert.equal(ok.status, 200);
+  assert.deepEqual((ok.body as MedalUnlock[]).map((m) => m.medalId), ['md_chapters', 'md_lancer']);
+  const record = api.handle({ method: 'GET', path: '/me/service-record', playerId: 'p_demo' }).body as ServiceRecord;
+  assert.deepEqual(record.equipped.map((m) => m.medalId), ['md_chapters', 'md_lancer']);
 });

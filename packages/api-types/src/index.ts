@@ -30,6 +30,11 @@ export type NewsTag = S['NewsTag'];
 export type NewsSummary = S['NewsSummary'];
 export type NewsArticle = S['NewsArticle'];
 export type CalendarEntry = S['CalendarEntry'];
+export type Medal = S['Medal'];
+export type MedalTier = S['MedalTier'];
+export type MedalCategory = S['MedalCategory'];
+export type MedalUnlock = S['MedalUnlock'];
+export type ServiceRecord = S['ServiceRecord'];
 export type ApiError = S['Error'];
 
 export type MatchPage = operations['listMyMatches']['responses']['200']['content']['application/json'];

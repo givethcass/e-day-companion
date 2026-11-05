@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.6.0
+  version: 0.7.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -15,6 +15,7 @@ security:
 tags:
   - name: Jugador
   - name: Partidas
+  - name: Servicio
   - name: Clasificaciones
   - name: Temporada
   - name: Tienda
@@ -103,6 +104,80 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/NotificationPrefs' }
+  /me/service-record:
+    get:
+      tags: [Servicio]
+      summary: Récord de servicio del jugador hasta asOf, calculado de sus partidas
+      operationId: getServiceRecord
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Récord de servicio
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceRecord' }
+  /me/medals:
+    get:
+      tags: [Servicio]
+      summary: Series de medallas con el progreso del jugador y la fecha de cada nivel obtenido
+      operationId: listMyMedals
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Medallas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Medal' }
+  /me/medals/{medalId}:
+    get:
+      tags: [Servicio]
+      summary: Una serie de medallas
+      operationId: getMyMedal
+      parameters:
+        - name: medalId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Medalla
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Medal' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /me/medals/equipped:
+    put:
+      tags: [Servicio]
+      summary: Elegir hasta 3 medallas para la tarjeta de perfil (solo series con al menos un nivel obtenido)
+      operationId: setEquippedMedals
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [medalIds]
+              properties:
+                medalIds:
+                  type: array
+                  maxItems: 3
+                  items: { type: string }
+      responses:
+        '200':
+          description: Medallas equipadas, en orden
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MedalUnlock' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /me/matches:
     get:
       tags: [Partidas]
@@ -475,6 +550,11 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
+    BadRequest:
+      description: Petición inválida
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
   schemas:
     Error:
       type: object
@@ -585,6 +665,175 @@ components:
           properties:
             from: { type: string, examples: ['22:00'] }
             to: { type: string, examples: ['08:00'] }
+    MedalTier:
+      type: string
+      enum: [bronze, silver, gold, onyx, diamond]
+    MedalCategory:
+      type: string
+      enum: [weapon, horde, versus, campaign, event]
+    Medal:
+      type: object
+      description: Una serie de medallas de cinco niveles, como en la personalización del juego
+      required: [id, name, category, unit, progress, tiers, equipped]
+      properties:
+        id: { type: string }
+        name: { type: string, examples: [Bajas con Lancer MK1] }
+        category: { $ref: '#/components/schemas/MedalCategory' }
+        unit: { type: string, description: 'Lo que se cuenta, para leer "Consigue 250 bajas con el Lancer MK1"' }
+        progress: { type: integer, minimum: 0 }
+        equipped: { type: boolean }
+        tiers:
+          type: array
+          minItems: 5
+          maxItems: 5
+          items:
+            type: object
+            required: [tier, goal, reward, unlockedAt]
+            properties:
+              tier: { $ref: '#/components/schemas/MedalTier' }
+              goal: { type: integer, minimum: 1 }
+              reward:
+                type: object
+                required: [amount, currency]
+                properties:
+                  amount: { type: integer }
+                  currency: { type: string, enum: [coins] }
+              unlockedAt: { type: [string, 'null'], format: date-time }
+    MedalUnlock:
+      type: object
+      required: [medalId, name, tier, unlockedAt]
+      properties:
+        medalId: { type: string }
+        name: { type: string }
+        tier: { $ref: '#/components/schemas/MedalTier' }
+        unlockedAt: { type: string, format: date-time }
+    ServiceRecord:
+      type: object
+      required: [gamertag, level, title, career, versus, horde, campaign, medals, equipped, trivia]
+      properties:
+        gamertag: { type: string }
+        level: { type: integer }
+        title: { type: string, description: Título de perfil }
+        career:
+          type: object
+          required: [matches, hoursPlayed, daysPlayed, bestDayStreak, kills, deaths, kd, accuracy, share]
+          properties:
+            matches: { type: integer }
+            hoursPlayed: { type: number }
+            daysPlayed: { type: integer }
+            bestDayStreak: { type: integer }
+            daysSinceLastMatch: { type: [integer, 'null'] }
+            firstMatchAt: { type: [string, 'null'], format: date-time }
+            favoriteHour: { type: [string, 'null'], description: 'Hora local en que más juega, "21:00"' }
+            favoriteWeekday: { type: [string, 'null'], description: Día de la semana en que más juega }
+            kills: { type: integer }
+            deaths: { type: integer }
+            kd: { type: number }
+            accuracy: { type: number, description: Promedio de 0 a 1 }
+            share:
+              type: object
+              description: Parte del tiempo jugado por modo, de 0 a 1
+              required: [versus, horde, campaign]
+              properties:
+                versus: { type: number }
+                horde: { type: number }
+                campaign: { type: number }
+        versus:
+          type: object
+          required: [matches, wins, losses, draws, winRate, bestWinStreak, kills, deaths, kd, accuracy, hoursPlayed, byMode]
+          properties:
+            matches: { type: integer }
+            wins: { type: integer }
+            losses: { type: integer }
+            draws: { type: integer }
+            winRate: { type: number }
+            bestWinStreak: { type: integer }
+            kills: { type: integer }
+            deaths: { type: integer }
+            kd: { type: number }
+            accuracy: { type: number }
+            hoursPlayed: { type: number }
+            bestKills: { type: [integer, 'null'], description: Más bajas en una partida }
+            rank:
+              oneOf:
+                - $ref: '#/components/schemas/Rank'
+                - type: 'null'
+            byMode:
+              type: array
+              items:
+                type: object
+                required: [mode, matches, wins]
+                properties:
+                  mode: { $ref: '#/components/schemas/Mode' }
+                  matches: { type: integer }
+                  wins: { type: integer }
+            bestMap:
+              type: [object, 'null']
+              required: [map, matches, wins]
+              properties:
+                map: { type: string }
+                matches: { type: integer }
+                wins: { type: integer }
+        horde:
+          type: object
+          required: [matches, completed, bestWave, waveGoal, wavesCleared, kills, hoursPlayed, byMap]
+          properties:
+            matches: { type: integer }
+            completed: { type: integer }
+            bestWave: { type: integer }
+            waveGoal: { type: integer }
+            wavesCleared: { type: integer }
+            kills: { type: integer }
+            hoursPlayed: { type: number }
+            mainRole:
+              oneOf:
+                - $ref: '#/components/schemas/HordeRole'
+                - type: 'null'
+            byMap:
+              type: array
+              items:
+                type: object
+                required: [map, matches, bestWave]
+                properties:
+                  map: { type: string }
+                  matches: { type: integer }
+                  bestWave: { type: integer }
+        campaign:
+          type: object
+          required: [chaptersCompleted, chaptersTotal, attempts, hoursPlayed, kills]
+          properties:
+            chaptersCompleted: { type: integer }
+            chaptersTotal: { type: integer }
+            attempts: { type: integer }
+            hoursPlayed: { type: number }
+            kills: { type: integer }
+        medals:
+          type: object
+          required: [earned, total, seriesCompleted, seriesTotal, latest]
+          properties:
+            earned: { type: integer, description: Niveles obtenidos en todas las series }
+            total: { type: integer }
+            seriesCompleted: { type: integer }
+            seriesTotal: { type: integer }
+            latest:
+              type: array
+              description: Los niveles más recientes, el último primero
+              items: { $ref: '#/components/schemas/MedalUnlock' }
+        equipped:
+          type: array
+          maxItems: 3
+          items: { $ref: '#/components/schemas/MedalUnlock' }
+        trivia:
+          type: array
+          description: Curiosidades al estilo GTA, ya redactadas para mostrarse
+          items:
+            type: object
+            required: [id, label, value]
+            properties:
+              id: { type: string }
+              label: { type: string, examples: [Balas disparadas] }
+              value: { type: string, examples: ['48,210'] }
+              detail: { type: string, examples: [Unas 160 cajas de munición] }
     MatchSummary:
       type: object
       required: [id, mode, map, endedAt, result]

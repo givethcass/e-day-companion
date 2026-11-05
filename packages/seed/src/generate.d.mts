@@ -33,6 +33,12 @@ export interface SeedNews {
   sections: { heading?: string; paragraphs?: string[]; bullets?: string[] }[]; knownIssues?: string[]; cta?: { label: string; link: string };
 }
 
+export interface SeedMedalSeries {
+  id: string; name: string; category: 'weapon' | 'horde' | 'versus' | 'campaign' | 'event'; unit: string;
+  metric: 'kills' | 'versusKills' | 'waves' | 'hordeCompleted' | 'versusWins' | 'ranked' | 'chapters' | 'during';
+  share?: number; from?: Iso; to?: Iso; goals: number[];
+}
+
 export interface SeedData {
   meta: { seed: number; demoNow: Iso; disclaimer: string };
   season: { id: string; number: number; name: string; startsAt: Iso; endsAt: Iso };
@@ -50,10 +56,15 @@ export interface SeedData {
   sessions: SeedSession[];
   wallets: SeedWallet[];
   news: SeedNews[];
+  medalSeries: SeedMedalSeries[];
 }
 
 /** Waves that complete a Horde Siege map. */
 export const HORDE_WAVE_GOAL: number;
+/** Coins for each medal tier, bronze to diamond. */
+export const MEDAL_REWARDS: number[];
+/** Chapters in the campaign. */
+export const CAMPAIGN_CHAPTERS: number;
 /** When the anniversary gift unlocks. */
 export const GIFT_AT: string;
 export function generate(options?: { seed?: number }): SeedData;

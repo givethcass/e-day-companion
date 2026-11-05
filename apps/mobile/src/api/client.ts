@@ -2,7 +2,7 @@
 // With EXPO_PUBLIC_API_URL set it calls the HTTP mock; otherwise the simulated backend runs inside the app,
 // which is what the static web demo uses.
 import type {
-  CalendarEntry, Challenge, Clan, Event, JoinRequest, Leaderboard, LeaderboardScope, MatchPage, MatchReport, Mode, NewSquadSession,
+  CalendarEntry, Challenge, Medal, MedalUnlock, ServiceRecord, Clan, Event, JoinRequest, Leaderboard, LeaderboardScope, MatchPage, MatchReport, Mode, NewSquadSession,
   NewsArticle, NewsSummary, NewsTag, Notification, NotificationPrefs, Player, Season, SessionFilters, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport,
 } from '@eday/api-types';
 import { createApi, type Api } from '@eday/api-mock';
@@ -77,6 +77,10 @@ export const api = {
   getMyWallet: (asOf?: string) => call<Wallet>('GET', '/me/wallet', { query: { asOf } }),
   getNotificationPrefs: () => call<NotificationPrefs>('GET', '/me/notification-prefs'),
   setNotificationPrefs: (prefs: NotificationPrefs) => call<NotificationPrefs>('PUT', '/me/notification-prefs', { body: prefs }),
+  getServiceRecord: (asOf?: string) => call<ServiceRecord>('GET', '/me/service-record', { query: { asOf } }),
+  listMyMedals: (asOf?: string) => call<Medal[]>('GET', '/me/medals', { query: { asOf } }),
+  getMyMedal: (medalId: string, asOf?: string) => call<Medal>('GET', `/me/medals/${enc(medalId)}`, { query: { asOf } }),
+  setEquippedMedals: (medalIds: string[], asOf?: string) => call<MedalUnlock[]>('PUT', '/me/medals/equipped', { query: { asOf }, body: { medalIds } }),
   listMyMatches: (q: { mode?: Mode; cursor?: string; limit?: number; asOf?: string } = {}) => call<MatchPage>('GET', '/me/matches', { query: q }),
   getMatch: (matchId: string, asOf?: string) => call<MatchReport>('GET', `/matches/${enc(matchId)}`, { query: { asOf } }),
   getLeaderboard: (mode: Mode, q: { scope?: LeaderboardScope; limit?: number } = {}) => call<Leaderboard>('GET', `/leaderboards/${mode}`, { query: q }),

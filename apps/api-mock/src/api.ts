@@ -1,10 +1,10 @@
 // The simulated backend. Every route in contract/openapi.yaml is answered here from the seed,
 // with the demo clock as "now" unless the request passes asOf.
 import type {
-  CalendarEntry, Challenge, Clan, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
+  CalendarEntry, Challenge, Clan, Medal, MedalTier, MedalUnlock, ServiceRecord, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
   NewsSummary, NewsTag, NewSquadSession, Notification, NotificationPrefs, Player, SquadSession, StoreItem, WeeklyReport,
 } from '@eday/api-types';
-import { GIFT_AT, HORDE_WAVE_GOAL, generate, type SeedData, type SeedMatch, type SeedPlayer, type SeedSession } from '@eday/seed';
+import { CAMPAIGN_CHAPTERS, GIFT_AT, HORDE_WAVE_GOAL, MEDAL_REWARDS, generate, type SeedData, type SeedMatch, type SeedMedalSeries, type SeedPlayer, type SeedSession } from '@eday/seed';
 import { DAY, clock, day, dayMonth, difficultyLabel, localDate, rankLabel, roleLabel, weekday } from './format.ts';
 import { createRouter, error, noContent, ok, type Query } from './router.ts';
 
@@ -22,6 +22,27 @@ const ROLE_GAP: Record<HordeRole, string> = {
   breacher: 'Sin Irruptor nadie limpió de cerca.',
   marksman: 'Sin Tirador nadie tumbó a los jefes.',
   assault: 'Sin Asalto nadie aturdió al enemigo.',
+};
+const MEDAL_TIERS: MedalTier[] = ['bronze', 'silver', 'gold', 'onyx', 'diamond'];
+// What one match adds to a medal series.
+const medalStep = (s: SeedMedalSeries, m: SeedMatch) => {
+  const versus = m.mode.startsWith('versus');
+  switch (s.metric) {
+    case 'kills': return versus || m.mode === 'horde_siege' ? m.kills * (s.share ?? 1) : 0;
+    case 'versusKills': return versus ? m.kills * (s.share ?? 1) : 0;
+    case 'waves': return m.wavesCleared ?? 0;
+    case 'hordeCompleted': return Number(m.mode === 'horde_siege' && m.result === 'completed');
+    case 'versusWins': return Number(versus && m.result === 'win');
+    case 'ranked': return Number(m.mode === 'versus_ranked');
+    case 'chapters': return Number(m.mode === 'campaign' && m.result === 'completed');
+    case 'during': return Number(m.endedAt >= s.from! && m.endedAt < s.to!);
+  }
+};
+const round = (x: number, digits = 1) => Number(x.toFixed(digits));
+const modeOf = <T,>(xs: T[]) => {
+  const counts = new Map<T, number>();
+  for (const x of xs) counts.set(x, (counts.get(x) ?? 0) + 1);
+  return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 };
 const modeLabelEs = (mode: Mode) => (mode === 'horde_siege' ? 'Horde' : mode === 'campaign' ? 'campaña' : 'Versus');
 const family = (mode: Mode) => (mode.startsWith('versus') ? 'versus' : mode === 'horde_siege' ? 'horde' : 'campaign');
@@ -59,6 +80,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   const wishlists = new Map<string, Set<string>>();
   for (const w of data.wishlists) (wishlists.get(w.playerId) ?? wishlists.set(w.playerId, new Set()).get(w.playerId)!).add(w.itemId);
   const prefs = new Map<string, Required<NotificationPrefs>>();
+  const equippedBy = new Map<string, string[]>();
   let created = 0;
 
   const nowOf = (q: Query) => q.asOf ?? demoNow;
@@ -74,6 +96,155 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   const toItem = (playerId: string, id: string): StoreItem => ({ ...items.get(id)!, wishlisted: wishlists.get(playerId)?.has(id) ?? false });
   const summary = ({ id, mode, map, endedAt, result, kills, deaths, rankDelta, durationSeconds, wavesCleared }: SeedMatch): MatchSummary =>
     ({ id, mode, map, endedAt, result, kills, deaths, rankDelta, durationSeconds, wavesCleared, waveGoal: mode === 'horde_siege' ? HORDE_WAVE_GOAL : null });
+
+  const roleOf = (p: SeedPlayer): HordeRole => [...sessions.values()].flatMap((s) => s.members).find((x) => x.gamertag === p.gamertag && x.role)?.role
+    ?? ROLES[Math.floor(hashRng(p.id)() * ROLES.length)];
+
+  // Medal progress is counted from the player's matches up to `now`; each tier carries the date of the match that earned it.
+  const medalsOf = (p: SeedPlayer, now: string): Medal[] & { chosen: string[] } => {
+    const played = playedBy(p.id, now);
+    const list = data.medalSeries.map(({ id, name, category, unit, goals, ...rule }): Medal => {
+      let raw = 0;
+      const unlockedAt: (string | null)[] = goals.map(() => null);
+      for (const m of played) {
+        raw += medalStep({ id, name, category, unit, goals, ...rule }, m);
+        goals.forEach((g, i) => { if (!unlockedAt[i] && Math.floor(raw) >= g) unlockedAt[i] = m.endedAt; });
+      }
+      return {
+        id, name, category, unit, progress: Math.floor(raw), equipped: false,
+        tiers: goals.map((goal, i) => ({ tier: MEDAL_TIERS[i], goal, reward: { amount: MEDAL_REWARDS[i], currency: 'coins' as const }, unlockedAt: unlockedAt[i] })),
+      };
+    });
+    const earned = (m: Medal) => m.tiers.filter((t) => t.unlockedAt).length;
+    const lastAt = (m: Medal) => m.tiers.reduce((a, t) => (t.unlockedAt && t.unlockedAt > a ? t.unlockedAt : a), '');
+    // Until the player picks, the card shows their three best series.
+    const chosen = (equippedBy.get(p.id) ?? [...list].filter((m) => earned(m) > 0)
+      .sort((a, b) => earned(b) - earned(a) || lastAt(b).localeCompare(lastAt(a))).slice(0, 3).map((m) => m.id))
+      .filter((id) => { const m = list.find((x) => x.id === id); return m && earned(m) > 0; });
+    for (const m of list) m.equipped = chosen.includes(m.id);
+    return Object.assign(list, { chosen });
+  };
+  const unlockOf = (m: Medal): MedalUnlock | null => {
+    const top = [...m.tiers].reverse().find((t) => t.unlockedAt);
+    return top ? { medalId: m.id, name: m.name, tier: top.tier, unlockedAt: top.unlockedAt! } : null;
+  };
+
+  // GTA-style curiosities. The game would count these; the demo estimates them from each match's kills, deaths,
+  // accuracy and time, with fixed ratios, so they stay stable for the same matches.
+  const trivia = (p: SeedPlayer, played: SeedMatch[]): ServiceRecord['trivia'] => {
+    if (!played.length) return [];
+    const tz = p.timezone;
+    const n = (x: number) => Math.round(x).toLocaleString('en-US');
+    const kills = played.reduce((s, m) => s + m.kills, 0);
+    const shots = played.reduce((s, m) => s + (m.kills * 7) / Math.max(0.1, m.accuracy), 0);
+    const hordeDeaths = played.filter((m) => m.mode === 'horde_siege').reduce((s, m) => s + m.deaths, 0);
+    const deaths = played.reduce((s, m) => s + m.deaths, 0);
+    const hours = played.reduce((s, m) => s + m.durationSeconds, 0) / 3600;
+    const km = hours * 4.2;
+    // Late night counts until 5 a.m.: 01:30 is later than 23:50.
+    const late = played.map((m) => m.endedAt).sort((a, b) => {
+      const v = (x: string) => { const [h, mi] = clock(x, tz).split(':').map(Number); return (h < 5 ? h + 24 : h) * 60 + mi; };
+      return v(b) - v(a);
+    })[0];
+    const weeks = new Map<string, SeedMatch[]>();
+    for (const m of played) {
+      const d = new Date(m.endedAt);
+      const monday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - ((d.getUTCDay() + 6) % 7), 12)).toISOString();
+      (weeks.get(monday) ?? weeks.set(monday, []).get(monday)!).push(m);
+    }
+    const [weekStart, weekMatches] = [...weeks].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))[0];
+    const weekDays = new Set(weekMatches.map((m) => localDate(m.endedAt, tz))).size;
+    const blood = kills * 4.7;
+    return [
+      { id: 'blood', label: 'Sangre derramada', value: `${n(blood)} litros`, detail: blood > 2500 ? 'Alcanza para una piscina chica' : `Unas ${n(blood / 150)} tinas llenas` },
+      { id: 'shots', label: 'Balas disparadas', value: n(shots), detail: `Unas ${n(shots / 300)} cajas de munición` },
+      { id: 'distance', label: 'Kilómetros corriendo agachado', value: `${round(km)} km`, detail: `Como ir del Zócalo a Chapultepec ${Math.max(1, Math.round(km / 5))} veces` },
+      { id: 'stomps', label: 'Locust pisoteados', value: n(kills * 0.03), detail: 'Cráneos bajo tu bota' },
+      { id: 'chainsaw', label: 'Sierra del Lancer encendida', value: `${round(kills * 0.006)} min`, detail: 'Sin contar las veces que te interrumpieron' },
+      { id: 'boomer', label: 'Veces que te aplastó un Boomer', value: n(hordeDeaths * 0.12), detail: hordeDeaths ? 'Todas en Horde Siege' : 'Todavía ninguna' },
+      { id: 'grenade', label: 'Veces que te mató tu propia granada', value: n(Math.ceil(deaths * 0.008)), detail: 'Pasa en las mejores familias' },
+      { id: 'late', label: 'Hora más tardía en que jugaste', value: clock(late, tz), detail: `El ${day(late, tz)}` },
+      { id: 'week', label: 'Tu semana Gears', value: `${weekMatches.length} partidas en ${weekDays} días`, detail: `La semana del ${dayMonth(weekStart, tz)}` },
+    ];
+  };
+
+  const serviceRecord = (p: SeedPlayer, now: string): ServiceRecord => {
+    const tz = p.timezone;
+    const played = playedBy(p.id, now);
+    const hours = (ms: SeedMatch[]) => round(ms.reduce((s, m) => s + m.durationSeconds, 0) / 3600);
+    const kd = (k: number, d: number) => round(k / Math.max(1, d), 2);
+    const sum = (ms: SeedMatch[], f: (m: SeedMatch) => number) => ms.reduce((s, m) => s + f(m), 0);
+    const avg = (ms: SeedMatch[], f: (m: SeedMatch) => number) => (ms.length ? round(sum(ms, f) / ms.length, 3) : 0);
+    const versus = played.filter((m) => family(m.mode) === 'versus');
+    const horde = played.filter((m) => m.mode === 'horde_siege');
+    const campaign = played.filter((m) => m.mode === 'campaign');
+    const total = Math.max(1, sum(played, (m) => m.durationSeconds));
+
+    const days = [...new Set(played.map((m) => localDate(m.endedAt, tz)))].sort();
+    let streak = 0, best = 0, prev = '';
+    for (const d of days) {
+      streak = prev && Date.parse(d) - Date.parse(prev) === DAY ? streak + 1 : 1;
+      best = Math.max(best, streak);
+      prev = d;
+    }
+    let winStreak = 0, bestWinStreak = 0;
+    for (const m of versus) { winStreak = m.result === 'win' ? winStreak + 1 : 0; bestWinStreak = Math.max(bestWinStreak, winStreak); }
+    const maps = [...new Set(versus.map((m) => m.map))].map((map) => {
+      const ms = versus.filter((m) => m.map === map);
+      return { map, matches: ms.length, wins: ms.filter((m) => m.result === 'win').length };
+    }).filter((x) => x.wins > 0).sort((a, b) => b.wins - a.wins || b.wins / b.matches - a.wins / a.matches || a.map.localeCompare(b.map));
+    const hordeMaps = [...new Set(horde.map((m) => m.map))].map((map) => {
+      const ms = horde.filter((m) => m.map === map);
+      return { map, matches: ms.length, bestWave: Math.max(0, ...ms.map((m) => m.wavesCleared ?? 0)) };
+    }).sort((a, b) => b.bestWave - a.bestWave);
+    const share = { versus: round(sum(versus, (m) => m.durationSeconds) / total, 3), horde: round(sum(horde, (m) => m.durationSeconds) / total, 3),
+      campaign: round(sum(campaign, (m) => m.durationSeconds) / total, 3) };
+    const main = played.length ? (Object.keys(share) as (keyof typeof share)[]).sort((a, b) => share[b] - share[a])[0] : null;
+
+    const medals = medalsOf(p, now);
+    const unlocks = medals.flatMap((m) => m.tiers.filter((t) => t.unlockedAt).map((t) => ({ medalId: m.id, name: m.name, tier: t.tier, unlockedAt: t.unlockedAt! })))
+      .sort((a, b) => b.unlockedAt.localeCompare(a.unlockedAt) || MEDAL_TIERS.indexOf(b.tier) - MEDAL_TIERS.indexOf(a.tier));
+    const last = played.at(-1);
+    return {
+      gamertag: p.gamertag, level: p.level, trivia: trivia(p, played),
+      title: main === 'horde' ? 'Defensor de Horde' : main === 'versus' ? 'Veterano de Versus' : main === 'campaign' ? 'Soldado de la COG' : 'Recluta',
+      career: {
+        matches: played.length, hoursPlayed: hours(played), daysPlayed: days.length, bestDayStreak: best,
+        daysSinceLastMatch: last ? Math.floor((Date.parse(now) - Date.parse(last.endedAt)) / DAY) : null,
+        firstMatchAt: played[0]?.endedAt ?? null,
+        favoriteHour: played.length ? `${clock(modeOf(played.map((m) => m.endedAt.slice(0, 13)))! + ':00:00.000Z', tz).slice(0, 2)}:00` : null,
+        favoriteWeekday: modeOf(played.map((m) => weekday(m.endedAt, tz))),
+        kills: sum(played, (m) => m.kills), deaths: sum(played, (m) => m.deaths), kd: kd(sum(played, (m) => m.kills), sum(played, (m) => m.deaths)),
+        accuracy: avg(played, (m) => m.accuracy), share,
+      },
+      versus: {
+        matches: versus.length, wins: versus.filter((m) => m.result === 'win').length, losses: versus.filter((m) => m.result === 'loss').length,
+        draws: versus.filter((m) => m.result === 'draw').length, winRate: versus.length ? round(versus.filter((m) => m.result === 'win').length / versus.length, 3) : 0,
+        bestWinStreak, kills: sum(versus, (m) => m.kills), deaths: sum(versus, (m) => m.deaths), kd: kd(sum(versus, (m) => m.kills), sum(versus, (m) => m.deaths)),
+        accuracy: avg(versus, (m) => m.accuracy), hoursPlayed: hours(versus), bestKills: versus.length ? Math.max(...versus.map((m) => m.kills)) : null,
+        rank: p.rank,
+        byMode: (['versus_tdm', 'versus_conquest', 'versus_ranked'] as Mode[]).map((mode) => {
+          const ms = versus.filter((m) => m.mode === mode);
+          return { mode, matches: ms.length, wins: ms.filter((m) => m.result === 'win').length };
+        }),
+        bestMap: maps[0] ?? null,
+      },
+      horde: {
+        matches: horde.length, completed: horde.filter((m) => m.result === 'completed').length, bestWave: Math.max(0, ...horde.map((m) => m.wavesCleared ?? 0)),
+        waveGoal: HORDE_WAVE_GOAL, wavesCleared: sum(horde, (m) => m.wavesCleared ?? 0), kills: sum(horde, (m) => m.kills), hoursPlayed: hours(horde),
+        mainRole: horde.length ? roleOf(p) : null, byMap: hordeMaps,
+      },
+      campaign: {
+        chaptersCompleted: new Set(campaign.filter((m) => m.result === 'completed').map((m) => m.map)).size, chaptersTotal: CAMPAIGN_CHAPTERS,
+        attempts: campaign.length, hoursPlayed: hours(campaign), kills: sum(campaign, (m) => m.kills),
+      },
+      medals: {
+        earned: unlocks.length, total: medals.length * MEDAL_TIERS.length,
+        seriesCompleted: medals.filter((m) => m.tiers.every((t) => t.unlockedAt)).length, seriesTotal: medals.length, latest: unlocks.slice(0, 3),
+      },
+      equipped: medals.chosen.map((id) => unlockOf(medals.find((m) => m.id === id)!)!),
+    };
+  };
 
   const bestWave = (id: string, now: string) =>
     playedBy(id, now).reduce((best, m) => Math.max(best, m.wavesCleared ?? 0), 0);
@@ -274,6 +445,22 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     return ok(next);
   });
 
+  r.add('GET', '/me/service-record', ({ playerId, query }) => ok(serviceRecord(me(playerId), nowOf(query))));
+  r.add('GET', '/me/medals', ({ playerId, query }) => ok([...medalsOf(me(playerId), nowOf(query))]));
+  r.add('GET', '/me/medals/{medalId}', ({ playerId, params, query }) => {
+    const m = medalsOf(me(playerId), nowOf(query)).find((x) => x.id === params.medalId);
+    return m ? ok(m) : error(404, 'not_found', `No existe la medalla ${params.medalId}`);
+  });
+  r.add('PUT', '/me/medals/equipped', ({ playerId, query, body }) => {
+    const ids = (body as { medalIds?: unknown } | undefined)?.medalIds;
+    if (!Array.isArray(ids) || ids.length > 3 || new Set(ids).size !== ids.length) return error(400, 'bad_request', 'Elige hasta 3 medallas distintas');
+    const medals = medalsOf(me(playerId), nowOf(query));
+    const picked = ids.map((id) => medals.find((m) => m.id === id));
+    if (picked.some((m) => !m || !unlockOf(m))) return error(400, 'bad_request', 'Solo puedes equipar medallas que ya obtuviste');
+    equippedBy.set(playerId, ids as string[]);
+    return ok(picked.map((m) => unlockOf(m!)!));
+  });
+
   r.add('GET', '/me/matches', ({ playerId, query }) => {
     const limit = Math.min(100, Math.max(1, Number(query.limit ?? 20)));
     const start = Number(query.cursor ?? 0);
@@ -293,8 +480,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     const pool = others.slice(0, 40);
     const pick = (n: number) => Array.from({ length: n }, () => players.get(pool.splice(Math.floor(rand() * pool.length), 1)[0])!);
     // The player keeps the role they sign up for in squads; teammates get one each.
-    const myRole = [...sessions.values()].flatMap((s) => s.members).find((x) => x.gamertag === p.gamertag && x.role)?.role
-      ?? ROLES[Math.floor(hashRng(p.id)() * ROLES.length)];
+    const myRole = roleOf(p);
     const line = (x: SeedPlayer, team: string, kills: number, deaths: number) => ({
       gamertag: x.gamertag, team, kills, deaths, score: kills * (horde ? 70 : 100) + Math.floor(rand() * 400),
       ...(horde ? { role: x.id === p.id ? myRole : ROLES[Math.floor(rand() * ROLES.length)] } : {}), ...(x.id === p.id ? { isMe: true } : {}),

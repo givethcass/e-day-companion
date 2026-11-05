@@ -1,9 +1,9 @@
-// Inicio in the official site's look: an ember hero with the week's objective (tabs switch to the
-// alternatives), the week's figures, the latest official news, what is yours this week (squad and store),
+// Inicio in the official site's look: an ember hero with the player's card and their figures per mode
+// (tabs switch Versus, Horde and Campaña) leading to Mi servicio, the week's figures, the latest official news, what is yours this week (squad and store),
 // the season calendar, then a recap: the last match's lesson, the rival and the season.
 import type { Href } from 'expo-router';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/api/client';
@@ -11,14 +11,14 @@ import { useSession } from '@/api/session';
 import { useApi } from '@/api/useApi';
 import { useNow } from '@/lib/clock';
 import { number } from '@/lib/demo';
+import { FAMILIES, mainFamily, TIER } from '@/lib/service';
 import { matchTitle, outcome } from '@/lib/match';
-import { openLaunchUrl } from '@/lib/launch';
 import { clock, day, dayTime } from '@/lib/time';
 import { Art, Band, Button, Glow, IconButton, Loader, Readouts, Row, Screen, Section, Tabs, Text } from '@/ui/kit';
+import { MedalBadge } from '@/ui/Medal';
+import { Emblem, StatGrid, modeCells } from '@/ui/Service';
 import { Featured, NewsRow } from '@/ui/News';
 import { color, space } from '@/ui/theme';
-
-const TAB: Record<string, string> = { versus_ranked: 'Ranked', horde_siege: 'Horde', campaign: 'Campaña', versus_tdm: 'Versus', versus_conquest: 'Versus' };
 
 function Tile({ label, glow, title, body, cta, onPress }: { label: string; glow: string; title: string; body: string; cta: string; onPress: () => void }) {
   return (
@@ -36,30 +36,27 @@ export default function Inicio() {
   const tz = player!.timezone;
   const now = useNow();
   const { data, error, reload } = useApi(async () => {
-    const [week, wallet, season, sessions, rotation, news, calendar, notifications, clan, history] = await Promise.all([
+    const [week, wallet, season, sessions, rotation, news, calendar, notifications, clan, history, record] = await Promise.all([
       api.getMyWeek(now), api.getMyWallet(now), api.getCurrentSeason(), api.listSessions({ startsAfter: now }),
       api.getStoreRotation(now), api.listNews({ limit: 8, asOf: now }), api.listCalendar(now), api.listMyNotifications(now),
-      player!.clanId ? api.getClan(player!.clanId) : null, api.listMyMatches({ limit: 1, asOf: now }),
+      player!.clanId ? api.getClan(player!.clanId) : null, api.listMyMatches({ limit: 1, asOf: now }), api.getServiceRecord(now),
     ]);
     const last = history.items[0] ? await api.getMatch(history.items[0].id, now) : null;
-    return { week, wallet, season, sessions, rotation, news, calendar, clan, last, unread: notifications.filter((n) => !n.read).length };
+    return { week, wallet, season, sessions, rotation, news, calendar, clan, last, record, unread: notifications.filter((n) => !n.read).length };
   }, [now]);
-  const [pick, setPick] = useState(0);
-  const [sent, setSent] = useState<number | null>(null);
-  // A new demo moment can bring different missions.
-  useEffect(() => { setPick(0); setSent(null); }, [now]);
+  // null: open on the mode the player spends the most time in.
+  const [pick, setPick] = useState<number | null>(null);
 
   if (!data) return <Screen title="Inicio"><Loader error={error} onRetry={reload} /></Screen>;
-  const { week, wallet, season, sessions, rotation, news, calendar, clan, last, unread } = data;
+  const { week, wallet, season, sessions, rotation, news, calendar, clan, last, record, unread } = data;
   const weekNo = Math.floor((Date.parse(now) - Date.parse(season.startsAt)) / (7 * 864e5)) + 1;
   const weeks = Math.round((Date.parse(season.endsAt) - Date.parse(season.startsAt)) / (7 * 864e5));
-  const missions = [week.nextMission, ...(week.nextMission.alternatives ?? [])];
-  const m = missions[pick];
-  const isMain = pick === 0;
-  const main = week.nextMission;
-  const body = isMain
-    ? [main.reason, `Unos ${main.estimatedMinutes} minutos`, main.reward].filter(Boolean).join(' · ')
-    : 'Otra opción según cómo juegas esta temporada.';
+  const tab = pick ?? FAMILIES.findIndex(([f]) => f === mainFamily(record));
+  const family = FAMILIES[tab][0];
+  const c = record.career;
+  const newest = record.medals.latest[0];
+  const caption = [`${c.hoursPlayed} h`, `${c.matches} partidas`,
+    c.daysSinceLastMatch === null ? null : c.daysSinceLastMatch === 0 ? 'jugó hoy' : `última hace ${c.daysSinceLastMatch} días`].filter(Boolean).join(' · ');
   const mine = sessions.filter((s) => s.members.some((x) => x.gamertag === player!.gamertag));
   const wished = rotation.items.filter((i) => i.wishlisted);
   const lead = news.find((n) => n.featured) ?? news[0];
@@ -85,15 +82,29 @@ export default function Inicio() {
       </View>
       <View style={styles.hero}>
         <Glow />
-        <Tabs items={missions.map((x) => TAB[x.mode] ?? x.mode)} selected={pick} onSelect={(i) => { setPick(i); setSent(null); }} />
-        <Text variant="overline" tone="textMuted" style={{ marginTop: 18 }}>{isMain ? `Objetivo de la semana · ${player!.gamertag}` : 'Otra opción'}</Text>
-        <Text variant="display" style={{ fontSize: 34, lineHeight: 34 }}>{m.title}</Text>
-        <Text tone="textMuted" style={{ color: '#E2E0E0' }}>{body}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }}>
-          <Button compact label={sent === pick ? 'Enviado' : 'Desplegar'} kind={sent === pick ? 'secondary' : 'primary'}
-            onPress={() => { setSent(pick); if (m.launchUrl) openLaunchUrl(m.launchUrl); }} />
-          {sent === pick && <Text variant="caption" tone="textMuted" style={{ flex: 1 }}>Enviado a tu Xbox o PC.</Text>}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <Emblem level={record.level} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="overline" tone="primary">{record.title}</Text>
+            <Text variant="display" style={{ fontSize: 32, lineHeight: 32 }} numberOfLines={1}>{record.gamertag}</Text>
+            <Text variant="caption" tone="textMuted" style={{ color: '#E2E0E0' }}>{caption}</Text>
+          </View>
         </View>
+        <View style={{ marginTop: 10 }}>
+          <Tabs items={FAMILIES.map(([, label]) => label)} selected={tab} onSelect={setPick} />
+        </View>
+        <StatGrid cells={modeCells(record, family)} />
+        {newest && (
+          <Pressable accessibilityRole="button" onPress={() => router.push(`/servicio/medallas/${newest.medalId}`)} style={styles.medal}>
+            <MedalBadge tier={newest.tier} size={32} />
+            <View style={{ flex: 1 }}>
+              <Text variant="overline" tone="textSubtle" style={{ fontSize: 11 }}>Última medalla · {shortDay(newest.unlockedAt)}</Text>
+              <Text variant="bodyStrong" numberOfLines={1}>{`${newest.name} · ${TIER[newest.tier].label}`}</Text>
+            </View>
+            <Text variant="data" tone="textMuted">{`${record.medals.earned}/${record.medals.total}`}</Text>
+          </Pressable>
+        )}
+        <Button compact label="Ver mi servicio" onPress={() => router.push('/servicio')} />
       </View>
     </SafeAreaView>
   );
@@ -101,9 +112,9 @@ export default function Inicio() {
   return (
     <Screen edges={[]} bleed={hero}>
       <Readouts items={[
-        { label: 'Inactivo', value: week.daysSinceLastMatch ? `${week.daysSinceLastMatch} días` : 'Hoy', tone: week.daysSinceLastMatch ? 'primary' : 'text' },
         { label: 'Retos', value: `${week.challengesDone} / ${week.challengesTotal}` },
         { label: 'Monedas', value: number(wallet.coins) },
+        { label: 'Medallas', value: `${record.medals.earned} / ${record.medals.total}`, tone: 'primary' },
       ]} />
 
       <Band title="Lo último" subtitle="Noticias oficiales de la temporada" />
@@ -170,4 +181,5 @@ export default function Inicio() {
 const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: space.xl, paddingRight: space.sm, paddingTop: space.sm },
   hero: { paddingHorizontal: space.xl, paddingTop: 18, paddingBottom: 20, gap: 10, overflow: 'hidden' },
+  medal: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: color.border },
 });

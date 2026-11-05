@@ -1,6 +1,6 @@
 # Information architecture
 
-> **Current structure (v0.6.0, week 4).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060).
+> **Current structure (v0.7.0, week 4).** After the player research on 2026-10-28 the app moved to a Waypoint-style hub. The week 1 table below is kept as history; see [Waypoint-style structure (v0.6.0)](#waypoint-style-structure-v060) and [Service record and medals (v0.7.0)](#service-record-and-medals-v070).
 
 Week 1. Five tabs, each one answering a single question, plus the profile in the top corner. Every screen ends in an action, and the main one is **Deploy** (open the game).
 
@@ -83,4 +83,17 @@ Player research (2026-10-28) showed that what players look for outside the game 
 The store is no longer a tab: it opens over the tabs from Inicio and from news stories (`/tienda`). Routes moved with the tabs, and every in-app `link` the API returns follows them: `/comunidad/escuadra/{id}`, `/servicio/partidas/{id}`, `/servicio/clasificacion`, `/noticias/{id}`.
 
 Contract additions: `listNews` and `getNews` (official posts tagged patch, event, season, store or community; a story is visible only once `publishedAt` is past the demo clock, so the Nov 2 patch and the 20th anniversary story appear when the clock moves to Nov 3; patch and event stories follow what The Coalition shipped up to Nov 3, 2026) and `listCalendar` (event starts and ends, the Tuesday store and challenge rotation, the Nov 7 anniversary gift and the end of the season).
+
+## Service record and medals (v0.7.0)
+
+Feedback on 2026-11-05: the mission hero on Inicio felt like a launcher, not like Waypoint. Inicio now opens on the player's card (level, profile title, gamertag, hours, matches, days since the last match) with tabs for Versus, Horde and Campaña, four figures per mode, the latest medal, and a link to the full record. The tab that opens first is the mode the player spends the most time in.
+
+| Screen | What it shows | Contract operations |
+| --- | --- | --- |
+| Inicio (hero) | Card, figures per mode, latest medal, "Ver mi servicio" | `getServiceRecord` |
+| Mi servicio | Profile card with the 3 medals shown in game, career, every figure per mode and map, latest medals, GTA-style curiosities, leaderboards, history | `getServiceRecord`, `listMyMatches` |
+| Medallas | 13 series in 5 categories, 5 tiers each (Bronce to Diamante, as in E-Day's profile customisation), filters for earned and missing, progress to the next tier | `listMyMedals` |
+| Medalla | Next tier's challenge with its Monedas reward, the 5 tiers with unlock date or what is left, put on or take off the profile card | `getMyMedal`, `setEquippedMedals` |
+
+Medal progress is computed from the player's matches, so every tier's unlock date is the end of the match that crossed its goal. The profile card holds up to 3 medals; without a choice it shows the 3 with the most tiers. Curiosities (blood spilled, bullets fired, distance run in cover, latest night played, busiest week) are derived from the same matches and come already worded from the API. The full list of metrics a game like E-Day could expose is in the "Métricas de jugador" doc.
 

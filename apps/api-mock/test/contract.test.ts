@@ -21,6 +21,10 @@ const calls: [string, string, { query?: Record<string, string>; body?: unknown }
   ['GET', '/me/wallet'],
   ['GET', '/me/notification-prefs'],
   ['PUT', '/me/notification-prefs', { body: { events: true } }],
+  ['GET', '/me/service-record'],
+  ['GET', '/me/medals'],
+  ['GET', '/me/medals/md_lancer'],
+  ['PUT', '/me/medals/equipped', { body: { medalIds: ['md_lancer', 'md_waves'] } }],
   ['GET', '/me/matches', { query: { limit: '5' } }],
   ['GET', '/matches/m_000001'],
   ['GET', '/leaderboards/horde_siege', { query: { scope: 'friends' } }],
@@ -44,18 +48,19 @@ const calls: [string, string, { query?: Record<string, string>; body?: unknown }
 ];
 
 const api = createApi();
-const template = (path: string) => api.routes.find((r) => new RegExp(`^${r.template.replace(/\{\w+\}/g, '[^/]+')}$`).test(path))!.template;
+const template = (method: string, path: string) =>
+  api.routes.find((r) => r.method === method && new RegExp(`^${r.template.replace(/\{\w+\}/g, '[^/]+')}$`).test(path))!.template;
 
 test('the mock serves exactly the operations in the contract', () => {
   const inContract = Object.entries(contract.paths).flatMap(([p, ops]) => Object.keys(ops as object).map((m) => `${m.toUpperCase()} ${p}`)).sort();
   assert.deepEqual(api.routes.map((r) => `${r.method} ${r.template}`).sort(), inContract);
-  assert.deepEqual(calls.map(([m, p]) => `${m} ${template(p)}`).sort(), inContract);
+  assert.deepEqual(calls.map(([m, p]) => `${m} ${template(m, p)}`).sort(), inContract);
 });
 
 for (const [method, path, opts] of calls) {
   test(`${method} ${path} matches the contract`, () => {
     const res = api.handle({ method, path, playerId: 'p_demo', ...opts });
-    const declared = contract.paths[template(path)][method.toLowerCase()].responses;
+    const declared = contract.paths[template(method, path)][method.toLowerCase()].responses;
     assert.ok(declared[String(res.status)], `status ${res.status} is not declared: ${JSON.stringify(res.body)}`);
     const schema = declared[String(res.status)].content?.['application/json']?.schema;
     if (!schema) return assert.equal(res.body, undefined);
