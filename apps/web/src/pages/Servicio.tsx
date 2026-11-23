@@ -8,6 +8,7 @@ import { Arrow, earned, MedalBadge, MoreLink, nextTier, SectionHead, TierPips, t
 import { Bar, CountUp, Reveal, spotlight, useSeen, useToast } from '../ui/fx';
 import { HeroScene } from '../ui/HeroScene';
 import { Clasificacion } from './Clasificacion';
+import { Campana } from './Campana';
 import { Temporada } from './Temporada';
 import { ChartCard, Columns, Donut, MODE_COLOR, OTHER, RankBars, ROLE_COLOR, SERIES, SplitBar } from '../ui/charts';
 
@@ -15,7 +16,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const WEEK = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const WEEK_NAME = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-const SUBS = [['', 'Resumen'], ['temporada', 'Tu temporada'], ['medallas', 'Medallas'], ['logros', 'Logros'], ['clasificacion', 'Clasificaciones']] as const;
+const SUBS = [['', 'Resumen'], ['temporada', 'Tu temporada'], ['campana', 'Campaña'], ['medallas', 'Medallas'], ['logros', 'Logros'], ['clasificacion', 'Clasificaciones']] as const;
 
 export function Servicio({ sub = '' }: { sub?: string }) {
   const [version, setVersion] = useState(0);
@@ -63,6 +64,7 @@ export function Servicio({ sub = '' }: { sub?: string }) {
           : sub === 'logros' ? <Achievements />
           : sub === 'clasificacion' ? <Clasificacion />
           : sub === 'temporada' ? <Temporada />
+          : sub === 'campana' ? <Campana />
           : <Summary />}
       </div>
     </>
@@ -125,6 +127,7 @@ function Summary() {
           </ChartCard>
           <ChartCard title="Bajas por arma" note="Versus y Horde, con armas y granadas">
             <Donut stack unit="bajas" slices={b.killsByWeapon} />
+            <div className="mt-5"><MoreLink href="#/guias/arsenal">Tu arsenal, arma por arma</MoreLink></div>
           </ChartCard>
           <ChartCard title="Enemigos abatidos" note="Bajas en Horde por tipo de enemigo">
             <Donut stack unit="bajas" slices={b.killsByEnemy} />

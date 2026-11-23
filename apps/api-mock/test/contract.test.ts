@@ -53,6 +53,9 @@ const calls: [string, string, { query?: Record<string, string>; body?: unknown }
   ['GET', '/maps'],
   ['GET', '/maps/map_mercado'],
   ['GET', '/me/season-recap'],
+  ['GET', '/weapons'],
+  ['GET', '/weapons/gnasher'],
+  ['GET', '/me/campaign'],
 ];
 
 const api = createApi();

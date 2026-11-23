@@ -150,3 +150,14 @@ Giveth asked for Mi servicio to read as charts instead of label / value lines, w
 | Match report, Mi servicio | Links to the map the match was played on | `MatchSummary.mapId`, `versusByMap[].mapId` |
 
 Where each kill and death happened is estimated from each match (by how much fighting and how much exposure each callout sees); the game would record it.
+
+## Arsenal and campaign (v0.12.0)
+
+| Where | What it adds | Contract |
+| --- | --- | --- |
+| Guías → Arsenal | The community tier list (S to C) for Versus and for Horde, each weapon with the player's kills and share | `listWeapons` |
+| A weapon | What it is for, stats, tips, the Versus maps and callouts where it spawns, kills by mode, rank among the player's weapons, accuracy, headshots and its medal | `getWeapon` |
+| Mi servicio → Campaña | The twelve chapters in three acts, when each was finished, the three collectibles of each with where the missing ones are, and what to play next | `getCampaign` |
+| Mi servicio, Tu temporada | The weapon chart and the recap's weapon card link to the weapon; the campaign card links to the chapters | |
+
+Kills with each weapon use the same estimate as the weapon medals. Collectibles are found on completed runs with a fixed chance per collectible (lower for the one most players miss), and the collectible medal and achievement now count those, so all three agree. Chapter replays after the twelfth count as runs of an earlier chapter, not new chapters. Weapon stats, tiers, chapters and collectibles are invented.

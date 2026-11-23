@@ -605,6 +605,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/weapons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** El arsenal, con la tier list de la comunidad y tus bajas con cada arma */
+        get: operations["listWeapons"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/weapons/{weaponId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ficha de un arma, dónde aparece y cómo te va con ella */
+        get: operations["getWeapon"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tu campaña por capítulos, con los coleccionables que encontraste y dónde están los que faltan */
+        get: operations["getCampaign"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -993,6 +1044,117 @@ export interface components {
             };
             cards: components["schemas"]["RecapCard"][];
             shareText: string;
+        };
+        WeaponTier: {
+            /** @enum {string} */
+            tier: "S" | "A" | "B" | "C";
+            /** @description Por qué está en ese nivel */
+            note: string;
+        };
+        WeaponSummary: {
+            /** @example gnasher */
+            id: string;
+            /** @example Gnasher */
+            name: string;
+            /** @enum {string} */
+            category: "rifle" | "shotgun" | "precision" | "smg" | "pistol" | "heavy" | "explosive";
+            /**
+             * @description loadout: equipo inicial; map: se recoge en el mapa; power: arma de poder; horde: se fabrica en Horde
+             * @enum {string}
+             */
+            source: "loadout" | "map" | "power" | "horde";
+            /** @description Valores de 0 a 100 */
+            stats: {
+                damage: number;
+                rate: number;
+                range: number;
+                handling: number;
+            };
+            /** @description Tier list de la comunidad por modo */
+            tiers: {
+                versus: components["schemas"]["WeaponTier"];
+                horde: components["schemas"]["WeaponTier"];
+            };
+            me: {
+                kills: number;
+                /** @description Parte de tus bajas con armas hechas con esta */
+                share: number;
+            };
+        };
+        Weapon: components["schemas"]["WeaponSummary"] & {
+            summary: string;
+            tips: string[];
+            magazine: number;
+            /** @description Segundos */
+            reload: number;
+            guideId: string | null;
+            /** @description Dónde aparece en los mapas de Versus */
+            pickups: {
+                mapId: string;
+                map: string;
+                zone: string;
+                respawnSeconds: number;
+            }[];
+            detail: {
+                versusKills: number;
+                hordeKills: number;
+                /** @description Puesto entre tus armas por bajas */
+                rank: number | null;
+                /** @description Estimación de la demo */
+                accuracy: number | null;
+                /** @description Parte de tus bajas a la cabeza */
+                headshots: number | null;
+                medal: {
+                    id: string;
+                    tier: components["schemas"]["MedalTier"] | null;
+                    progress: number;
+                    nextGoal: number | null;
+                };
+            };
+        };
+        Collectible: {
+            /** @example c11_3 */
+            id: string;
+            /** @enum {string} */
+            kind: "tag" | "diary" | "radio" | "poster";
+            name: string;
+            where: string;
+            found: boolean;
+            /** Format: date-time */
+            foundAt: string | null;
+        };
+        Chapter: {
+            n: number;
+            name: string;
+            setting: string;
+            summary: string;
+            /** @description Duración típica */
+            minutes: number;
+            /** @enum {string} */
+            status: "completed" | "available" | "locked";
+            attempts: number;
+            /** Format: date-time */
+            completedAt: string | null;
+            bestKills: number | null;
+            collectibles: components["schemas"]["Collectible"][];
+        };
+        Campaign: {
+            chaptersCompleted: number;
+            chaptersTotal: number;
+            collectiblesFound: number;
+            collectiblesTotal: number;
+            attempts: number;
+            hoursPlayed: number;
+            kills: number;
+            /** @description Lo siguiente que conviene jugar */
+            next: null | {
+                chapter: number;
+                text: string;
+            };
+            acts: {
+                name: string;
+                chapters: components["schemas"]["Chapter"][];
+            }[];
         };
         /** @description Una parte de un total, para gráficas */
         Slice: {
@@ -2221,6 +2383,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SeasonRecap"];
+                };
+            };
+        };
+    };
+    listWeapons: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Armas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeaponSummary"][];
+                };
+            };
+        };
+    };
+    getWeapon: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path: {
+                weaponId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Arma */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Weapon"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getCampaign: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Campaña */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campaign"];
                 };
             };
         };

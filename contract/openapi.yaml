@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.11.0
+  version: 0.12.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -649,6 +649,52 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SeasonRecap' }
+  /weapons:
+    get:
+      tags: [Guías]
+      summary: El arsenal, con la tier list de la comunidad y tus bajas con cada arma
+      operationId: listWeapons
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Armas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/WeaponSummary' }
+  /weapons/{weaponId}:
+    get:
+      tags: [Guías]
+      summary: Ficha de un arma, dónde aparece y cómo te va con ella
+      operationId: getWeapon
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Arma
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Weapon' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /me/campaign:
+    get:
+      tags: [Servicio]
+      summary: Tu campaña por capítulos, con los coleccionables que encontraste y dónde están los que faltan
+      operationId: getCampaign
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Campaña
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Campaign' }
 components:
   securitySchemes:
     bearerAuth:
@@ -1143,6 +1189,139 @@ components:
           type: array
           items: { $ref: '#/components/schemas/RecapCard' }
         shareText: { type: string }
+    WeaponTier:
+      type: object
+      required: [tier, note]
+      properties:
+        tier: { type: string, enum: [S, A, B, C] }
+        note: { type: string, description: Por qué está en ese nivel }
+    WeaponSummary:
+      type: object
+      required: [id, name, category, source, stats, tiers, me]
+      properties:
+        id: { type: string, examples: [gnasher] }
+        name: { type: string, examples: [Gnasher] }
+        category: { type: string, enum: [rifle, shotgun, precision, smg, pistol, heavy, explosive] }
+        source: { type: string, enum: [loadout, map, power, horde], description: 'loadout: equipo inicial; map: se recoge en el mapa; power: arma de poder; horde: se fabrica en Horde' }
+        stats:
+          type: object
+          description: Valores de 0 a 100
+          required: [damage, rate, range, handling]
+          properties:
+            damage: { type: integer }
+            rate: { type: integer }
+            range: { type: integer }
+            handling: { type: integer }
+        tiers:
+          type: object
+          description: Tier list de la comunidad por modo
+          required: [versus, horde]
+          properties:
+            versus: { $ref: '#/components/schemas/WeaponTier' }
+            horde: { $ref: '#/components/schemas/WeaponTier' }
+        me:
+          type: object
+          required: [kills, share]
+          properties:
+            kills: { type: integer }
+            share: { type: number, description: Parte de tus bajas con armas hechas con esta }
+    Weapon:
+      allOf:
+        - $ref: '#/components/schemas/WeaponSummary'
+        - type: object
+          required: [summary, tips, magazine, reload, guideId, pickups, detail]
+          properties:
+            summary: { type: string }
+            tips:
+              type: array
+              items: { type: string }
+            magazine: { type: integer }
+            reload: { type: number, description: Segundos }
+            guideId: { type: [string, 'null'] }
+            pickups:
+              type: array
+              description: Dónde aparece en los mapas de Versus
+              items:
+                type: object
+                required: [mapId, map, zone, respawnSeconds]
+                properties:
+                  mapId: { type: string }
+                  map: { type: string }
+                  zone: { type: string }
+                  respawnSeconds: { type: integer }
+            detail:
+              type: object
+              required: [versusKills, hordeKills, rank, accuracy, headshots, medal]
+              properties:
+                versusKills: { type: integer }
+                hordeKills: { type: integer }
+                rank: { type: [integer, 'null'], description: Puesto entre tus armas por bajas }
+                accuracy: { type: [number, 'null'], description: Estimación de la demo }
+                headshots: { type: [number, 'null'], description: Parte de tus bajas a la cabeza, estimación de la demo }
+                medal:
+                  type: object
+                  required: [id, tier, progress, nextGoal]
+                  properties:
+                    id: { type: string }
+                    tier: { oneOf: [{ $ref: '#/components/schemas/MedalTier' }, { type: 'null' }] }
+                    progress: { type: integer }
+                    nextGoal: { type: [integer, 'null'] }
+    Collectible:
+      type: object
+      required: [id, kind, name, where, found, foundAt]
+      properties:
+        id: { type: string, examples: [c11_3] }
+        kind: { type: string, enum: [tag, diary, radio, poster] }
+        name: { type: string }
+        where: { type: string }
+        found: { type: boolean }
+        foundAt: { type: [string, 'null'], format: date-time }
+    Chapter:
+      type: object
+      required: [n, name, setting, summary, minutes, status, attempts, completedAt, bestKills, collectibles]
+      properties:
+        n: { type: integer }
+        name: { type: string }
+        setting: { type: string }
+        summary: { type: string }
+        minutes: { type: integer, description: Duración típica }
+        status: { type: string, enum: [completed, available, locked] }
+        attempts: { type: integer }
+        completedAt: { type: [string, 'null'], format: date-time }
+        bestKills: { type: [integer, 'null'] }
+        collectibles:
+          type: array
+          items: { $ref: '#/components/schemas/Collectible' }
+    Campaign:
+      type: object
+      required: [chaptersCompleted, chaptersTotal, collectiblesFound, collectiblesTotal, attempts, hoursPlayed, kills, next, acts]
+      properties:
+        chaptersCompleted: { type: integer }
+        chaptersTotal: { type: integer }
+        collectiblesFound: { type: integer }
+        collectiblesTotal: { type: integer }
+        attempts: { type: integer }
+        hoursPlayed: { type: number }
+        kills: { type: integer }
+        next:
+          description: Lo siguiente que conviene jugar
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [chapter, text]
+              properties:
+                chapter: { type: integer }
+                text: { type: string }
+        acts:
+          type: array
+          items:
+            type: object
+            required: [name, chapters]
+            properties:
+              name: { type: string }
+              chapters:
+                type: array
+                items: { $ref: '#/components/schemas/Chapter' }
     Slice:
       type: object
       description: Una parte de un total, para gráficas

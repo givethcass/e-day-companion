@@ -36,6 +36,7 @@ export default function Guias() {
       )}
       <View style={styles.box}>
         <Row icon="map" title="Mapas de Versus" subtitle="Callouts, armas de poder y dónde ganas o caes" onPress={() => router.push('/guias/mapas')} />
+        <Row icon="target" title="Arsenal" subtitle="Tier list por modo y tus bajas con cada arma" onPress={() => router.push('/guias/arsenal')} />
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
         <Chip label="Todas" selected={!section} onPress={() => setSection(null)} />

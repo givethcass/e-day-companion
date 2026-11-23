@@ -37,7 +37,7 @@ export interface SeedMedalSeries {
   id: string; name: string; unit: string; goals: number[]; title: string;
   category: 'weapon' | 'grenade' | 'kill_type' | 'support' | 'horde' | 'enemy' | 'versus' | 'campaign' | 'progression' | 'event';
   metric: 'kills' | 'versusKills' | 'hordeKills' | 'campaignKills' | 'matches' | 'versusMatches' | 'hordeMatches' | 'role'
-    | 'waves' | 'hordeCompleted' | 'versusWins' | 'ranked' | 'chapters' | 'during';
+    | 'waves' | 'hordeCompleted' | 'versusWins' | 'ranked' | 'chapters' | 'collectibles' | 'during';
   share?: number; from?: Iso; to?: Iso; role?: Role; item?: 'weapon';
 }
 
@@ -64,6 +64,8 @@ export interface SeedData {
   promos: SeedPromo[];
   achievements: SeedAchievement[];
   versusMaps: SeedVersusMap[];
+  weapons: SeedWeapon[];
+  campaign: { acts: string[]; chapters: SeedChapter[] };
 }
 
 export interface SeedGuide {
@@ -107,3 +109,13 @@ export interface SeedVersusMap {
   id: string; name: string; size: 'small' | 'medium' | 'large'; setting: string; summary: string; bestFor: string; guideId?: string;
   zones: SeedZone[]; blocks: [number, number, number, number][]; pickups: { weaponId: string; zone: string; respawnSeconds: number }[];
 }
+
+export type WeaponTier = 'S' | 'A' | 'B' | 'C';
+export interface SeedWeapon {
+  id: string; category: 'rifle' | 'shotgun' | 'precision' | 'smg' | 'pistol' | 'heavy' | 'explosive';
+  source: 'loadout' | 'map' | 'power' | 'horde';
+  stats: { damage: number; rate: number; range: number; handling: number }; magazine: number; reload: number; guideId?: string;
+  summary: string; tips: string[]; tiers: { versus: [WeaponTier, string]; horde: [WeaponTier, string] };
+}
+export interface SeedCollectible { kind: 'tag' | 'diary' | 'radio' | 'poster'; name: string; where: string; hard?: boolean }
+export interface SeedChapter { n: number; act: number; name: string; setting: string; minutes: number; summary: string; collectibles: SeedCollectible[] }

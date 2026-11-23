@@ -51,6 +51,12 @@ export type VersusMap = S['VersusMap'];
 export type MapZone = S['MapZone'];
 export type RecapCard = S['RecapCard'];
 export type SeasonRecap = S['SeasonRecap'];
+export type WeaponSummary = S['WeaponSummary'];
+export type Weapon = S['Weapon'];
+export type WeaponTier = S['WeaponTier'];
+export type Campaign = S['Campaign'];
+export type Chapter = S['Chapter'];
+export type Collectible = S['Collectible'];
 export type ApiError = S['Error'];
 
 export type MatchPage = operations['listMyMatches']['responses']['200']['content']['application/json'];

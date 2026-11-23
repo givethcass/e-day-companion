@@ -8,7 +8,7 @@ export const ACHIEVEMENTS = [
   a('ch1', 'Emergencia', 'Completa el capítulo 1 de la campaña.', 15, 'chapters', 1, 0.81),
   a('ch6', 'A mitad del camino', 'Completa 6 capítulos de la campaña.', 30, 'chapters', 6, 0.38),
   a('ch12', 'Kalona sigue en pie', 'Termina la campaña.', 75, 'chapters', 12, 0.19),
-  a('collect', 'Archivista de la COG', 'Encuentra los 36 coleccionables.', 50, 'chapters', 12, 0.06, { share: 3, goal: 36 }),
+  a('collect', 'Archivista de la COG', 'Encuentra los 36 coleccionables.', 50, 'collectibles', 36, 0.06),
   a('v1', 'Primera victoria', 'Gana una partida de Versus.', 10, 'versusWins', 1, 0.62),
   a('v50', 'Veterano de la arena', 'Gana 50 partidas de Versus.', 40, 'versusWins', 50, 0.11),
   a('v150', 'Leyenda de la arena', 'Gana 150 partidas de Versus.', 60, 'versusWins', 150, 0.02),

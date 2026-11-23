@@ -2,7 +2,7 @@
 import type {
   AchievementList, CalendarEntry, Clan, Creator, Guide, GuideSummary, Leaderboard, MatchPage, Medal, MedalUnlock, NewsArticle,
   HordeRole, MatchReport, NewsSummary, Notification, Player, Promo, PromoPlacement, ServiceRecord, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport,
-  SeasonRecap, VersusMap, VersusMapSummary,
+  SeasonRecap, VersusMap, VersusMapSummary, Weapon, WeaponSummary, Campaign,
 } from '@eday/api-types';
 import { createApi } from '@eday/api-mock';
 
@@ -48,4 +48,7 @@ export const api = {
   maps: (asOf: string) => call<VersusMapSummary[]>('GET', '/maps', { asOf }),
   map: (id: string, asOf: string) => call<VersusMap>('GET', `/maps/${id}`, { asOf }),
   recap: (asOf: string) => call<SeasonRecap>('GET', '/me/season-recap', { asOf }),
+  weapons: (asOf: string) => call<WeaponSummary[]>('GET', '/weapons', { asOf }),
+  weapon: (id: string, asOf: string) => call<Weapon>('GET', `/weapons/${id}`, { asOf }),
+  campaign: (asOf: string) => call<Campaign>('GET', '/me/campaign', { asOf }),
 };

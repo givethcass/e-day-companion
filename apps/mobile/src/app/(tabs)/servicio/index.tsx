@@ -117,6 +117,7 @@ function ModeDetail({ r, f }: { r: ServiceRecord; f: Family }) {
           <DataLine label="Bajas" value={number(c.kills)} />
         </View>
       </View>
+      <Row icon="book" title="Capítulos y coleccionables" subtitle="Lo que te falta y dónde está" onPress={() => router.push('/servicio/campana')} />
     </Chart>
   );
 }
@@ -222,6 +223,7 @@ export default function Servicio() {
         <Columns>
           <Chart title="Por arma" note="Versus y Horde, con armas y granadas">
             <Donut unit="bajas" slices={r.breakdown.killsByWeapon} />
+            <Row icon="target" title="Tu arsenal" subtitle="Cada arma, su nivel y tus bajas" onPress={() => router.push('/guias/arsenal')} />
           </Chart>
           <Chart title="Bajas especiales" note="Se traslapan: un disparo a la cabeza puede ser con Longshot">
             <RankBars items={r.breakdown.killsByType.map((x) => ({ ...x, note: pct(x.value / Math.max(1, c.kills)) }))} />

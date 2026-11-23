@@ -99,7 +99,7 @@ export const MEDAL_SERIES = [
   // Campaña
   series('chapters', 'Superviviente de Kalona', 'campaign', 'capítulos de campaña completados', 'chapters', 1, [1, 3, 6, 9, 12], 'Forjado en el fuego'),
   series('ckills', 'Bajas en campaña', 'campaign', 'bajas en campaña', 'campaignKills', 1, [50, 150, 300, 600, 1000], 'Sobreviviente del E-Day'),
-  series('collect', 'Coleccionables', 'campaign', 'coleccionables encontrados', 'chapters', 3, [3, 9, 18, 27, 36], 'Archivista'),
+  series('collect', 'Coleccionables', 'campaign', 'coleccionables encontrados', 'collectibles', 1, [3, 9, 18, 27, 36], 'Archivista'),
   // Progresión
   series('reup', 'Re-up', 'progression', 're-ups (llegar a nivel 100 y reiniciar)', 'matches', 1 / 297, [1, 2, 3, 4, 5], 'Leyenda de la COG'),
   // Eventos

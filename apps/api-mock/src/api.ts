@@ -3,8 +3,9 @@
 import type {
   Achievement, AchievementList, CalendarEntry, Challenge, Clan, ClassLevel, Creator, Guide, GuideSection, GuideSummary, Medal, Promo, PromoPlacement, MedalTier, MedalUnlock, ServiceRecord, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
   NewsSummary, NewsTag, NewSquadSession, Notification, NotificationPrefs, Player, RecapCard, SeasonRecap, SquadSession, StoreItem, VersusMap, VersusMapSummary, WeeklyReport,
+  Campaign, Chapter, Weapon, WeaponSummary,
 } from '@eday/api-types';
-import { CAMPAIGN_CHAPTERS, GIFT_AT, HORDE_WAVE_GOAL, MEDAL_REWARDS, generate, rankFromPoints, type SeedData, type SeedVersusMap, type SeedMatch, type SeedAchievement, type SeedMedalSeries, type SeedPlayer, type SeedSession } from '@eday/seed';
+import { CAMPAIGN_CHAPTERS, GIFT_AT, HORDE_WAVE_GOAL, MEDAL_REWARDS, generate, rankFromPoints, type SeedData, type SeedVersusMap, type SeedWeapon, type SeedMatch, type SeedAchievement, type SeedMedalSeries, type SeedPlayer, type SeedSession } from '@eday/seed';
 import { DAY, clock, day, dayMonth, difficultyLabel, localDate, rankLabel, roleLabel, weekday } from './format.ts';
 import { createRouter, error, noContent, ok, type Query } from './router.ts';
 
@@ -26,6 +27,9 @@ const ROLE_GAP: Record<HordeRole, string> = {
 const MEDAL_TIERS: MedalTier[] = ['bronze', 'silver', 'gold', 'onyx', 'diamond'];
 // Part of a player's Horde matches played with each class: most with the main one, the rest spread unevenly.
 const roleShare = (role: HordeRole, main: HordeRole) => (role === main ? 0.7 : [0.13, 0.1, 0.07][ROLES.filter((r) => r !== main).indexOf(role)]);
+// What each campaign match adds: 1 when it completes a chapter for the first time, and the collectibles it found.
+// Filled once per seed in createApi, since it depends on the player's earlier runs, not on the demo clock.
+const CAMPAIGN_GAIN = new WeakMap<SeedMatch, { chapter: number; found: number[] }>();
 // What one match adds to a medal series.
 const medalStep = (s: SeedMedalSeries, m: SeedMatch, role: HordeRole) => {
   const versus = m.mode.startsWith('versus');
@@ -45,7 +49,8 @@ const medalStep = (s: SeedMedalSeries, m: SeedMatch, role: HordeRole) => {
     case 'hordeCompleted': return Number(horde && m.result === 'completed') * k;
     case 'versusWins': return Number(versus && m.result === 'win') * k;
     case 'ranked': return Number(m.mode === 'versus_ranked');
-    case 'chapters': return Number(m.mode === 'campaign' && m.result === 'completed') * k;
+    case 'chapters': return (CAMPAIGN_GAIN.get(m)?.chapter ?? 0) * k;
+    case 'collectibles': return (CAMPAIGN_GAIN.get(m)?.found.length ?? 0) * k;
     case 'during': return Number(m.endedAt >= s.from! && m.endedAt < s.to!);
   }
 };
@@ -89,6 +94,26 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   const matchesOf = new Map<string, SeedMatch[]>();
   for (const m of data.matches) (matchesOf.get(m.playerId) ?? matchesOf.set(m.playerId, []).get(m.playerId)!).push(m);
   const matchById = new Map(data.matches.map((m) => [m.id, m]));
+  const chapterOf = (m: SeedMatch) => Number(/(\d+)$/.exec(m.map)?.[1] ?? 0);
+  // The game would record each collectible. The demo finds each missing one on a completed run with a fixed chance,
+  // lower for the one most players miss and a little lower on replays, so the same run always finds the same ones.
+  for (const ms of matchesOf.values()) {
+    const done = new Set<number>(), found = new Set<string>();
+    for (const m of [...ms].filter((x) => x.mode === 'campaign').sort((a, b) => a.endedAt.localeCompare(b.endedAt))) {
+      const n = chapterOf(m);
+      const gain = { chapter: 0, found: [] as number[] };
+      if (m.result === 'completed') {
+        const first = !done.has(n);
+        if (first) { done.add(n); gain.chapter = 1; }
+        data.campaign.chapters[n - 1]?.collectibles.forEach((c, i) => {
+          if (found.has(`${n}:${i}`)) return;
+          const chance = c.hard ? (first ? 0.3 : 0.55) : first ? 0.88 : 0.75;
+          if (hashRng(`${m.id}:c${i}`)() < chance) { found.add(`${n}:${i}`); gain.found.push(i); }
+        });
+      }
+      CAMPAIGN_GAIN.set(m, gain);
+    }
+  }
   const friendsOf = new Map<string, string[]>();
   for (const f of data.friendships) (friendsOf.get(f.playerId) ?? friendsOf.set(f.playerId, []).get(f.playerId)!).push(f.friendId);
   const progress = new Map(data.challengeProgress.map((c) => [`${c.playerId}:${c.challengeId}`, c.progress]));
@@ -503,6 +528,79 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     return { mode, scope, metric, entries: all.slice(0, limit), ...(mine ? { me: mine } : {}) };
   };
 
+  // ---------- Arsenal ----------
+  // Kills with each weapon come from the same estimate as the weapon medals; accuracy and headshots are the demo's
+  // guess around a typical value for the weapon type, since the game would record them per shot.
+  const ACCURACY: Record<SeedWeapon['category'], [number, number | null]> = {
+    rifle: [0.36, 0.24], shotgun: [0.52, 0.08], precision: [0.46, 0.55], smg: [0.3, 0.12], pistol: [0.41, 0.3], heavy: [0.27, 0.05], explosive: [0.62, null],
+  };
+  const weaponKills = (p: SeedPlayer, now: string) => {
+    const played = playedBy(p.id, now), role = roleOf(p);
+    return new Map(data.weapons.map((w) => {
+      const s = data.medalSeries.find((x) => x.id === `md_${w.id}`)!;
+      let versus = 0, horde = 0;
+      for (const m of played) { const v = medalStep(s, m, role); if (family(m.mode) === 'versus') versus += v; else horde += v; }
+      const kills = Math.floor(versus + horde);
+      return [w.id, { kills, versus: Math.min(kills, Math.round(versus)) }];
+    }));
+  };
+  const weaponSummary = (w: SeedWeapon, kills: ReturnType<typeof weaponKills>): WeaponSummary => {
+    const total = [...kills.values()].reduce((a, x) => a + x.kills, 0);
+    const mine = kills.get(w.id)!.kills;
+    return { id: w.id, name: weaponName(w.id), category: w.category, source: w.source, stats: w.stats,
+      tiers: { versus: { tier: w.tiers.versus[0], note: w.tiers.versus[1] }, horde: { tier: w.tiers.horde[0], note: w.tiers.horde[1] } },
+      me: { kills: mine, share: round(mine / Math.max(1, total), 3) } };
+  };
+  const weaponDetail = (p: SeedPlayer, w: SeedWeapon, now: string): Weapon => {
+    const kills = weaponKills(p, now);
+    const k = kills.get(w.id)!;
+    const ranked = [...kills].filter(([, x]) => x.kills > 0).sort((a, b) => b[1].kills - a[1].kills).map(([id]) => id);
+    const rand = hashRng(`${p.id}:${w.id}`);
+    const [acc, head] = ACCURACY[w.category];
+    const medal = medalsOf(p, now).find((m) => m.id === `md_${w.id}`)!;
+    const unlocked = medal.tiers.filter((t) => t.unlockedAt);
+    return {
+      ...weaponSummary(w, kills), summary: w.summary, tips: w.tips, magazine: w.magazine, reload: w.reload, guideId: w.guideId ?? null,
+      pickups: data.versusMaps.flatMap((m) => m.pickups.filter((x) => x.weaponId === w.id)
+        .map((x) => ({ mapId: m.id, map: m.name, zone: m.zones.find((z) => z.id === x.zone)!.name, respawnSeconds: x.respawnSeconds }))),
+      detail: {
+        versusKills: k.versus, hordeKills: k.kills - k.versus, rank: k.kills ? ranked.indexOf(w.id) + 1 : null,
+        accuracy: k.kills >= 10 ? round(acc + (rand() - 0.4) * 0.1, 3) : null,
+        headshots: k.kills >= 10 && head !== null ? round(head + (rand() - 0.4) * 0.08, 3) : null,
+        medal: { id: medal.id, tier: unlocked.at(-1)?.tier ?? null, progress: medal.progress, nextGoal: medal.tiers.find((t) => !t.unlockedAt)?.goal ?? null },
+      },
+    };
+  };
+
+  // ---------- Campaign ----------
+  const campaignOf = (p: SeedPlayer, now: string): Campaign => {
+    const runs = playedBy(p.id, now).filter((m) => m.mode === 'campaign').sort((a, b) => a.endedAt.localeCompare(b.endedAt));
+    const chapters = data.campaign.chapters.map((c): Chapter => {
+      const mine = runs.filter((m) => chapterOf(m) === c.n);
+      const wins = mine.filter((m) => m.result === 'completed');
+      const foundAt = new Map<number, string>();
+      for (const m of wins) for (const i of CAMPAIGN_GAIN.get(m)?.found ?? []) foundAt.set(i, m.endedAt);
+      return { n: c.n, name: c.name, setting: c.setting, summary: c.summary, minutes: c.minutes, status: wins.length ? 'completed' : 'locked',
+        attempts: mine.length, completedAt: wins[0]?.endedAt ?? null, bestKills: wins.length ? Math.max(...wins.map((m) => m.kills)) : null,
+        collectibles: c.collectibles.map((x, i) => ({ id: `c${c.n}_${i + 1}`, kind: x.kind, name: x.name, where: x.where, found: foundAt.has(i), foundAt: foundAt.get(i) ?? null })) };
+    });
+    chapters.forEach((c, i) => { if (c.status === 'locked' && (i === 0 || chapters[i - 1].status === 'completed')) c.status = 'available'; });
+    const missing = (c: Chapter) => c.collectibles.filter((x) => !x.found).length;
+    const open = chapters.find((c) => c.status === 'available');
+    const hunt = [...chapters].filter((c) => c.status === 'completed' && missing(c)).sort((a, b) => missing(b) - missing(a) || a.n - b.n)[0];
+    const next = open
+      ? { chapter: open.n, text: `Sigue con el capítulo ${open.n}, ${open.name}: unos ${open.minutes} minutos.` }
+      : hunt ? { chapter: hunt.n, text: `Te ${missing(hunt) === 1 ? 'falta 1 coleccionable' : `faltan ${missing(hunt)} coleccionables`} en el capítulo ${hunt.n}. Repítelo desde la selección de capítulo.` }
+        : null;
+    const found = chapters.reduce((a, c) => a + c.collectibles.length - missing(c), 0);
+    return {
+      chaptersCompleted: chapters.filter((c) => c.status === 'completed').length, chaptersTotal: CAMPAIGN_CHAPTERS,
+      collectiblesFound: found, collectiblesTotal: chapters.reduce((a, c) => a + c.collectibles.length, 0),
+      attempts: runs.length, hoursPlayed: round(runs.reduce((a, m) => a + m.durationSeconds, 0) / 3600), kills: runs.reduce((a, m) => a + m.kills, 0),
+      next, acts: data.campaign.acts.map((name, i) => ({ name, chapters: chapters.filter((_, k) => data.campaign.chapters[k].act === i) })),
+    };
+  };
+
   // ---------- Versus maps ----------
   // The game would record where each kill and death happened. The demo spreads every match's kills over the map's
   // callouts by how much fighting each sees, with a nudge toward one favourite callout per player and map, and its
@@ -592,7 +690,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
         const series = data.medalSeries.find((x) => x.name === `Bajas con ${weapons[0].label}`);
         cards.push({ id: 'weapon', kind: 'weapon', overline: 'Tu arma', value: weapons[0].label, title: `${n(weapons[0].value)} bajas con ella`,
           detail: `El ${Math.round((weapons[0].value / Math.max(1, weaponKills)) * 100)}% de tus bajas con armas.${weapons[1] ? ` Le sigue ${weapons[1].label}.` : ''}`,
-          ...(series ? { link: `/servicio/medallas/${series.id}` } : {}) });
+          ...(series ? { link: `/guias/arsenal/${series.id.replace(/^md_/, '')}` } : {}) });
       }
       const best = [...rec.breakdown.versusByMap].sort((a, b) => b.wins - a.wins || b.matches - a.matches)[0];
       if (best?.wins) {
@@ -642,6 +740,15 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     return map ? ok(mapDetail(me(playerId), map, nowOf(query))) : error(404, 'not_found', `No existe el mapa ${params.mapId}`);
   });
   r.add('GET', '/me/season-recap', ({ playerId, query }) => ok(seasonRecap(me(playerId), nowOf(query))));
+  r.add('GET', '/weapons', ({ playerId, query }) => {
+    const kills = weaponKills(me(playerId), nowOf(query));
+    return ok(data.weapons.map((w) => weaponSummary(w, kills)));
+  });
+  r.add('GET', '/weapons/{weaponId}', ({ playerId, params, query }) => {
+    const w = data.weapons.find((x) => x.id === params.weaponId);
+    return w ? ok(weaponDetail(me(playerId), w, nowOf(query))) : error(404, 'not_found', 'Esa arma no existe');
+  });
+  r.add('GET', '/me/campaign', ({ playerId, query }) => ok(campaignOf(me(playerId), nowOf(query))));
 
   r.add('GET', '/me', ({ playerId }) => ok(toPlayer(me(playerId))));
 

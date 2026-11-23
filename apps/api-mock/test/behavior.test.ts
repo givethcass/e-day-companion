@@ -1,7 +1,7 @@
 // The demo story and the six fixes from the synthetic test hold in the simulated backend.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import type { SeasonRecap, VersusMap, VersusMapSummary, AchievementList, Creator, Guide, GuideSummary, Promo, CalendarEntry, Leaderboard, Medal, MedalUnlock, ServiceRecord, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
+import type { Campaign, Weapon, WeaponSummary, SeasonRecap, VersusMap, VersusMapSummary, AchievementList, Creator, Guide, GuideSummary, Promo, CalendarEntry, Leaderboard, Medal, MedalUnlock, ServiceRecord, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
 import { generate } from '@eday/seed';
 import { createApi } from '../src/index.ts';
 
@@ -277,4 +277,33 @@ test('the season recap tells the season in order and links where to go next', ()
   assert.match(recap.shareText, /concepto no oficial/);
   const early = call<SeasonRecap>('GET', '/me/season-recap', { query: { asOf: '2026-10-06T15:00:00.000Z' } });
   assert.deepEqual(early.cards.map((c) => c.kind), ['intro', 'outro'], 'nothing played yet');
+});
+
+test('the arsenal reads kills from the same estimate as the weapon medals and places power weapons on the maps', () => {
+  const list = call<WeaponSummary[]>('GET', '/weapons');
+  const medals = call<Medal[]>('GET', '/me/medals');
+  for (const w of list) assert.equal(w.me.kills, medals.find((m) => m.id === `md_${w.id}`)!.progress, w.id);
+  assert.ok(Math.abs(list.reduce((a, w) => a + w.me.share, 0) - 1) < 0.01);
+  const longshot = call<Weapon>('GET', '/weapons/longshot');
+  assert.ok(longshot.pickups.length > 0 && longshot.pickups.every((x) => x.respawnSeconds > 0));
+  assert.equal(longshot.detail.versusKills + longshot.detail.hordeKills, longshot.me.kills);
+  const recap = call<SeasonRecap>('GET', '/me/season-recap');
+  const top = list.slice().sort((a, b) => b.me.kills - a.me.kills)[0];
+  assert.equal(recap.cards.find((c) => c.kind === 'weapon')!.link, `/guias/arsenal/${top.id}`);
+  assert.equal(call<Weapon>('GET', `/weapons/${top.id}`).detail.rank, 1);
+  assert.equal(fresh().api.handle({ method: 'GET', path: '/weapons/nope', playerId: 'p_demo' }).status, 404);
+});
+
+test('the campaign counts each chapter once and agrees with the collectible medal', () => {
+  const c = call<Campaign>('GET', '/me/campaign');
+  const chapters = c.acts.flatMap((a) => a.chapters);
+  assert.deepEqual(chapters.map((x) => x.n), Array.from({ length: 12 }, (_, i) => i + 1));
+  assert.equal(c.chaptersCompleted, call<ServiceRecord>('GET', '/me/service-record').campaign.chaptersCompleted);
+  const medal = call<Medal[]>('GET', '/me/medals').find((m) => m.id === 'md_collect')!;
+  assert.equal(medal.progress, c.collectiblesFound);
+  assert.ok(c.collectiblesFound < c.collectiblesTotal, 'Delta_Rojo still has some to find');
+  assert.match(c.next!.text, /coleccionable/);
+  const early = call<Campaign>('GET', '/me/campaign', { query: { asOf: '2026-10-06T15:00:00.000Z' } });
+  assert.equal(early.chaptersCompleted, 0);
+  assert.deepEqual(early.acts[0].chapters.map((x) => x.status), ['available', 'locked', 'locked', 'locked']);
 });

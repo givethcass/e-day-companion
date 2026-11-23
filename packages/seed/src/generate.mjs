@@ -7,6 +7,8 @@ import {
 import { NEWS, GIFT_AT } from './news.mjs';
 import { MEDAL_SERIES, MEDAL_REWARDS, CAMPAIGN_CHAPTERS } from './medals.mjs';
 import { VERSUS_MAP_INFO } from './maps.mjs';
+import { WEAPONS } from './weapons.mjs';
+import { CAMPAIGN, CAMPAIGN_ACTS } from './campaign.mjs';
 import { GUIDES, CREATORS } from './guides.mjs';
 import { PROMOS } from './promos.mjs';
 import { ACHIEVEMENTS } from './achievements.mjs';
@@ -112,7 +114,8 @@ export function generate({ seed = SEED } = {}) {
       const ch = (chapter.get(playerId) ?? 0) + 1;
       const done = rng.chance(0.9);
       if (done) chapter.set(playerId, ch);
-      return { ...base, map: `Campaña · Capítulo ${ch}`, result: done ? 'completed' : 'failed',
+      // After the twelfth chapter the player replays from the chapter select, usually for missing collectibles.
+      return { ...base, map: `Campaña · Capítulo ${((ch - 1) % CAMPAIGN_CHAPTERS) + 1}`, result: done ? 'completed' : 'failed',
         kills: Math.max(0, Math.round(rng.normal(40, 10))), deaths: Math.max(0, Math.round(rng.normal(3, 2))) };
     }
     const roll = rng.float();
@@ -485,5 +488,7 @@ export function generate({ seed = SEED } = {}) {
     promos: PROMOS,
     achievements: ACHIEVEMENTS,
     versusMaps: VERSUS_MAP_INFO,
+    weapons: WEAPONS,
+    campaign: { acts: CAMPAIGN_ACTS, chapters: CAMPAIGN },
   };
 }

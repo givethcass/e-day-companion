@@ -62,6 +62,15 @@ function List() {
             </span>
             <Arrow className="size-6 transition-transform group-hover:translate-x-1" />
           </a>
+          <a href="#/guias/arsenal" {...spotlight} className="spotlight group col-span-3 flex items-center gap-8 border border-line bg-surface px-8 py-6 hover:border-white/30 transition-colors">
+            <svg viewBox="0 0 24 24" className="size-10 text-primary shrink-0" fill="none" stroke="currentColor" strokeWidth={1.6}><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 1v5M12 18v5M1 12h5M18 12h5" /></svg>
+            <span className="flex-1">
+              <span className="eyebrow text-subtle block">Herramienta</span>
+              <span className="display text-3xl group-hover:text-primary transition-colors">Arsenal</span>
+              <span className="block text-muted">La tier list de la comunidad para Versus y Horde, con tus bajas con cada arma.</span>
+            </span>
+            <Arrow className="size-6 transition-transform group-hover:translate-x-1" />
+          </a>
           {items.map((g, i) => <GuideCard key={g.id} g={g} i={i} big={i === 0 && !section} />)}
         </div>
         <aside className="flex flex-col gap-6">
