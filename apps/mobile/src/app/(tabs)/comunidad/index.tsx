@@ -66,6 +66,9 @@ export default function Comunidad() {
         ))}</Columns>}
         {data && open.length === 0 && <Text tone="textMuted">No hay sesiones con ese filtro.</Text>}
       </Section>
+      <Section title="Cara a cara">
+        <Row icon="squad" title="Compárate con un amigo" subtitle="Tus números y los suyos, lado a lado" onPress={() => router.push('/comunidad/cara-a-cara')} />
+      </Section>
       {extra?.clan && (
         <Section title="Tu clan">
           <Row tag={`[${extra.clan.tag}]`} tagTone="primary" title={extra.clan.name}

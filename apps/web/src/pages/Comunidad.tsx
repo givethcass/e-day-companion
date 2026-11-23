@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { api } from '../lib/api';
 import { useApp, useData } from '../lib/app';
 import { clock, compact, countdown, day, DIFF, MODE, num, plural, ROLE } from '../lib/format';
-import { PromoCard, SectionHead } from '../ui/bits';
+import { Arrow, PromoCard, SectionHead } from '../ui/bits';
 import { Reveal, spotlight, useToast } from '../ui/fx';
 import { PageHero } from '../ui/PageHero';
 
@@ -33,6 +33,15 @@ export function Comunidad() {
         </div>
       </PageHero>
       <div className="max-w-[1440px] mx-auto px-10 pt-16 flex flex-col gap-24">
+        <a href="#/comunidad/cara-a-cara" className="group -mb-10 flex items-center gap-8 border border-line bg-surface px-8 py-6 hover:border-white/30 transition-colors">
+          <span className="display text-4xl shrink-0"><span className="text-primary">VS</span></span>
+          <span className="flex-1">
+            <span className="eyebrow text-subtle block">Cara a cara</span>
+            <span className="display text-3xl group-hover:text-primary transition-colors">Compárate con un amigo</span>
+            <span className="block text-muted">Versus, Horde y campaña fila por fila. También desde cualquier nombre de las clasificaciones.</span>
+          </span>
+          <Arrow className="size-6 transition-transform group-hover:translate-x-1" />
+        </a>
         <section>
           <Reveal><SectionHead over="Escuadras" title="Busca con quién jugar" action={
             <div className="flex gap-2">

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.12.0
+  version: 0.13.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -695,6 +695,40 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Campaign' }
+  /me/friends:
+    get:
+      tags: [Comunidad]
+      summary: Tus amigos, con cómo quedarías cara a cara con cada uno
+      operationId: listFriends
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Amigos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Friend' }
+  /me/compare/{gamertag}:
+    get:
+      tags: [Comunidad]
+      summary: Tus números y los de otro jugador, lado a lado
+      operationId: compareWithPlayer
+      parameters:
+        - name: gamertag
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Comparación
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Comparison' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
 components:
   securitySchemes:
     bearerAuth:
@@ -1322,6 +1356,72 @@ components:
               chapters:
                 type: array
                 items: { $ref: '#/components/schemas/Chapter' }
+    CompareSide:
+      type: object
+      required: [gamertag, level, title, rank, clanTag, country, mainMode, mainRole, favoriteWeapon]
+      properties:
+        gamertag: { type: string }
+        level: { type: integer }
+        title: { type: string, examples: [Veterano de Versus] }
+        rank: { anyOf: [{ $ref: '#/components/schemas/Rank' }, { type: 'null' }] }
+        clanTag: { type: [string, 'null'] }
+        country: { type: string }
+        mainMode: { type: [string, 'null'], enum: [versus, horde, campaign, null] }
+        mainRole: { anyOf: [{ $ref: '#/components/schemas/HordeRole' }, { type: 'null' }] }
+        favoriteWeapon:
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [id, name]
+              properties:
+                id: { type: string }
+                name: { type: string }
+    CompareRow:
+      type: object
+      required: [id, group, label, me, them, unit, winner]
+      properties:
+        id: { type: string, examples: [kd] }
+        group: { type: string, enum: [general, versus, horde, campaign] }
+        label: { type: string, examples: [K/D] }
+        me: { type: number }
+        them: { type: number }
+        unit: { type: string, enum: [count, ratio, percent, hours] }
+        winner: { type: string, enum: [me, them, tie] }
+    Comparison:
+      type: object
+      required: [me, them, friends, rows, score, verdict]
+      properties:
+        me: { $ref: '#/components/schemas/CompareSide' }
+        them: { $ref: '#/components/schemas/CompareSide' }
+        friends: { type: boolean }
+        rows:
+          type: array
+          items: { $ref: '#/components/schemas/CompareRow' }
+        score:
+          type: object
+          required: [me, them, ties]
+          properties:
+            me: { type: integer }
+            them: { type: integer }
+            ties: { type: integer }
+        verdict: { type: string, description: Quién gana y dónde está la mayor ventaja de cada uno }
+    Friend:
+      type: object
+      required: [gamertag, level, title, rank, clanTag, lastMatchAt, score]
+      properties:
+        gamertag: { type: string }
+        level: { type: integer }
+        title: { type: string }
+        rank: { anyOf: [{ $ref: '#/components/schemas/Rank' }, { type: 'null' }] }
+        clanTag: { type: [string, 'null'] }
+        lastMatchAt: { type: [string, 'null'], format: date-time }
+        score:
+          type: object
+          description: Cuántas filas de la comparación gana cada uno
+          required: [me, them]
+          properties:
+            me: { type: integer }
+            them: { type: integer }
     Slice:
       type: object
       description: Una parte de un total, para gráficas

@@ -57,7 +57,8 @@ export function Clasificacion() {
               <span className={`display text-3xl ${isMe || e.position <= 3 ? 'text-primary' : 'text-subtle'}`}>{e.position}</span>
               <div className="min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <span className={`font-semibold truncate ${isMe ? 'text-primary' : ''}`}>{e.gamertag}{isMe ? ' (tú)' : ''}</span>
+                  {isMe ? <span className="font-semibold truncate text-primary">{e.gamertag} (tú)</span>
+                    : <a href={`#/comunidad/cara-a-cara/${encodeURIComponent(e.gamertag)}`} title={`Compararte con ${e.gamertag}`} className="font-semibold truncate hover:text-primary hover:underline underline-offset-4">{e.gamertag}</a>}
                   <span className="text-sm text-subtle">{[e.country, e.clanTag && `[${e.clanTag}]`].filter(Boolean).join(' · ')}</span>
                 </div>
                 <div className="h-1.5 bg-white/8 mt-2">

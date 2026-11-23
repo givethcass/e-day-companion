@@ -161,3 +161,13 @@ Where each kill and death happened is estimated from each match (by how much fig
 | Mi servicio, Tu temporada | The weapon chart and the recap's weapon card link to the weapon; the campaign card links to the chapters | |
 
 Kills with each weapon use the same estimate as the weapon medals. Collectibles are found on completed runs with a fixed chance per collectible (lower for the one most players miss), and the collectible medal and achievement now count those, so all three agree. Chapter replays after the twelfth count as runs of an earlier chapter, not new chapters. Weapon stats, tiers, chapters and collectibles are invented.
+
+## Cara a cara (v0.13.0)
+
+| Where | What it adds | Contract |
+| --- | --- | --- |
+| Comunidad → Cara a cara | The player's friends, each with how the comparison ends | `listFriends` |
+| One comparison | Both players' cards (rank, main mode and class, favourite weapon), the score in rows won, a verdict naming each player's widest lead, and fourteen rows in four groups as bars that lean toward whoever leads | `compareWithPlayer` |
+| Clasificaciones | Every other player on a board opens the comparison with them | `compareWithPlayer` |
+
+Rows are compared as shown (63% against 63% is a tie). The rows favour rates over totals so a friend who plays less but better can win them; Capi_Hierro is that friend in the seed.

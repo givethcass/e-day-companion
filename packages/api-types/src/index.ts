@@ -57,6 +57,10 @@ export type WeaponTier = S['WeaponTier'];
 export type Campaign = S['Campaign'];
 export type Chapter = S['Chapter'];
 export type Collectible = S['Collectible'];
+export type Friend = S['Friend'];
+export type Comparison = S['Comparison'];
+export type CompareRow = S['CompareRow'];
+export type CompareSide = S['CompareSide'];
 export type ApiError = S['Error'];
 
 export type MatchPage = operations['listMyMatches']['responses']['200']['content']['application/json'];

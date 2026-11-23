@@ -39,7 +39,8 @@ export default function Clasificacion() {
           {data.entries.map((e) => (
             <Row key={e.gamertag} tag={`#${String(e.position).padStart(2, '0')}`} tagTone={e.gamertag === data.me?.gamertag ? 'primary' : 'textSubtle'}
               title={e.gamertag} subtitle={[e.country, e.clanTag].filter(Boolean).join(' · ')} trailing={score(e.points)}
-              trailingTone={e.gamertag === data.me?.gamertag ? 'primary' : 'text'} />
+              trailingTone={e.gamertag === data.me?.gamertag ? 'primary' : 'text'}
+              onPress={e.gamertag === data.me?.gamertag ? undefined : () => router.push(`/comunidad/cara-a-cara/${encodeURIComponent(e.gamertag)}`)} />
           ))}
         </Section>
       )}

@@ -56,6 +56,8 @@ const calls: [string, string, { query?: Record<string, string>; body?: unknown }
   ['GET', '/weapons'],
   ['GET', '/weapons/gnasher'],
   ['GET', '/me/campaign'],
+  ['GET', '/me/friends'],
+  ['GET', '/me/compare/Capi_Hierro'],
 ];
 
 const api = createApi();

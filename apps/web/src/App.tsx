@@ -1,5 +1,5 @@
 // Desktop shell: sticky nav with a sliding underline, the demo clock, notifications, and the five sections.
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { api } from './lib/api';
 import { AppProvider, PRESETS, useApp, useData } from './lib/app';
 import { dayTime, rankLabel } from './lib/format';
@@ -8,12 +8,15 @@ import { Comunidad } from './pages/Comunidad';
 import { Escuadra } from './pages/Escuadra';
 import { Guias } from './pages/Guias';
 import { Inicio } from './pages/Inicio';
-import { Arsenal } from './pages/Arsenal';
-import { Mapas } from './pages/Mapas';
 import { Noticias } from './pages/Noticias';
 import { Partida } from './pages/Partida';
 import { Servicio } from './pages/Servicio';
 import { Tienda } from './pages/Tienda';
+
+// The tools added after the first release load on first visit, so the opening bundle stays the size it was.
+const Arsenal = lazy(() => import('./pages/Arsenal').then((m) => ({ default: m.Arsenal })));
+const CaraACara = lazy(() => import('./pages/CaraACara').then((m) => ({ default: m.CaraACara })));
+const Mapas = lazy(() => import('./pages/Mapas').then((m) => ({ default: m.Mapas })));
 
 const TABS = [['inicio', 'Inicio'], ['noticias', 'Noticias'], ['guias', 'Guías'], ['servicio', 'Mi servicio'], ['comunidad', 'Comunidad']] as const;
 
@@ -35,6 +38,7 @@ function Shell() {
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] bg-ink text-bg px-3 py-2">Saltar al contenido</a>
       <Nav />
       <main id="main" key={route.join('/')} className="flex-1 animate-rise">
+        <Suspense fallback={<div className="min-h-screen" />}>
         {page === 'noticias' ? <Noticias id={route[1]} />
           : page === 'guias' && route[1] === 'mapas' ? <Mapas id={route[2]} />
           : page === 'guias' && route[1] === 'arsenal' ? <Arsenal id={route[2]} />
@@ -42,9 +46,11 @@ function Shell() {
           : page === 'servicio' && route[1] === 'partidas' && route[2] ? <Partida id={route[2]} />
           : page === 'servicio' ? <Servicio sub={route[1]} />
           : page === 'comunidad' && route[1] === 'escuadra' && route[2] ? <Escuadra id={route[2]} />
+          : page === 'comunidad' && route[1] === 'cara-a-cara' ? <CaraACara tag={route[2]} />
           : page === 'comunidad' ? <Comunidad />
           : page === 'tienda' ? <Tienda id={route[1]} />
           : <Inicio />}
+        </Suspense>
       </main>
       <Footer />
     </div>

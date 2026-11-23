@@ -47,7 +47,7 @@ export function generate({ seed = SEED } = {}) {
   // Named characters from the brief and the prototype.
   const scripted = [
     { id: 'p_demo', gamertag: 'Delta_Rojo', platform: 'xbox', country: 'MX', accessType: 'game_pass', skill: 2.0 },
-    { id: 'p_capi', gamertag: 'Capi_Hierro', platform: 'xbox', country: 'MX', accessType: 'purchase', skill: 0.9 },
+    { id: 'p_capi', gamertag: 'Capi_Hierro', platform: 'xbox', country: 'MX', accessType: 'purchase', skill: 2.4 },
     { id: 'p_marla', gamertag: 'Marla_X', platform: 'pc', country: 'MX', accessType: 'purchase', skill: 0.6 },
   ];
   scripted.forEach((p) => usedTags.add(p.gamertag));

@@ -3,7 +3,7 @@
 import type {
   Achievement, AchievementList, CalendarEntry, Challenge, Clan, ClassLevel, Creator, Guide, GuideSection, GuideSummary, Medal, Promo, PromoPlacement, MedalTier, MedalUnlock, ServiceRecord, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
   NewsSummary, NewsTag, NewSquadSession, Notification, NotificationPrefs, Player, RecapCard, SeasonRecap, SquadSession, StoreItem, VersusMap, VersusMapSummary, WeeklyReport,
-  Campaign, Chapter, Weapon, WeaponSummary,
+  Campaign, Chapter, Weapon, WeaponSummary, Comparison, CompareRow, CompareSide, Friend,
 } from '@eday/api-types';
 import { CAMPAIGN_CHAPTERS, GIFT_AT, HORDE_WAVE_GOAL, MEDAL_REWARDS, generate, rankFromPoints, type SeedData, type SeedVersusMap, type SeedWeapon, type SeedMatch, type SeedAchievement, type SeedMedalSeries, type SeedPlayer, type SeedSession } from '@eday/seed';
 import { DAY, clock, day, dayMonth, difficultyLabel, localDate, rankLabel, roleLabel, weekday } from './format.ts';
@@ -601,6 +601,65 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     };
   };
 
+  // ---------- Cara a cara ----------
+  // The same numbers Mi servicio shows, for two players side by side. Each row has a winner; the verdict names the
+  // row where each player leads by the widest margin.
+  const ROWS: [CompareRow['group'], string, string, CompareRow['unit']][] = [
+    ['general', 'hours', 'Horas jugadas', 'hours'], ['general', 'gamerscore', 'Gamerscore', 'count'], ['general', 'dayStreak', 'Días seguidos', 'count'],
+    ['versus', 'kd', 'K/D', 'ratio'], ['versus', 'winRate', 'Victorias', 'percent'], ['versus', 'rankPoints', 'Puntos de Ranked', 'count'],
+    ['versus', 'winStreak', 'Mejor racha', 'count'], ['versus', 'bestKills', 'Más bajas en una partida', 'count'], ['versus', 'accuracy', 'Precisión', 'percent'],
+    ['horde', 'bestWave', 'Mejor oleada', 'count'], ['horde', 'hordeRate', 'Partidas completas', 'percent'], ['horde', 'hordeKpm', 'Bajas por partida', 'count'],
+    ['campaign', 'chapters', 'Capítulos', 'count'], ['campaign', 'collectibles', 'Coleccionables', 'count'],
+  ];
+  const factsCache = new Map<string, ReturnType<typeof computeFacts>>();
+  const compareFacts = (p: SeedPlayer, now: string) => {
+    const key = `${p.id}|${now}`;
+    if (!factsCache.has(key)) factsCache.set(key, computeFacts(p, now));
+    return factsCache.get(key)!;
+  };
+  function computeFacts(p: SeedPlayer, now: string) {
+    const rec = serviceRecord(p, now);
+    const camp = campaignOf(p, now);
+    const kills = weaponKills(p, now);
+    const fav = [...kills].sort((a, b) => b[1].kills - a[1].kills)[0];
+    const share = rec.career.share;
+    const main = rec.career.matches ? (Object.keys(share) as (keyof typeof share)[]).sort((a, b) => share[b] - share[a])[0] : null;
+    const side: CompareSide = { gamertag: p.gamertag, level: p.level, title: rec.title, rank: p.rank, clanTag: p.clanId ? clans.get(p.clanId)!.tag : null,
+      country: p.country, mainMode: main, mainRole: rec.horde.mainRole ?? null, favoriteWeapon: fav?.[1].kills ? { id: fav[0], name: weaponName(fav[0]) } : null };
+    const values: Record<string, number> = {
+      hours: rec.career.hoursPlayed, gamerscore: achievementsOf(p, now).gamerscore, dayStreak: rec.career.bestDayStreak,
+      kd: rec.versus.kd, winRate: rec.versus.winRate, rankPoints: p.rank?.points ?? 0, winStreak: rec.versus.bestWinStreak, bestKills: rec.versus.bestKills ?? 0,
+      accuracy: rec.versus.accuracy, bestWave: rec.horde.bestWave, hordeRate: round(rec.horde.completed / Math.max(1, rec.horde.matches), 3),
+      hordeKpm: Math.round(rec.horde.kills / Math.max(1, rec.horde.matches)), chapters: camp.chaptersCompleted, collectibles: camp.collectiblesFound,
+    };
+    return { side, values };
+  }
+  const fmt = (r: CompareRow, x: number) => (r.unit === 'percent' ? `${Math.round(x * 100)}%` : r.unit === 'ratio' ? x.toFixed(2) : r.unit === 'hours' ? `${Math.round(x)} h` : x.toLocaleString('en-US'));
+  const compare = (p: SeedPlayer, other: SeedPlayer, now: string): Comparison => {
+    const a = compareFacts(p, now), b = compareFacts(other, now);
+    const rows = ROWS.map(([group, id, label, unit]): CompareRow => {
+      // Compared as shown: 63% against 63% is a tie even when the third decimal differs.
+      const shown = (v: number) => (unit === 'percent' ? Math.round(v * 100) : unit === 'ratio' ? round(v, 2) : unit === 'hours' ? Math.round(v) : v);
+      const x = a.values[id], y = b.values[id];
+      return { id, group, label, me: x, them: y, unit, winner: shown(x) > shown(y) ? 'me' : shown(y) > shown(x) ? 'them' : 'tie' };
+    });
+    const score = { me: rows.filter((r) => r.winner === 'me').length, them: rows.filter((r) => r.winner === 'them').length, ties: rows.filter((r) => r.winner === 'tie').length };
+    const edge = (who: 'me' | 'them') => rows.filter((r) => r.winner === who)
+      .sort((r1, r2) => Math.abs(r2.me - r2.them) / Math.max(r2.me, r2.them) - Math.abs(r1.me - r1.them) / Math.max(r1.me, r1.them))[0];
+    const mine = edge('me'), theirs = edge('them');
+    const lead = score.me > score.them ? `Le ganas en ${score.me} de ${rows.length}.` : score.them > score.me ? `${other.gamertag} te gana en ${score.them} de ${rows.length}.` : `Empate: ${score.me} cada uno.`;
+    const verdict = [lead,
+      mine && `Tu mayor ventaja: ${mine.label.toLowerCase()} (${fmt(mine, mine.me)} contra ${fmt(mine, mine.them)}).`,
+      theirs && `La suya: ${theirs.label.toLowerCase()} (${fmt(theirs, theirs.them)} contra ${fmt(theirs, theirs.me)}).`].filter(Boolean).join(' ');
+    return { me: a.side, them: b.side, friends: (friendsOf.get(p.id) ?? []).includes(other.id), rows, score, verdict };
+  };
+  const friendsList = (p: SeedPlayer, now: string): Friend[] => (friendsOf.get(p.id) ?? []).map((id) => {
+    const f = players.get(id)!;
+    const c = compare(p, f, now);
+    return { gamertag: f.gamertag, level: f.level, title: c.them.title, rank: f.rank, clanTag: c.them.clanTag,
+      lastMatchAt: playedBy(f.id, now).at(-1)?.endedAt ?? null, score: { me: c.score.me, them: c.score.them } };
+  }).sort((x, y) => (y.lastMatchAt ?? '').localeCompare(x.lastMatchAt ?? ''));
+
   // ---------- Versus maps ----------
   // The game would record where each kill and death happened. The demo spreads every match's kills over the map's
   // callouts by how much fighting each sees, with a nudge toward one favourite callout per player and map, and its
@@ -747,6 +806,13 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   r.add('GET', '/weapons/{weaponId}', ({ playerId, params, query }) => {
     const w = data.weapons.find((x) => x.id === params.weaponId);
     return w ? ok(weaponDetail(me(playerId), w, nowOf(query))) : error(404, 'not_found', 'Esa arma no existe');
+  });
+  r.add('GET', '/me/friends', ({ playerId, query }) => ok(friendsList(me(playerId), nowOf(query))));
+  r.add('GET', '/me/compare/{gamertag}', ({ playerId, params, query }) => {
+    const other = byTag.get(params.gamertag);
+    if (!other) return error(404, 'not_found', `No encontramos a ${params.gamertag}`);
+    if (other.id === playerId) return error(400, 'bad_request', 'Elige a otro jugador');
+    return ok(compare(me(playerId), other, nowOf(query)));
   });
   r.add('GET', '/me/campaign', ({ playerId, query }) => ok(campaignOf(me(playerId), nowOf(query))));
 

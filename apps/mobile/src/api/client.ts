@@ -3,7 +3,7 @@
 // which is what the static web demo uses.
 import type {
   AchievementList, CalendarEntry, Challenge, Creator, Guide, GuideSection, GuideSummary, HordeRole, Promo, PromoPlacement, Medal, MedalUnlock, ServiceRecord, Clan, Event, JoinRequest, Leaderboard, LeaderboardScope, MatchPage, MatchReport, Mode, NewSquadSession,
-  NewsArticle, NewsSummary, NewsTag, Notification, NotificationPrefs, Player, Season, SessionFilters, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport, VersusMap, VersusMapSummary, SeasonRecap, Weapon, WeaponSummary, Campaign,
+  NewsArticle, NewsSummary, NewsTag, Notification, NotificationPrefs, Player, Season, SessionFilters, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport, VersusMap, VersusMapSummary, SeasonRecap, Weapon, WeaponSummary, Campaign, Friend, Comparison,
 } from '@eday/api-types';
 import { createApi, type Api } from '@eday/api-mock';
 
@@ -112,4 +112,6 @@ export const api = {
   listWeapons: (asOf?: string) => call<WeaponSummary[]>('GET', '/weapons', { query: { asOf } }),
   getWeapon: (weaponId: string, asOf?: string) => call<Weapon>('GET', `/weapons/${enc(weaponId)}`, { query: { asOf } }),
   getCampaign: (asOf?: string) => call<Campaign>('GET', '/me/campaign', { query: { asOf } }),
+  listFriends: (asOf?: string) => call<Friend[]>('GET', '/me/friends', { query: { asOf } }),
+  compareWith: (gamertag: string, asOf?: string) => call<Comparison>('GET', `/me/compare/${enc(gamertag)}`, { query: { asOf } }),
 };

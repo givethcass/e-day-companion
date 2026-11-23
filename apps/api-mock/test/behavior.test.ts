@@ -1,7 +1,7 @@
 // The demo story and the six fixes from the synthetic test hold in the simulated backend.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import type { Campaign, Weapon, WeaponSummary, SeasonRecap, VersusMap, VersusMapSummary, AchievementList, Creator, Guide, GuideSummary, Promo, CalendarEntry, Leaderboard, Medal, MedalUnlock, ServiceRecord, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
+import type { Comparison, Friend, Campaign, Weapon, WeaponSummary, SeasonRecap, VersusMap, VersusMapSummary, AchievementList, Creator, Guide, GuideSummary, Promo, CalendarEntry, Leaderboard, Medal, MedalUnlock, ServiceRecord, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
 import { generate } from '@eday/seed';
 import { createApi } from '../src/index.ts';
 
@@ -306,4 +306,20 @@ test('the campaign counts each chapter once and agrees with the collectible meda
   const early = call<Campaign>('GET', '/me/campaign', { query: { asOf: '2026-10-06T15:00:00.000Z' } });
   assert.equal(early.chaptersCompleted, 0);
   assert.deepEqual(early.acts[0].chapters.map((x) => x.status), ['available', 'locked', 'locked', 'locked']);
+});
+
+test('cara a cara puts two players side by side, row by row, with a verdict', () => {
+  const c = call<Comparison>('GET', '/me/compare/Capi_Hierro');
+  assert.equal(c.friends, true);
+  assert.equal(c.score.me + c.score.them + c.score.ties, c.rows.length);
+  assert.equal(c.rows.find((r) => r.id === 'winRate')!.winner, 'tie', '63% against 63% reads as a tie');
+  assert.equal(c.rows.find((r) => r.id === 'kd')!.winner, 'them');
+  assert.equal(c.rows.find((r) => r.id === 'kd')!.me, call<ServiceRecord>('GET', '/me/service-record').versus.kd);
+  assert.ok(c.score.them > 0, 'Capi_Hierro wins somewhere');
+  assert.match(c.verdict, /^Le ganas en \d+ de 14\. Tu mayor ventaja: .+ La suya: .+/);
+  const friends = call<Friend[]>('GET', '/me/friends');
+  assert.deepEqual(friends.find((f) => f.gamertag === 'Capi_Hierro')!.score, { me: c.score.me, them: c.score.them });
+  const { api } = fresh();
+  assert.equal(api.handle({ method: 'GET', path: '/me/compare/Delta_Rojo', playerId: 'p_demo' }).status, 400);
+  assert.equal(api.handle({ method: 'GET', path: '/me/compare/Nadie', playerId: 'p_demo' }).status, 404);
 });

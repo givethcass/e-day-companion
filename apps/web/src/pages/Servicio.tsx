@@ -1,6 +1,6 @@
 // Mi servicio on desktop: a dashboard of the whole career, the 74 medal series with equip, and achievements.
 import type { Medal } from '@eday/api-types';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { api } from '../lib/api';
 import { useApp, useData } from '../lib/app';
 import { day, dayTime, MEDAL_GROUP, MODE, matchTitle, num, outcome, pct, plural, rankLabel, ROLE, TIER } from '../lib/format';
@@ -8,9 +8,10 @@ import { Arrow, earned, MedalBadge, MoreLink, nextTier, SectionHead, TierPips, t
 import { Bar, CountUp, Reveal, spotlight, useSeen, useToast } from '../ui/fx';
 import { HeroScene } from '../ui/HeroScene';
 import { Clasificacion } from './Clasificacion';
-import { Campana } from './Campana';
-import { Temporada } from './Temporada';
 import { ChartCard, Columns, Donut, MODE_COLOR, OTHER, RankBars, ROLE_COLOR, SERIES, SplitBar } from '../ui/charts';
+
+const Campana = lazy(() => import('./Campana').then((m) => ({ default: m.Campana })));
+const Temporada = lazy(() => import('./Temporada').then((m) => ({ default: m.Temporada })));
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const WEEK = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -60,12 +61,14 @@ export function Servicio({ sub = '' }: { sub?: string }) {
         </nav>
       </section>
       <div className="max-w-[1440px] mx-auto px-10 pt-14">
+        <Suspense fallback={<div className="min-h-[60vh]" />}>
         {sub === 'medallas' ? <Medals onChange={() => setVersion((v) => v + 1)} version={version} />
           : sub === 'logros' ? <Achievements />
           : sub === 'clasificacion' ? <Clasificacion />
           : sub === 'temporada' ? <Temporada />
           : sub === 'campana' ? <Campana />
           : <Summary />}
+        </Suspense>
       </div>
     </>
   );
