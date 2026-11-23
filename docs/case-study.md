@@ -1,5 +1,7 @@
 # Case study (draft)
 
+> The finished case study is published at https://givethcass.github.io/e-day-companion/ (source: `site/index.html`). This file is the original outline.
+
 > Unofficial concept. Not affiliated with Microsoft, Xbox or The Coalition. Data is simulated.
 
 ## 1. The problem

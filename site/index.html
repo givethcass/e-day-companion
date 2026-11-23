@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>E-Day Companion · Caso de estudio</title>
+<meta name="description" content="Caso de estudio de E-Day Companion, una app companion no oficial para Gears of War: E-Day: problema, proceso, decisiones de diseño y resultado.">
+<meta property="og:title" content="E-Day Companion · Caso de estudio">
+<meta property="og:image" content="img/poster.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a long read on black, one narrow text column, media breaking out wider; the product's own Direction C tokens. */
+  :root {
+    color-scheme: dark;
+    --bg: #000000;
+    --surface: #0e0e0e;
+    --raised: #161616;
+    --line: #262626;
+    --band: #800000;
+    --ink: #ffffff;
+    --muted: #b4b2b2;
+    --subtle: #959393;
+    --primary: #f0473a;
+    --action: #bf0a0a;
+    --gold: #c98500;
+    --blue: #3987e5;
+    --display: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+    --body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --text: 680px;
+    --wide: 1180px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.6 var(--body); -webkit-font-smoothing: antialiased; }
+  .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .col { max-width: var(--text); margin-inline: auto; }
+  .wide { max-width: var(--wide); margin-inline: auto; }
+  a { color: var(--primary); text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible, video:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; line-height: 0.95; margin: 0; text-wrap: balance; }
+  h2 { font-size: clamp(34px, 5vw, 52px); }
+  h3 { font-size: 24px; letter-spacing: 0.04em; }
+  p { margin: 0; }
+  .eyebrow { font: 600 13px/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.14em; color: var(--primary); }
+  .eyebrow.grey { color: var(--subtle); }
+  .lede { font-size: 21px; line-height: 1.5; color: var(--muted); }
+  .note { font-size: 14px; color: var(--subtle); line-height: 1.5; }
+  .stack { display: flex; flex-direction: column; gap: 20px; }
+
+  /* Hero: the band from the product, fading to black. */
+  .hero { position: relative; overflow: hidden; background: linear-gradient(180deg, var(--band) 0%, #2a0000 55%, var(--bg) 100%); }
+  .hero::after { content: ''; position: absolute; right: -120px; top: 40px; width: 420px; height: 420px; transform: rotate(45deg); border: 14px solid rgb(240 71 58 / 0.35); pointer-events: none; }
+  .hero .inner { position: relative; z-index: 1; padding-block: 72px 64px; display: flex; flex-direction: column; gap: 26px; }
+  .hero h1 { font-size: clamp(64px, 12vw, 148px); line-height: 0.86; }
+  .hero h1 span { color: var(--primary); display: block; }
+  .hero .lede { color: rgb(255 255 255 / 0.82); max-width: 640px; }
+  .meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid rgb(255 255 255 / 0.18); margin-top: 10px; }
+  .meta div { padding: 16px 18px 0 0; min-width: 0; }
+  .meta dt { font: 600 12px/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.14em; color: rgb(255 255 255 / 0.6); }
+  .meta dd { margin: 6px 0 0; font-size: 15px; line-height: 1.4; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; font: 600 15px/1 var(--display); text-transform: uppercase; letter-spacing: 0.12em; text-decoration: none; color: var(--ink); border: 1px solid rgb(255 255 255 / 0.4); transition: background 0.2s, color 0.2s; }
+  .btn:hover { background: var(--ink); color: var(--bg); }
+  .btn.solid { background: var(--action); border-color: var(--action); }
+  .btn.solid:hover { background: #e50f11; color: var(--ink); }
+  .btn svg { width: 16px; height: 16px; }
+  .disclaimer { font-size: 13px; color: rgb(255 255 255 / 0.6); }
+
+  section { padding-block: 72px; }
+  section + section { border-top: 1px solid var(--line); }
+  .head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+
+  /* Video */
+  .film { padding-block: 8px 56px; }
+  .film video { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #050505; border: 1px solid var(--line); }
+  .film figcaption { margin-top: 12px; }
+
+  /* Figures */
+  .figures { display: grid; gap: 18px; }
+  .figures.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .figures.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .figures.phones { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 900px; margin-inline: auto; }
+  figure { margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  figure img { display: block; width: 100%; max-width: 100%; height: auto; border: 1px solid var(--line); background: var(--surface); }
+  .phones figure img { border-radius: 28px; border: 6px solid #111; box-shadow: 0 0 0 1px #2c2c2c; }
+  figcaption { font-size: 14px; color: var(--subtle); line-height: 1.45; }
+  figcaption b { color: var(--muted); font-weight: 600; }
+
+  /* Big numbers in the problem section: they are the point there. */
+  .figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); margin-block: 8px 18px; }
+  .figs div { padding: 22px 22px 20px; border-right: 1px solid var(--line); min-width: 0; }
+  .figs div:last-child { border-right: 0; }
+  .figs b { display: block; font: 700 clamp(44px, 6vw, 64px)/0.9 var(--display); font-variant-numeric: tabular-nums; }
+  .figs div:first-child b { color: var(--primary); }
+  .figs span { display: block; margin-top: 10px; font-size: 15px; color: var(--muted); line-height: 1.4; }
+
+  .callout { border: 1px solid var(--line); border-left: 4px solid var(--primary); background: var(--surface); padding: 20px 22px; display: flex; flex-direction: column; gap: 6px; }
+  .callout p { font-size: 18px; }
+
+  /* Personas */
+  .people { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .person { background: var(--surface); border: 1px solid var(--line); padding: 22px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .person h3 { font-size: 28px; }
+  .person .who { font-size: 14px; color: var(--subtle); }
+  .person q { font-size: 17px; line-height: 1.45; quotes: '«' '»'; }
+  .person dl { margin: auto 0 0; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .person dt { font: 600 11px/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.14em; color: var(--subtle); }
+  .person dd { margin: 2px 0 0; font-size: 15px; }
+
+  /* Test result rows */
+  .rows { border-top: 1px solid var(--line); }
+  .rows > div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 18px; padding-block: 16px; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .rows b { font: 700 34px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .rows b.red { color: var(--primary); }
+  .rows p { color: var(--muted); }
+  .rows p strong { color: var(--ink); font-weight: 600; }
+
+  /* Tabs: the five sections of the hub, drawn like the app's tab bar. */
+  .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); }
+  .tab { padding: 18px 16px 20px; border-right: 1px solid var(--line); min-width: 0; display: flex; flex-direction: column; gap: 8px; position: relative; }
+  .tab:last-child { border-right: 0; }
+  .tab::before { content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 3px; background: var(--primary); transform: scaleX(0); transform-origin: left; transition: transform 0.3s; }
+  .tab:hover::before { transform: scaleX(1); }
+  .tab h3 { font-size: 22px; }
+  .tab p { font-size: 14px; color: var(--muted); line-height: 1.45; }
+
+  /* Directions A, B, C */
+  .dirs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .dir { border: 1px solid var(--line); padding: 20px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .dir.pick { border-color: var(--primary); background: linear-gradient(180deg, rgb(128 0 0 / 0.45), transparent 70%); }
+  .dir .tag { font: 600 12px/1 var(--display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle); }
+  .dir.pick .tag { color: var(--primary); }
+  .dir p { font-size: 15px; color: var(--muted); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .sw { display: flex; align-items: center; gap: 10px; padding-right: 14px; border: 1px solid var(--line); background: var(--surface); }
+  .sw i { width: 40px; height: 40px; display: block; border-right: 1px solid var(--line); }
+  .sw span { font-size: 13px; color: var(--muted); line-height: 1.25; }
+  .sw code { font: 500 12px/1 ui-monospace, 'SFMono-Regular', Menlo, monospace; color: var(--subtle); display: block; margin-top: 3px; }
+
+  .rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; margin-top: 26px; }
+  .rules div { display: flex; flex-direction: column; gap: 4px; border-top: 2px solid var(--line); padding-top: 12px; }
+  .rules h3 { font-size: 20px; }
+  .rules p { font-size: 15px; color: var(--muted); }
+
+  /* Architecture flow */
+  .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; align-items: stretch; }
+  .node { position: relative; border: 1px solid var(--line); background: var(--surface); padding: 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .node + .node { border-left: 0; }
+  .node h3 { font-size: 20px; }
+  .node p { font-size: 14px; color: var(--muted); line-height: 1.45; }
+  .node code { font: 500 12.5px/1.4 ui-monospace, 'SFMono-Regular', Menlo, monospace; color: var(--subtle); }
+  .node:not(:last-child)::after { content: ''; position: absolute; right: -8px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%) rotate(45deg); background: var(--primary); z-index: 1; }
+  .node.end { background: linear-gradient(180deg, rgb(128 0 0 / 0.5), var(--surface)); }
+  .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-top: 18px; border: 1px solid var(--line); }
+  .facts div { padding: 16px 18px; border-right: 1px solid var(--line); min-width: 0; }
+  .facts div:last-child { border-right: 0; }
+  .facts b { display: block; font: 700 36px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .facts span { display: block; font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+  /* Metrics table */
+  .table { overflow-x: auto; border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 560px; }
+  th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 600 12px/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.14em; color: var(--subtle); background: var(--surface); }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { font-weight: 600; }
+  .pill { display: inline-block; font: 600 12px/1 var(--display); letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 8px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .pill.main { border-color: var(--primary); color: var(--primary); }
+
+  .next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 26px; }
+  .next div { border: 1px solid var(--line); padding: 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .next h3 { font-size: 20px; }
+  .next p { font-size: 15px; color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line); padding-block: 40px 56px; }
+  footer .wide { display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: space-between; align-items: baseline; }
+  footer .brand { font: 700 22px/1 var(--display); text-transform: uppercase; letter-spacing: 0.06em; }
+  footer .brand span { color: var(--primary); }
+
+  @media (max-width: 900px) {
+    .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .figures.three, .people, .dirs, .next { grid-template-columns: minmax(0, 1fr); }
+    .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tab { border-bottom: 1px solid var(--line); }
+    .flow, .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .node + .node { border-left: 1px solid var(--line); }
+    .node::after { display: none; }
+    .facts div:nth-child(2) { border-right: 0; }
+    .facts div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  }
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    section { padding-block: 52px; }
+    .hero .inner { padding-block: 48px 44px; }
+    .hero::after { width: 240px; height: 240px; right: -110px; top: 20px; border-width: 10px; }
+    .figs, .figures.two, .rules, .flow { grid-template-columns: minmax(0, 1fr); }
+    .figs div { border-right: 0; border-bottom: 1px solid var(--line); }
+    .figs div:last-child { border-bottom: 0; }
+    .figures.phones { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .phones figure img { border-radius: 14px; border-width: 3px; }
+    .tabs { grid-template-columns: minmax(0, 1fr); }
+    .rows > div { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .tab::before, .btn { transition: none; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="inner wide">
+      <div class="eyebrow" style="color: rgb(255 255 255 / 0.75)">Caso de estudio · Concepto no oficial</div>
+      <h1>E-Day<span>Companion</span></h1>
+      <p class="lede">La app companion que Gears of War: E-Day podría tener si fuera oficial: noticias, guías, tu historial de servicio y escuadras de Horde, en el teléfono, en tablet y en la web.</p>
+      <div class="ctas">
+        <a class="btn solid" href="demo/">Abrir la demo
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn" href="https://github.com/givethcass/e-day-companion">Ver el código</a>
+      </div>
+      <dl class="meta">
+        <div><dt>Tipo</dt><dd>Proyecto de portafolio con datos simulados</dd></div>
+        <div><dt>Plataformas</dt><dd>iOS y Android (Expo), tablet y web</dd></div>
+        <div><dt>Alcance</dt><dd>Investigación, diseño de producto, UI y desarrollo</dd></div>
+        <div><dt>Plan</dt><dd>6 semanas, del brief al video</dd></div>
+      </dl>
+      <p class="disclaimer">No afiliado a Microsoft, Xbox ni The Coalition. Sin logos, arte ni fuentes del juego; los mapas, marcas y creadores son inventados.</p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap film">
+    <figure class="wide">
+      <video controls preload="metadata" playsinline poster="img/poster.jpg" aria-describedby="film-cap">
+        <source src="recorrido.mp4" type="video/mp4">
+      </video>
+      <figcaption id="film-cap"><b>Recorrido de 2 min 25 s.</b> La misma cuenta en el teléfono, en la tablet y en la web: Inicio, Mi servicio con sus gráficas, el reporte de una partida y el planificador de Horde.</figcaption>
+    </figure>
+  </div>
+
+  <section class="wrap" aria-labelledby="problema">
+    <div class="col">
+      <div class="head">
+        <div class="eyebrow">El problema</div>
+        <h2 id="problema">Mucha gente lo probó y poca se quedó</h2>
+      </div>
+      <div class="stack">
+        <p>E-Day salió el 6 de octubre de 2026 dentro de Game Pass. Las estimaciones de Alinea Analytics describen un lanzamiento con mucho alcance y poca permanencia:</p>
+        <div class="figs">
+          <div><b>1.7 M</b><span>personas lo probaron por Game Pass entre el 1 y el 6 de octubre</span></div>
+          <div><b>54%</b><span>de quienes jugaron en Xbox jugaron 5 horas o menos</span></div>
+          <div><b>17%</b><span>jugaron menos de una hora</span></div>
+        </div>
+        <p class="note">Fuente: <a href="https://alineaanalytics.substack.com/p/gears-of-war-e-day-sells-230k-copies">Alinea Analytics</a>, estimaciones de terceros.</p>
+        <p>Fuera del juego no había nada que le diera a esa persona una razón concreta para volver: ni sus números, ni una meta para la semana, ni una forma fácil de juntar escuadra.</p>
+        <div class="callout">
+          <div class="eyebrow">Hipótesis inicial</div>
+          <p>Si quien probó E-Day recibe cada semana una meta corta y personal, más jugadores vuelven en su segunda semana.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="quien">
+    <div class="wide">
+      <div class="head col" style="margin-inline: 0; max-width: var(--text)">
+        <div class="eyebrow">Para quién</div>
+        <h2 id="quien">Tres jugadores, tres razones para abrir la app</h2>
+        <p class="note">Proto-personas: hipótesis armadas con los datos de retención y reseñas públicas, no con entrevistas.</p>
+      </div>
+      <div class="people">
+        <article class="person">
+          <div><h3>Ana</h3><div class="who">La que lo probó por Game Pass · Xbox Series S</div></div>
+          <q>No sé qué hacer después; hay otros juegos esperando.</q>
+          <dl><div><dt>Qué la haría volver</dt><dd>Una meta corta con recompensa clara</dd></div><div><dt>En la app</dt><dd>Inicio con su semana y la tienda</dd></div></dl>
+        </article>
+        <article class="person">
+          <div><h3>Leo</h3><div class="who">El competitivo · PC, Ranked casi a diario</div></div>
+          <q>No veo mis estadísticas ni cómo voy frente a otros.</q>
+          <dl><div><dt>Qué lo haría volver</dt><dd>Clasificaciones y un rival cercano</dd></div><div><dt>En la app</dt><dd>Mi servicio, reportes y clasificaciones</dd></div></dl>
+        </article>
+        <article class="person">
+          <div><h3>Marco</h3><div class="who">El organizador · oficial de un clan de 20</div></div>
+          <q>Juntar a 12 personas por WhatsApp es un caos.</q>
+          <dl><div><dt>Qué lo haría volver</dt><dd>Que la sesión se llene sola y todos entren al juego</dd></div><div><dt>En la app</dt><dd>Comunidad y el planificador de Horde</dd></div></dl>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="prueba">
+    <div class="col">
+      <div class="head">
+        <div class="eyebrow">Semana 1 · Probar antes de construir</div>
+        <h2 id="prueba">La primera versión empujaba a todos a Ranked</h2>
+      </div>
+      <div class="stack">
+        <p>Las 10 pantallas clave se diseñaron en dos direcciones visuales y se pusieron frente a una prueba sintética: 10 perfiles simulados, armados a partir de reseñas reales de jugadores, que recorrieron la app con tareas concretas. No sustituye una prueba con personas, pero sirvió para encontrar problemas antes de escribir código.</p>
+        <div class="rows">
+          <div><b>10 de 10</b><p><strong>La navegación funcionó.</strong> Todos los perfiles encontraron su partida, la tienda y la escuadra.</p></div>
+          <div><b class="red">2.1 / 5</b><p><strong>Pocas ganas de instalarla.</strong> La misión semanal siempre sugería Ranked, aunque el perfil solo jugara Horde o campaña.</p></div>
+          <div><b>8 a 2</b><p><strong>Preferencia por la dirección A</strong> sobre la B, por legibilidad.</p></div>
+        </div>
+        <p>De ahí salieron seis cambios: misión según el modo que juegas, hora local en todo, saldo de Monedas y Hierro con el tope semanal, un planificador que confirma tu rol, filtros en escuadras y clasificación también para Horde.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="giro">
+    <div class="wide">
+      <div class="head" style="max-width: var(--text)">
+        <div class="eyebrow">Semana 4 · El giro</div>
+        <h2 id="giro">De una misión semanal a un hub como Halo Waypoint</h2>
+      </div>
+      <div class="col stack" style="margin-inline: 0; margin-bottom: 30px">
+        <p>Lo que los jugadores piden en foros, reseñas y videos es más amplio que una misión: quieren saber qué cambió en el último parche, aprender una clase de Horde y ver sus propios números. El juego tampoco tiene clasificaciones ni partidas privadas, así que una app oficial podría darlas primero.</p>
+        <p>Halo Waypoint es la referencia más cercana: el hub oficial de una saga de Xbox que reúne noticias, servicio del jugador y comunidad. Su app móvil cerró en 2023 y hoy vive en la web, lo que dejó claro que la versión web también cuenta. La estructura quedó en cinco pestañas:</p>
+      </div>
+      <div class="tabs" role="list">
+        <div class="tab" role="listitem"><h3>Inicio</h3><p>Tus números por modo, la semana, la tienda, el calendario y lo último.</p></div>
+        <div class="tab" role="listitem"><h3>Noticias</h3><p>Parches, eventos y temporadas, con notas que se entienden.</p></div>
+        <div class="tab" role="listitem"><h3>Guías</h3><p>Clases y builds de Horde, armas, mapas y coleccionables, oficiales y de creadores.</p></div>
+        <div class="tab" role="listitem"><h3>Mi servicio</h3><p>Carrera en gráficas, 74 series de medallas, logros, historial y clasificaciones.</p></div>
+        <div class="tab" role="listitem"><h3>Comunidad</h3><p>Escuadras con roles, tu clan, creadores y el planificador de Horde.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="look">
+    <div class="wide">
+      <div class="head" style="max-width: var(--text)">
+        <div class="eyebrow">Dirección visual</div>
+        <h2 id="look">Que se sienta oficial sin copiar nada</h2>
+      </div>
+      <div class="dirs">
+        <div class="dir"><span class="tag">Dirección A</span><h3>Mando COG</h3><p>Paneles militares y tipografía de placa. Ganó la prueba sintética por legibilidad.</p></div>
+        <div class="dir"><span class="tag">Dirección B</span><h3>HUD táctico</h3><p>Una interfaz de juego encima de la app. Llamativa, pero cansaba en pantallas largas.</p></div>
+        <div class="dir pick"><span class="tag">Dirección C · elegida</span><h3>El sitio oficial</h3><p>Una app oficial seguiría la marca. Se tomó el lenguaje del sitio del juego: negro, banda roja, esquinas rectas, Barlow Condensed.</p></div>
+      </div>
+      <div class="swatches" aria-label="Colores de la dirección C">
+        <div class="sw"><i style="background:#000000"></i><span>Fondo<code>#000000</code></span></div>
+        <div class="sw"><i style="background:#800000"></i><span>Banda<code>#800000</code></span></div>
+        <div class="sw"><i style="background:#bf0a0a"></i><span>Botón<code>#BF0A0A</code></span></div>
+        <div class="sw"><i style="background:#f0473a"></i><span>Texto rojo<code>#F0473A</code></span></div>
+        <div class="sw"><i style="background:#959393"></i><span>Secundario<code>#959393</code></span></div>
+      </div>
+      <p class="note" style="margin-top: 14px; max-width: var(--text)">El rojo de texto del sitio se aclaró un poco, de #E43127 a #F0473A, para pasar 4.5:1 sobre fondo oscuro. El arte es propio: brillos y degradados en lugar de imágenes del juego.</p>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="servicio">
+    <div class="wide">
+      <div class="head" style="max-width: var(--text)">
+        <div class="eyebrow">Mi servicio</div>
+        <h2 id="servicio">La carrera de un jugador, leída de un vistazo</h2>
+        <p class="lede" style="font-size: 18px">302 partidas y 100 horas no caben en una lista. Mi servicio las parte en lo que el jugador quiere saber: en qué modo se le va el tiempo, con qué arma mata, contra qué enemigos y a qué hora juega.</p>
+      </div>
+      <div class="figures two">
+        <figure><img src="img/w-servicio.jpg" alt="Mi servicio en la web: tres donas con el tiempo por modo, las bajas por arma y los enemigos abatidos, cada una con su leyenda de valores y porcentajes" width="2880" height="1800" loading="lazy"><figcaption><b>Web.</b> Las donas se dibujan al aparecer; pasar el cursor por una parte o por su fila resalta las dos.</figcaption></figure>
+        <figure><img src="img/t-servicio.jpg" alt="Mi servicio en tablet: dona de tiempo por modo, barra de bajas por modo, dona de bajas por arma y barras de bajas especiales en dos columnas" width="1230" height="1770" loading="lazy" style="max-height: 640px; object-fit: cover; object-position: top"><figcaption><b>Tablet.</b> La misma app desde 700 puntos de ancho acomoda las gráficas en dos columnas.</figcaption></figure>
+      </div>
+      <div class="rules">
+        <div><h3>Donas solo para partes de un todo</h3><p>Seis partes como máximo; el resto se junta en «Otras», siempre en gris y al final.</p></div>
+        <div><h3>Barras para comparar</h3><p>Victorias por mapa o mejor oleada por mapa van en barras sobre una misma base, de un solo color.</p></div>
+        <div><h3>Colores probados</h3><p>Seis colores revisados para daltonismo sobre el fondo oscuro, con el rojo de la marca primero.</p></div>
+        <div><h3>El color nunca va solo</h3><p>Cada gráfica nombra sus partes con valor y porcentaje, y cada parte se puede tocar o enfocar con teclado.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="dispositivos">
+    <div class="wide">
+      <div class="head" style="max-width: var(--text)">
+        <div class="eyebrow">Tres dispositivos</div>
+        <h2 id="dispositivos">Una app para el bolsillo, una web para quedarse</h2>
+      </div>
+      <div class="col stack" style="margin-inline: 0; margin-bottom: 30px">
+        <p>El teléfono es para lo rápido: revisar la última partida, ver si la escuadra del viernes ya está completa. La web es donde se lee una guía o se compara la temporada, así que tiene más espacio y más movimiento: una medalla en 3D en la portada, números que cuentan hacia arriba, tarjetas que se inclinan bajo el cursor.</p>
+      </div>
+      <div class="figures phones">
+        <figure><img src="img/m-inicio.jpg" alt="Inicio en el teléfono: tarjeta del jugador nivel 100 con victorias, K/D, rango y mejor racha" width="880" height="1912" loading="lazy"><figcaption><b>Inicio.</b> Tus números del modo que más juegas.</figcaption></figure>
+        <figure><img src="img/m-servicio-graficas.jpg" alt="Mi servicio en el teléfono: barra de bajas por modo, dona de bajas por arma y barras de bajas especiales" width="880" height="1912" loading="lazy"><figcaption><b>Mi servicio.</b> Bajas por modo, arma y tipo.</figcaption></figure>
+        <figure><img src="img/m-planificador.jpg" alt="Planificador de Horde en el teléfono: roles Asalto, Irruptor, Tirador y Médico, tres escuadras y el botón Desplegar" width="880" height="1912" loading="lazy"><figcaption><b>Planificador.</b> Eliges rol y la escuadra lo confirma.</figcaption></figure>
+      </div>
+      <div class="figures two" style="margin-top: 26px">
+        <figure><img src="img/w-inicio.jpg" alt="Inicio en la web: titular Juega Ranked, una medalla facetada en 3D y la fila de estadísticas del jugador" width="2880" height="1800" loading="lazy"><figcaption><b>Inicio en la web.</b> La medalla en three.js reacciona al cursor; los números cuentan al cargar.</figcaption></figure>
+        <figure><img src="img/w-partida.jpg" alt="Reporte de una partida Ranked en la web: Victoria +16 puntos, bajas, caídas, precisión, duración y la lección de la partida" width="2880" height="1800" loading="lazy"><figcaption><b>Reporte de partida.</b> Cada partida termina en una lección que enlaza a lo que ayuda la próxima vez.</figcaption></figure>
+        <figure><img src="img/w-planificador.jpg" alt="Planificador de Horde en la web: tarjetas de rol con Médico confirmado y tres escuadras de cuatro lugares" width="2880" height="1800" loading="lazy"><figcaption><b>Planificador en la web.</b> Los lugares libres dicen qué rol falta; tocarlos te une a esa escuadra.</figcaption></figure>
+        <figure><img src="img/w-clasificacion.jpg" alt="Clasificaciones en la web: tu posición número 2 entre amigos en Horde y la lista con barras de mejor oleada" width="2880" height="1800" loading="lazy"><figcaption><b>Clasificaciones.</b> Horde por mejor oleada y Ranked por puntos, entre amigos, clan, país o todos.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="como">
+    <div class="wide">
+      <div class="head" style="max-width: var(--text)">
+        <div class="eyebrow">Cómo está construido</div>
+        <h2 id="como">Primero el contrato, después las pantallas</h2>
+      </div>
+      <div class="col stack" style="margin-inline: 0; margin-bottom: 30px">
+        <p>Sin acceso real a los servidores del juego, todo parte de un contrato OpenAPI que describe la API que una app oficial necesitaría. De ese contrato salen los tipos, y un backend simulado lo implementa dentro del navegador, así la demo funciona sin servidor y la app y la web leen exactamente los mismos datos.</p>
+        <p>Un reloj de demo salta entre cuatro momentos de la temporada (un martes al mediodía, una hora antes de Horde, el viernes de la sesión del clan, el día que rota la tienda) y todo se recalcula: avisos, misión, escuadras y tienda.</p>
+      </div>
+      <div class="flow">
+        <div class="node"><span class="eyebrow grey">1</span><h3>Contrato OpenAPI</h3><p>35 operaciones: jugador, servicio, medallas, partidas, tienda, sesiones, clanes, noticias, guías.</p><code>contract/openapi.yaml</code></div>
+        <div class="node"><span class="eyebrow grey">2</span><h3>Tipos generados</h3><p>TypeScript generado del contrato, compartido por todo el repositorio.</p><code>packages/api-types</code></div>
+        <div class="node"><span class="eyebrow grey">3</span><h3>Backend simulado</h3><p>Implementa el contrato con datos deterministas; corre en el navegador o como servidor HTTP.</p><code>apps/api-mock</code></div>
+        <div class="node end"><span class="eyebrow grey">4</span><h3>App y web</h3><p>Expo y Expo Router para teléfono y tablet; Vite, React, Tailwind y three.js para la web.</p><code>apps/mobile · apps/web</code></div>
+      </div>
+      <div class="facts">
+        <div><b>57</b><span>pruebas: contrato, datos y comportamiento, en cada push</span></div>
+        <div><b>6</b><span>decisiones de arquitectura escritas (ADR)</span></div>
+        <div><b>0</b><span>violaciones de axe en las 14 vistas de la web</span></div>
+        <div><b>124 kB</b><span>de JavaScript inicial en la web, antes 262 kB (gzip)</span></div>
+      </div>
+      <p class="note" style="margin-top: 14px; max-width: var(--text)">Las dos últimas cifras salen de la semana de pulido: contraste y roles corregidos en gráficas y filtros, y three.js separado para que cargue después de la página.</p>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="medir">
+    <div class="col">
+      <div class="head">
+        <div class="eyebrow">Qué mediría</div>
+        <h2 id="medir">Si fuera real, esto diría si funciona</h2>
+      </div>
+      <div class="stack">
+        <p>Todo en la demo es simulado, así que no hay resultados que presumir. Esto es lo que se mediría con jugadores reales:</p>
+        <div class="table">
+          <table>
+            <thead><tr><th>Métrica</th><th>Tipo</th><th>Definición</th></tr></thead>
+            <tbody>
+              <tr><td>Regreso en semana 2</td><td><span class="pill main">Principal</span></td><td>Jugadores con al menos una partida entre los días 8 y 14 tras la primera</td></tr>
+              <tr><td>Sesiones de escuadra jugadas</td><td><span class="pill">Apoyo</span></td><td>Sesiones creadas en la app que terminan en partida</td></tr>
+              <tr><td>Reportes abiertos</td><td><span class="pill">Apoyo</span></td><td>Partidas cuyo reporte se abre en las 24 horas siguientes</td></tr>
+              <tr><td>Avisos de tienda abiertos</td><td><span class="pill">Apoyo</span></td><td>Avisos de la lista de deseos que se abren</td></tr>
+              <tr><td>Avisos desactivados</td><td><span class="pill">Control</span></td><td>Usuarios que apagan los avisos, para no pasarse de insistentes</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="wide">
+      <div class="next">
+        <div><h3>Probar con personas</h3><p>Repetir los tres recorridos con jugadores reales de Game Pass, Ranked y clanes de Horde.</p></div>
+        <div><h3>Lectores de pantalla nativos</h3><p>La web pasa axe; falta revisar la app con VoiceOver y TalkBack en dispositivos.</p></div>
+        <div><h3>Datos en vivo</h3><p>Cambiar el backend simulado por la API real sin tocar las pantallas, porque ambos siguen el mismo contrato.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <div class="wide">
+    <span class="brand">E-Day <span>Companion</span></span>
+    <span class="note">Concepto no oficial con datos simulados. No afiliado a Microsoft ni a The Coalition. Proyecto de portafolio · 2026.</span>
+  </div>
+</footer>
+
+</body>
+</html>

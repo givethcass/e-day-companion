@@ -436,6 +436,25 @@ export function generate({ seed = SEED } = {}) {
   // Delta_Rojo spends as fast as they earn: a cheap emblem fits, not every coin item this week.
   Object.assign(wallets.find((w) => w.playerId === 'p_demo'), { coins: 16000, iron: 400 });
 
+  // ---------- Ranked ladder top ----------
+  // 500 simulated players is a thin ladder: left alone, Delta_Rojo would sit 700 points clear at #1 in the world.
+  // A pack of the most skilled ranked players (outside their friends and clan) is lifted above and around them,
+  // so they read as a strong player: top 10 global, #2 in Mexico, #1 among friends and clan.
+  // Only the season's starting points move; every match and rank delta stays as simulated.
+  const circle = new Set(['p_demo', ...friendships.filter((f) => f.playerId === 'p_demo').map((f) => f.friendId),
+    ...clanMembers.filter((m) => m.clanId === 'c_00').map((m) => m.playerId)]);
+  const contenders = players.filter((p) => p.rank && !circle.has(p.id))
+    .sort((a, b) => profiles.get(b.id).skill - profiles.get(a.id).skill || a.id.localeCompare(b.id));
+  const topMx = contenders.find((p) => p.country === 'MX');
+  const pack = [...new Set([...contenders.slice(0, 13), topMx].filter(Boolean))];
+  const LADDER_TOP = [2745, 2660, 2585, 2530, 2470, 2425, 2390, 2350, 2265, 2230, 2190, 2140, 2085, 2040];
+  pack.sort((a, b) => b.rank.points - a.rank.points || a.id.localeCompare(b.id)).forEach((p, i) => {
+    // Keep the Mexican contender ahead of Delta_Rojo so Mexico has a real #1.
+    const target = p === topMx && LADDER_TOP[i] < 2300 ? LADDER_TOP[0] - 40 : LADDER_TOP[i];
+    p.rankStartPoints += target - p.rank.points;
+    p.rank = rankFromPoints(target);
+  });
+
   const events = EVENTS.map((e) => ({ ...e, modes: ['versus_tdm', 'horde_siege'], rewards: [`Emblema ${e.name}`, `Estandarte ${e.name}`] }));
 
   return {

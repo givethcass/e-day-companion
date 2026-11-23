@@ -22,5 +22,7 @@ const frag = await readFile(join(mobile, 'index.html'), 'utf8');
 const split = frag.indexOf('<noscript>');
 await writeFile(join(out, 'mobile.html'), doc(frag.slice(0, split).trim(), frag.slice(split).trim()));
 await cp(join(web, 'index.html'), join(out, 'web.html'));
-await cp(join(root, 'scripts/demo/shell.html'), join(out, 'index.html'));
+// The switcher is written as a fragment; give it a doctype so it also renders in standards mode when served as a plain site.
+const shell = await readFile(join(root, 'scripts/demo/shell.html'), 'utf8');
+await writeFile(join(out, 'index.html'), `<!doctype html>\n<html lang="es">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n${shell}`);
 console.log(`Demo bundle in ${out}`);

@@ -6,6 +6,14 @@ What if *Gears of War: E-Day* had an official companion app built to bring playe
 
 Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its first week, yet more than half of Xbox players stopped at 5 hours or less. This project imagines an official mobile companion in the spirit of Halo Waypoint: official news and patch notes, guides, your own service record, and a community side where Horde Siege squads get organised. The home screen opens on the player's own figures per mode and leads to the full service record, with medals as in the game's profile customisation and GTA-style curiosities.
 
+## See it
+
+- **Case study:** https://givethcass.github.io/e-day-companion/ (problem, process, design decisions and result, with the walkthrough video)
+- **Live demo:** https://givethcass.github.io/e-day-companion/demo/ (switch between phone, tablet and web with the buttons or keys 1, 2, 3)
+- **Walkthrough video:** [site/recorrido.mp4](site/recorrido.mp4), 2 min 25 s
+
+The site is built and deployed by `.github/workflows/pages.yml` on every push to `main`. The case study source lives in `site/`.
+
 ## Status
 
 | Week | Focus | State |
@@ -17,7 +25,7 @@ Analyst estimates suggest about 1.7M people tried E-Day through Game Pass in its
 | 4 | Waypoint-style structure (five tabs), Home, News, season calendar | Done |
 | 5 | Guides, service record, community, partner slots | Done |
 | 5+ | Tablet layout, desktop website, device switcher in the demo | Done |
-| 6 | Polish, demo video, case study | Not started |
+| 6 | Polish, demo video, case study | Done |
 
 ## Repository
 
@@ -31,7 +39,8 @@ apps/web                 Desktop website: React, Tailwind and three.js on the sa
 scripts/demo             Device switcher (phone, tablet, web) that bundles both builds into one demo page
 apps/api-mock            Simulated backend: every contract operation, in the app or over HTTP
 docs/adr                 Architecture decision records
-docs/case-study.md       Case study draft
+docs/case-study.md       Case study draft (the published version is site/index.html)
+site                     Case study page published to GitHub Pages, with the demo under /demo/
 docs/information-architecture.md  Tabs, screens and the contract operations behind them
 ```
 
