@@ -2,6 +2,7 @@
 import type {
   AchievementList, CalendarEntry, Clan, Creator, Guide, GuideSummary, Leaderboard, MatchPage, Medal, MedalUnlock, NewsArticle,
   HordeRole, MatchReport, NewsSummary, Notification, Player, Promo, PromoPlacement, ServiceRecord, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport,
+  SeasonRecap, VersusMap, VersusMapSummary,
 } from '@eday/api-types';
 import { createApi } from '@eday/api-mock';
 
@@ -44,4 +45,7 @@ export const api = {
   clan: (id: string) => call<Clan>('GET', `/clans/${id}`),
   clanBoard: (id: string) => call<Leaderboard>('GET', `/clans/${id}/leaderboard`),
   leaderboard: (mode: string, scope: string, limit = 10) => call<Leaderboard>('GET', `/leaderboards/${mode}`, { scope, limit }),
+  maps: (asOf: string) => call<VersusMapSummary[]>('GET', '/maps', { asOf }),
+  map: (id: string, asOf: string) => call<VersusMap>('GET', `/maps/${id}`, { asOf }),
+  recap: (asOf: string) => call<SeasonRecap>('GET', '/me/season-recap', { asOf }),
 };

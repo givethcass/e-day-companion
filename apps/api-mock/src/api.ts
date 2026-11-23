@@ -2,9 +2,9 @@
 // with the demo clock as "now" unless the request passes asOf.
 import type {
   Achievement, AchievementList, CalendarEntry, Challenge, Clan, ClassLevel, Creator, Guide, GuideSection, GuideSummary, Medal, Promo, PromoPlacement, MedalTier, MedalUnlock, ServiceRecord, HordeRole, JoinRequest, Leaderboard, LeaderboardEntry, MatchReport, MatchSummary, Mission, Mode,
-  NewsSummary, NewsTag, NewSquadSession, Notification, NotificationPrefs, Player, SquadSession, StoreItem, WeeklyReport,
+  NewsSummary, NewsTag, NewSquadSession, Notification, NotificationPrefs, Player, RecapCard, SeasonRecap, SquadSession, StoreItem, VersusMap, VersusMapSummary, WeeklyReport,
 } from '@eday/api-types';
-import { CAMPAIGN_CHAPTERS, GIFT_AT, HORDE_WAVE_GOAL, MEDAL_REWARDS, generate, type SeedData, type SeedMatch, type SeedAchievement, type SeedMedalSeries, type SeedPlayer, type SeedSession } from '@eday/seed';
+import { CAMPAIGN_CHAPTERS, GIFT_AT, HORDE_WAVE_GOAL, MEDAL_REWARDS, generate, rankFromPoints, type SeedData, type SeedVersusMap, type SeedMatch, type SeedAchievement, type SeedMedalSeries, type SeedPlayer, type SeedSession } from '@eday/seed';
 import { DAY, clock, day, dayMonth, difficultyLabel, localDate, rankLabel, roleLabel, weekday } from './format.ts';
 import { createRouter, error, noContent, ok, type Query } from './router.ts';
 
@@ -109,8 +109,11 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   const toPlayer = ({ rankStartPoints: _, ...p }: SeedPlayer): Player => p;
   const toSession = (s: SeedSession): SquadSession => structuredClone(s);
   const toItem = (playerId: string, id: string): StoreItem => ({ ...items.get(id)!, wishlisted: wishlists.get(playerId)?.has(id) ?? false });
+  const mapByName = new Map(data.versusMaps.map((m) => [m.name, m]));
+  const mapByIdx = new Map(data.versusMaps.map((m) => [m.id, m]));
   const summary = ({ id, mode, map, endedAt, result, kills, deaths, rankDelta, durationSeconds, wavesCleared }: SeedMatch): MatchSummary =>
-    ({ id, mode, map, endedAt, result, kills, deaths, rankDelta, durationSeconds, wavesCleared, waveGoal: mode === 'horde_siege' ? HORDE_WAVE_GOAL : null });
+    ({ id, mode, map, mapId: mapByName.get(map)?.id ?? null, endedAt, result, kills, deaths, rankDelta, durationSeconds, wavesCleared,
+      waveGoal: mode === 'horde_siege' ? HORDE_WAVE_GOAL : null });
 
   // The class the player signed up with most recently.
   const roleOf = (p: SeedPlayer): HordeRole => [...sessions.values()].sort((a, b) => b.startsAt.localeCompare(a.startsAt)).flatMap((s) => s.members)
@@ -246,7 +249,7 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     };
     const byMap = [...new Set(versus.map((m) => m.map))].map((map) => {
       const ms = versus.filter((m) => m.map === map);
-      return { map, matches: ms.length, wins: ms.filter((m) => m.result === 'win').length };
+      return { map, mapId: mapByName.get(map)!.id, matches: ms.length, wins: ms.filter((m) => m.result === 'win').length };
     }).sort((a, b) => b.matches - a.matches || a.map.localeCompare(b.map));
     const hours = Array.from({ length: 24 }, () => 0);
     const week = Array.from({ length: 7 }, () => 0);
@@ -500,7 +503,145 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
     return { mode, scope, metric, entries: all.slice(0, limit), ...(mine ? { me: mine } : {}) };
   };
 
+  // ---------- Versus maps ----------
+  // The game would record where each kill and death happened. The demo spreads every match's kills over the map's
+  // callouts by how much fighting each sees, with a nudge toward one favourite callout per player and map, and its
+  // deaths by how exposed each callout is. The same match always lands the same way.
+  const weaponName = (weaponId: string) => data.medalSeries.find((s) => s.id === `md_${weaponId}`)?.name.replace(/^Bajas con /, '') ?? weaponId;
+  const spread = (total: number, weights: number[], rand: () => number) => {
+    const w = weights.map((x) => x * (0.5 + rand()));
+    const sum = w.reduce((a, b) => a + b, 0) || 1;
+    const raw = w.map((x) => (x / sum) * total);
+    const out = raw.map(Math.floor);
+    let left = total - out.reduce((a, b) => a + b, 0);
+    for (const i of raw.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0]).map(([, i]) => i)) { if (left-- <= 0) break; out[i]++; }
+    return out;
+  };
+  const versusOn = (p: SeedPlayer, map: SeedVersusMap, now: string) => playedBy(p.id, now).filter((m) => family(m.mode) === 'versus' && m.map === map.name);
+  const mapSummary = (p: SeedPlayer, map: SeedVersusMap, now: string): VersusMapSummary => {
+    const ms = versusOn(p, map, now);
+    const kills = ms.reduce((a, m) => a + m.kills, 0), deaths = ms.reduce((a, m) => a + m.deaths, 0);
+    return { id: map.id, name: map.name, size: map.size, setting: map.setting, summary: map.summary, bestFor: map.bestFor,
+      modes: ['versus_tdm', 'versus_conquest', 'versus_ranked'],
+      me: { matches: ms.length, wins: ms.filter((m) => m.result === 'win').length, kd: round(kills / Math.max(1, deaths), 2) } };
+  };
+  const mapDetail = (p: SeedPlayer, map: SeedVersusMap, now: string): VersusMap => {
+    const ms = versusOn(p, map, now);
+    const zones = map.zones;
+    const pick = hashRng(`${p.id}:${map.id}`);
+    const fighting = zones.filter((z) => z.kind !== 'spawn');
+    const favourite = fighting[Math.floor(pick() * fighting.length)].id;
+    const killW = zones.map((z) => (z.kind === 'spawn' ? 0.4 : z.heat) * (z.id === favourite ? 2.2 : 1));
+    const deathW = zones.map((z) => (z.kind === 'spawn' ? 0.6 : z.danger));
+    const kills = zones.map(() => 0), deaths = zones.map(() => 0);
+    for (const m of ms) {
+      const rand = hashRng(`${m.id}:${map.id}`);
+      spread(m.kills, killW, rand).forEach((k, i) => { kills[i] += k; });
+      spread(m.deaths, deathW, rand).forEach((d, i) => { deaths[i] += d; });
+    }
+    const totalDeaths = deaths.reduce((a, b) => a + b, 0);
+    const ranked = fighting.map((z) => { const i = zones.indexOf(z); return { z, k: kills[i], d: deaths[i] }; });
+    const strongest = [...ranked].filter((x) => x.k >= 5).sort((a, b) => b.k / Math.max(1, b.d) - a.k / Math.max(1, a.d) || b.k - a.k)[0]?.z ?? null;
+    const weakest = [...ranked].sort((a, b) => b.d - a.d || a.z.name.localeCompare(b.z.name)).find((x) => x.d > 0)?.z ?? null;
+    const share = (z: typeof weakest) => Math.round((deaths[zones.indexOf(z!)] / Math.max(1, totalDeaths)) * 100);
+    const takeaway = !ms.length ? null : weakest
+      ? `Caes más en ${weakest.name} (${share(weakest)}% de tus caídas aquí). ${weakest.tip}` : null;
+    return {
+      ...mapSummary(p, map, now), plan: { width: 100, height: 64 },
+      zones: zones.map(({ id, name, kind, team, x, y, w, h, tip }) => ({ id, name, kind, ...(team ? { team } : {}), x, y, w, h, tip })),
+      blocks: map.blocks.map(([x, y, w, h]) => ({ x, y, w, h })),
+      pickups: map.pickups.map((k) => ({ weaponId: k.weaponId, weapon: weaponName(k.weaponId), zoneId: k.zone, respawnSeconds: k.respawnSeconds })),
+      guideId: map.guideId ?? null,
+      stats: { kills: kills.reduce((a, b) => a + b, 0), deaths: totalDeaths, zones: zones.map((z, i) => ({ zoneId: z.id, kills: kills[i], deaths: deaths[i] })),
+        strongest: strongest?.id ?? null, weakest: weakest?.id ?? null, takeaway },
+    };
+  };
+
+  // ---------- Season recap ----------
+  // Hours of every player up to `now`, sorted, to say where the player stands.
+  const hoursCache = new Map<string, number[]>();
+  const allHours = (now: string) => {
+    if (!hoursCache.has(now)) hoursCache.set(now, data.players.map((x) => playedBy(x.id, now).reduce((a, m) => a + m.durationSeconds, 0) / 3600).sort((a, b) => a - b));
+    return hoursCache.get(now)!;
+  };
+  const MODE_ES: Record<Mode, string> = { versus_tdm: 'Duelo por equipos', versus_conquest: 'Conquista', versus_ranked: 'Ranked', horde_siege: 'Horde Siege', campaign: 'Campaña' };
+  const seasonRecap = (p: SeedPlayer, now: string): SeasonRecap => {
+    const tz = p.timezone;
+    const rec = serviceRecord(p, now);
+    const played = playedBy(p.id, now).filter((m) => m.endedAt >= data.season.startsAt);
+    const ach = achievementsOf(p, now);
+    const daysLeft = Math.max(0, Math.ceil((Date.parse(data.season.endsAt) - Date.parse(now)) / DAY));
+    const n = (x: number) => x.toLocaleString('en-US');
+    const overline = `Temporada ${data.season.number} · ${data.season.name}`;
+    const cards: RecapCard[] = [{ id: 'intro', kind: 'intro', overline, value: p.gamertag, title: rec.title,
+      detail: `Del ${dayMonth(data.season.startsAt, tz)} al ${dayMonth(now, tz)}. ${daysLeft ? `Quedan ${daysLeft} días de temporada.` : 'La temporada terminó.'}` }];
+    if (played.length) {
+      const hrs = allHours(now);
+      // Capped at 99: «más que el 100%» reads like a bug even for the top player.
+      const beat = Math.min(99, Math.floor((hrs.filter((h) => h < rec.career.hoursPlayed).length / hrs.length) * 100));
+      cards.push({ id: 'time', kind: 'time', overline: 'Tiempo jugado', value: `${Math.round(rec.career.hoursPlayed)} h`,
+        title: `Más horas que el ${beat}% de los jugadores`,
+        detail: `${n(rec.career.matches)} partidas en ${rec.career.daysPlayed} días. Tu hora: ${rec.career.favoriteHour}, los ${rec.career.favoriteWeekday}.` });
+      const shares = ([['versus', 'Versus'], ['horde', 'Horde'], ['campaign', 'Campaña']] as const).map(([k, label]) => ({ label, v: rec.career.share[k] }))
+        .sort((a, b) => b.v - a.v);
+      cards.push({ id: 'mode', kind: 'mode', overline: 'Tu modo', value: `${Math.round(shares[0].v * 100)}%`, title: `De tu tiempo fue ${shares[0].label}`,
+        detail: shares.map((x) => `${x.label} ${Math.round(x.v * 100)}%`).join(' · ') });
+      const weapons = rec.breakdown.killsByWeapon.filter((x) => !/^Otr/.test(x.label));
+      const weaponKills = rec.breakdown.killsByWeapon.reduce((a, x) => a + x.value, 0);
+      if (weapons[0]?.value) {
+        const series = data.medalSeries.find((x) => x.name === `Bajas con ${weapons[0].label}`);
+        cards.push({ id: 'weapon', kind: 'weapon', overline: 'Tu arma', value: weapons[0].label, title: `${n(weapons[0].value)} bajas con ella`,
+          detail: `El ${Math.round((weapons[0].value / Math.max(1, weaponKills)) * 100)}% de tus bajas con armas.${weapons[1] ? ` Le sigue ${weapons[1].label}.` : ''}`,
+          ...(series ? { link: `/servicio/medallas/${series.id}` } : {}) });
+      }
+      const best = [...rec.breakdown.versusByMap].sort((a, b) => b.wins - a.wins || b.matches - a.matches)[0];
+      if (best?.wins) {
+        const detail = mapDetail(p, mapByIdx.get(best.mapId)!, now);
+        const strong = detail.zones.find((z) => z.id === detail.stats.strongest);
+        cards.push({ id: 'map', kind: 'map', overline: 'Tu mapa', value: best.map, title: `${best.wins} victorias en ${best.matches} partidas`,
+          detail: strong ? `Donde mejor te va: ${strong.name}.` : 'Tu mapa con más victorias.', link: `/guias/mapas/${best.mapId}` });
+      }
+      // Horde kills dwarf Versus ones, so the best match is the Versus one with most kills, or the best Horde wave.
+      const top = [...played].filter((m) => family(m.mode) === 'versus').sort((a, b) => b.kills - a.kills || a.endedAt.localeCompare(b.endedAt))[0]
+        ?? [...played].filter((m) => m.mode === 'horde_siege').sort((a, b) => (b.wavesCleared ?? 0) - (a.wavesCleared ?? 0) || b.kills - a.kills)[0];
+      if (top) {
+        const res = top.result === 'win' ? 'Victoria' : top.result === 'loss' ? 'Derrota' : top.result === 'draw' ? 'Empate' : top.result === 'completed' ? 'Completada' : `Oleada ${top.wavesCleared}`;
+        cards.push({ id: 'match', kind: 'match', overline: 'Tu mejor partida', value: `${top.kills} bajas`, title: `${MODE_ES[top.mode]} en ${top.map}`,
+          detail: `El ${day(top.endedAt, tz)}. ${res}.`, link: `/servicio/partidas/${top.id}` });
+      }
+      if (p.rank) {
+        const start = rankFromPoints(p.rankStartPoints ?? p.rank.points);
+        const global = leaderboard(p.id, 'versus_ranked', 'global', 1, now).me;
+        const country = leaderboard(p.id, 'versus_ranked', 'country', 1, now).me;
+        const delta = p.rank.points - start.points;
+        cards.push({ id: 'rank', kind: 'rank', overline: 'Ranked', value: rankLabel(p.rank)!,
+          title: delta > 0 ? `Subiste ${n(delta)} puntos desde ${rankLabel(start)}` : `Empezaste en ${rankLabel(start)}`,
+          detail: [global && `#${global.position} global`, country && `#${country.position} en tu país`].filter(Boolean).join(' · '), link: '/servicio/clasificacion' });
+      }
+      cards.push({ id: 'medals', kind: 'medals', overline: 'Medallas y logros', value: n(rec.medals.earned), title: 'Niveles de medalla obtenidos',
+        detail: `${rec.medals.seriesCompleted} series completas · ${n(ach.gamerscore)} Gamerscore`, link: '/servicio/medallas' });
+    }
+    const next = medalsOf(p, now).map((m) => ({ m, t: m.tiers.find((t) => !t.unlockedAt) })).filter((x) => x.t)
+      .sort((a, b) => (a.t!.goal - a.m.progress) / a.t!.goal - (b.t!.goal - b.m.progress) / b.t!.goal)[0];
+    const TIER_ES: Record<string, string> = { bronze: 'Bronce', silver: 'Plata', gold: 'Oro', onyx: 'Ónix', diamond: 'Diamante' };
+    cards.push({ id: 'outro', kind: 'outro', overline: 'Lo que sigue', value: daysLeft ? `${daysLeft} días` : 'Fin',
+      title: daysLeft ? 'para cerrar la temporada' : 'Nos vemos en la temporada 2',
+      ...(next ? { detail: `Te faltan ${n(next.t!.goal - next.m.progress)} ${next.m.unit} para ${TIER_ES[next.t!.tier]} en ${next.m.name}.`, link: `/servicio/medallas/${next.m.id}` } : {}) });
+    const stats = { matches: played.length, hours: rec.career.hoursPlayed, kills: rec.career.kills, kd: rec.versus.kd, wins: rec.versus.wins, medalTiers: rec.medals.earned, gamerscore: ach.gamerscore };
+    const shareText = played.length
+      ? `Mi temporada ${data.season.number} de E-Day: ${n(Math.round(stats.hours))} h, ${n(stats.matches)} partidas, K/D en Versus ${stats.kd}${p.rank ? `, ${rankLabel(p.rank)}` : ''}. Hecho con E-Day Companion, un concepto no oficial.`
+      : `Empecé la temporada ${data.season.number} de E-Day. Hecho con E-Day Companion, un concepto no oficial.`;
+    return { season: data.season, gamertag: p.gamertag, title: rec.title, daysLeft, stats, cards, shareText };
+  };
+
   const r = createRouter();
+
+  r.add('GET', '/maps', ({ playerId, query }) => ok(data.versusMaps.map((m) => mapSummary(me(playerId), m, nowOf(query)))));
+  r.add('GET', '/maps/{mapId}', ({ playerId, params, query }) => {
+    const map = mapByIdx.get(params.mapId);
+    return map ? ok(mapDetail(me(playerId), map, nowOf(query))) : error(404, 'not_found', `No existe el mapa ${params.mapId}`);
+  });
+  r.add('GET', '/me/season-recap', ({ playerId, query }) => ok(seasonRecap(me(playerId), nowOf(query))));
 
   r.add('GET', '/me', ({ playerId }) => ok(toPlayer(me(playerId))));
 

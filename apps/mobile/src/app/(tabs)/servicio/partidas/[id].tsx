@@ -11,7 +11,7 @@ import { modeLabel, roleLabel } from '@/lib/demo';
 import { duration, isWin, outcome } from '@/lib/match';
 import { clock, day } from '@/lib/time';
 import { Icon } from '@/ui/Icon';
-import { IconButton, Loader, Readouts, Screen, Text } from '@/ui/kit';
+import { IconButton, Loader, Readouts, Row, Screen, Text } from '@/ui/kit';
 import { color, fontFamily, size, space } from '@/ui/theme';
 
 type Line = NonNullable<MatchReport['scoreboard']>[number];
@@ -102,6 +102,11 @@ export default function Reporte() {
           </View>
           {lesson.link && <Icon name="chev" size={16} color={color.textSubtle} />}
         </Pressable>
+      )}
+      {m.mapId && (
+        <View style={{ borderBottomWidth: 1, borderBottomColor: color.border }}>
+          <Row icon="map" title={`Ver ${m.map}`} subtitle="Callouts y dónde ganas o caes en este mapa" onPress={() => router.push(`/guias/mapas/${m.mapId}`)} />
+        </View>
       )}
     </Screen>
   );

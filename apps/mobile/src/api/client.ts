@@ -3,7 +3,7 @@
 // which is what the static web demo uses.
 import type {
   AchievementList, CalendarEntry, Challenge, Creator, Guide, GuideSection, GuideSummary, HordeRole, Promo, PromoPlacement, Medal, MedalUnlock, ServiceRecord, Clan, Event, JoinRequest, Leaderboard, LeaderboardScope, MatchPage, MatchReport, Mode, NewSquadSession,
-  NewsArticle, NewsSummary, NewsTag, Notification, NotificationPrefs, Player, Season, SessionFilters, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport,
+  NewsArticle, NewsSummary, NewsTag, Notification, NotificationPrefs, Player, Season, SessionFilters, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport, VersusMap, VersusMapSummary, SeasonRecap,
 } from '@eday/api-types';
 import { createApi, type Api } from '@eday/api-mock';
 
@@ -106,4 +106,7 @@ export const api = {
   deploySession: (sessionId: string) => call<{ launchUrl: string }>('POST', `/sessions/${enc(sessionId)}/deploy`),
   getClan: (clanId: string) => call<Clan>('GET', `/clans/${enc(clanId)}`),
   getClanLeaderboard: (clanId: string) => call<Leaderboard>('GET', `/clans/${enc(clanId)}/leaderboard`),
+  listMaps: (asOf?: string) => call<VersusMapSummary[]>('GET', '/maps', { query: { asOf } }),
+  getMap: (mapId: string, asOf?: string) => call<VersusMap>('GET', `/maps/${enc(mapId)}`, { query: { asOf } }),
+  getSeasonRecap: (asOf?: string) => call<SeasonRecap>('GET', '/me/season-recap', { query: { asOf } }),
 };

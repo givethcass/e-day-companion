@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: E-Day Companion API (simulada)
-  version: 0.10.0
+  version: 0.11.0
   description: |
     Contrato v0 de la API simulada para el concepto de portafolio "E-Day Companion".
     Imita lo que darían los servicios oficiales del juego (identidad Xbox, datos de
@@ -603,6 +603,52 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AchievementList' }
+  /maps:
+    get:
+      tags: [Guías]
+      summary: Mapas de Versus, con tus partidas en cada uno
+      operationId: listMaps
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Mapas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/VersusMapSummary' }
+  /maps/{mapId}:
+    get:
+      tags: [Guías]
+      summary: Plano de un mapa con sus callouts, armas y dónde haces y recibes bajas
+      operationId: getMap
+      parameters:
+        - name: mapId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Mapa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VersusMap' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /me/season-recap:
+    get:
+      tags: [Servicio]
+      summary: Resumen de tu temporada hasta hoy, en tarjetas para compartir
+      operationId: getSeasonRecap
+      parameters:
+        - $ref: '#/components/parameters/AsOf'
+      responses:
+        '200':
+          description: Resumen
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SeasonRecap' }
 components:
   securitySchemes:
     bearerAuth:
@@ -953,9 +999,10 @@ components:
               type: array
               items:
                 type: object
-                required: [map, matches, wins]
+                required: [map, mapId, matches, wins]
                 properties:
                   map: { type: string }
+                  mapId: { type: string }
                   matches: { type: integer }
                   wins: { type: integer }
             activityByHour:
@@ -970,6 +1017,132 @@ components:
               minItems: 7
               maxItems: 7
               items: { type: integer, minimum: 0 }
+    VersusMapSummary:
+      type: object
+      required: [id, name, size, setting, summary, bestFor, modes, me]
+      properties:
+        id: { type: string, examples: [map_mercado] }
+        name: { type: string, examples: [Mercado Viejo] }
+        size: { type: string, enum: [small, medium, large] }
+        setting: { type: string, description: Dónde ocurre el mapa }
+        summary: { type: string }
+        bestFor: { type: string, examples: [Escopeta y granadas] }
+        modes:
+          type: array
+          items: { $ref: '#/components/schemas/Mode' }
+        me:
+          type: object
+          description: Tus partidas de Versus en el mapa
+          required: [matches, wins, kd]
+          properties:
+            matches: { type: integer }
+            wins: { type: integer }
+            kd: { type: number }
+    MapZone:
+      type: object
+      description: Un callout del mapa, como rectángulo en un plano de 100 x 64
+      required: [id, name, kind, x, y, w, h, tip]
+      properties:
+        id: { type: string }
+        name: { type: string, examples: [Puente rojo] }
+        kind: { type: string, enum: [spawn, lane, open, close, high, power], description: 'spawn: reaparición; high: zona alta; power: arma de poder' }
+        team: { type: string, enum: [COG, Enjambre] }
+        x: { type: number }
+        y: { type: number }
+        w: { type: number }
+        h: { type: number }
+        tip: { type: string }
+    VersusMap:
+      allOf:
+        - $ref: '#/components/schemas/VersusMapSummary'
+        - type: object
+          required: [plan, zones, blocks, pickups, stats]
+          properties:
+            plan:
+              type: object
+              required: [width, height]
+              properties:
+                width: { type: number }
+                height: { type: number }
+            zones:
+              type: array
+              items: { $ref: '#/components/schemas/MapZone' }
+            blocks:
+              type: array
+              description: Muros y edificios, solo para orientarse
+              items:
+                type: object
+                required: [x, y, w, h]
+                properties:
+                  x: { type: number }
+                  y: { type: number }
+                  w: { type: number }
+                  h: { type: number }
+            pickups:
+              type: array
+              items:
+                type: object
+                required: [weaponId, weapon, zoneId, respawnSeconds]
+                properties:
+                  weaponId: { type: string, examples: [longshot] }
+                  weapon: { type: string, examples: [Longshot] }
+                  zoneId: { type: string }
+                  respawnSeconds: { type: integer }
+            guideId: { type: [string, 'null'] }
+            stats:
+              type: object
+              description: Dónde haces y recibes bajas en este mapa, por callout
+              required: [kills, deaths, zones]
+              properties:
+                kills: { type: integer }
+                deaths: { type: integer }
+                zones:
+                  type: array
+                  items:
+                    type: object
+                    required: [zoneId, kills, deaths]
+                    properties:
+                      zoneId: { type: string }
+                      kills: { type: integer }
+                      deaths: { type: integer }
+                strongest: { type: [string, 'null'], description: Callout donde mejor te va }
+                weakest: { type: [string, 'null'], description: Callout donde más caes }
+                takeaway: { type: [string, 'null'], description: Consejo para tu próxima partida en el mapa }
+    RecapCard:
+      type: object
+      description: Una tarjeta del resumen de temporada, ya redactada
+      required: [id, kind, overline, value, title]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [intro, time, mode, weapon, map, match, rank, medals, outro] }
+        overline: { type: string }
+        value: { type: string, examples: ['103 h'] }
+        title: { type: string, examples: [Más horas que el 97% de los jugadores] }
+        detail: { type: string }
+        link: { type: string, description: Ruta de la app }
+    SeasonRecap:
+      type: object
+      required: [season, gamertag, title, daysLeft, stats, cards, shareText]
+      properties:
+        season: { $ref: '#/components/schemas/Season' }
+        gamertag: { type: string }
+        title: { type: string }
+        daysLeft: { type: integer }
+        stats:
+          type: object
+          required: [matches, hours, kills, kd, wins, medalTiers, gamerscore]
+          properties:
+            matches: { type: integer }
+            hours: { type: number }
+            kills: { type: integer }
+            kd: { type: number, description: K/D en Versus }
+            wins: { type: integer, description: Victorias en Versus }
+            medalTiers: { type: integer }
+            gamerscore: { type: integer }
+        cards:
+          type: array
+          items: { $ref: '#/components/schemas/RecapCard' }
+        shareText: { type: string }
     Slice:
       type: object
       description: Una parte de un total, para gráficas
@@ -984,6 +1157,7 @@ components:
         id: { type: string }
         mode: { $ref: '#/components/schemas/Mode' }
         map: { type: string }
+        mapId: { type: [string, 'null'], description: Solo mapas de Versus }
         endedAt: { type: string, format: date-time }
         result: { type: string, enum: [win, loss, draw, completed, failed] }
         kills: { type: integer }

@@ -18,6 +18,9 @@ const shapes = {
   news: ['M4 5h13v14H6a2 2 0 01-2-2z', 'M17 9h3v8a2 2 0 01-2 2', 'M7 9h7M7 13h7M7 16h4'],
   book: ['M12 6.5C10 5 7 4.5 4 5v13.5c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5z', 'M12 6.5V20'],
   tag: ['M8 3h8l3 3v12l-3 3H8l-3-3V6z', 'M9 10h6M9 14h6'],
+  map: ['M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z', 'M9 4v14M15 6v14'],
+  spark: ['M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4z'],
+  share: ['M12 4v11', 'M8 8l4-4 4 4', 'M5 13v7h14v-7'],
 } satisfies Record<string, (string | { cx: number; cy: number; r: number })[]>;
 
 export type IconName = keyof typeof shapes;

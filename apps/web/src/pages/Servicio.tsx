@@ -4,17 +4,18 @@ import { useState } from 'react';
 import { api } from '../lib/api';
 import { useApp, useData } from '../lib/app';
 import { day, dayTime, MEDAL_GROUP, MODE, matchTitle, num, outcome, pct, plural, rankLabel, ROLE, TIER } from '../lib/format';
-import { Arrow, earned, MedalBadge, nextTier, SectionHead, TierPips, topTier } from '../ui/bits';
+import { Arrow, earned, MedalBadge, MoreLink, nextTier, SectionHead, TierPips, topTier } from '../ui/bits';
 import { Bar, CountUp, Reveal, spotlight, useSeen, useToast } from '../ui/fx';
 import { HeroScene } from '../ui/HeroScene';
 import { Clasificacion } from './Clasificacion';
+import { Temporada } from './Temporada';
 import { ChartCard, Columns, Donut, MODE_COLOR, OTHER, RankBars, ROLE_COLOR, SERIES, SplitBar } from '../ui/charts';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const WEEK = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const WEEK_NAME = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-const SUBS = [['', 'Resumen'], ['medallas', 'Medallas'], ['logros', 'Logros'], ['clasificacion', 'Clasificaciones']] as const;
+const SUBS = [['', 'Resumen'], ['temporada', 'Tu temporada'], ['medallas', 'Medallas'], ['logros', 'Logros'], ['clasificacion', 'Clasificaciones']] as const;
 
 export function Servicio({ sub = '' }: { sub?: string }) {
   const [version, setVersion] = useState(0);
@@ -61,6 +62,7 @@ export function Servicio({ sub = '' }: { sub?: string }) {
         {sub === 'medallas' ? <Medals onChange={() => setVersion((v) => v + 1)} version={version} />
           : sub === 'logros' ? <Achievements />
           : sub === 'clasificacion' ? <Clasificacion />
+          : sub === 'temporada' ? <Temporada />
           : <Summary />}
       </div>
     </>
@@ -103,6 +105,14 @@ function Summary() {
             </div>
           ))}
         </div>
+        <a href="#/servicio/temporada" className="group mt-5 flex items-center gap-8 border border-line border-l-4 border-l-primary bg-surface px-8 py-6 hover:bg-raised transition-colors">
+          <span className="size-10 rotate-45 border-2 border-primary grid place-items-center transition-transform duration-500 group-hover:rotate-[225deg]"><span className="size-3 bg-primary" /></span>
+          <span className="flex-1">
+            <span className="eyebrow text-primary block">Tu temporada hasta hoy</span>
+            <span className="text-lg">Tus horas, tu arma, tu mapa y tu mejor partida, en tarjetas y una imagen para compartir.</span>
+          </span>
+          <Arrow className="size-6 transition-transform group-hover:translate-x-1" />
+        </a>
       </Reveal>
 
       <Reveal>
@@ -151,6 +161,7 @@ function Summary() {
             <div>
               <div className="eyebrow text-muted mb-4">Victorias por mapa</div>
               <RankBars max={100} format={(x) => `${x}%`} items={b.versusByMap.map((m) => ({ label: m.map, value: Math.round((m.wins / Math.max(1, m.matches)) * 100), note: `${m.wins} de ${m.matches}` }))} />
+              <div className="mt-5"><MoreLink href="#/guias/mapas">Dónde ganas y caes en cada mapa</MoreLink></div>
             </div>
           </div>
         </Reveal>

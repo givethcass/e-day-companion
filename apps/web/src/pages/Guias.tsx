@@ -53,6 +53,15 @@ function List() {
       </PageHero>
       <div className="max-w-[1440px] mx-auto px-10 pt-14 grid grid-cols-[1fr_320px] gap-10">
         <div className="grid grid-cols-3 gap-5 content-start">
+          <a href="#/guias/mapas" {...spotlight} className="spotlight group col-span-3 flex items-center gap-8 border border-line bg-surface px-8 py-6 hover:border-white/30 transition-colors">
+            <svg viewBox="0 0 24 24" className="size-10 text-[#3FA7A0] shrink-0" fill="none" stroke="currentColor" strokeWidth={1.6}><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14" /></svg>
+            <span className="flex-1">
+              <span className="eyebrow text-subtle block">Herramienta</span>
+              <span className="display text-3xl group-hover:text-primary transition-colors">Mapas de Versus</span>
+              <span className="block text-muted">Callouts, armas de poder y en qué zonas ganas o caes, sacado de tus partidas.</span>
+            </span>
+            <Arrow className="size-6 transition-transform group-hover:translate-x-1" />
+          </a>
           {items.map((g, i) => <GuideCard key={g.id} g={g} i={i} big={i === 0 && !section} />)}
         </div>
         <aside className="flex flex-col gap-6">

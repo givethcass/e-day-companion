@@ -50,6 +50,9 @@ const calls: [string, string, { query?: Record<string, string>; body?: unknown }
   ['GET', '/guides/g_medic'],
   ['GET', '/creators', { query: { language: 'es' } }],
   ['GET', '/promos', { query: { placement: 'home' } }],
+  ['GET', '/maps'],
+  ['GET', '/maps/map_mercado'],
+  ['GET', '/me/season-recap'],
 ];
 
 const api = createApi();

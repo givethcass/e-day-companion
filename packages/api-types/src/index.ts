@@ -46,6 +46,11 @@ export type Guide = S['Guide'];
 export type Creator = S['Creator'];
 export type PromoPlacement = S['PromoPlacement'];
 export type Promo = S['Promo'];
+export type VersusMapSummary = S['VersusMapSummary'];
+export type VersusMap = S['VersusMap'];
+export type MapZone = S['MapZone'];
+export type RecapCard = S['RecapCard'];
+export type SeasonRecap = S['SeasonRecap'];
 export type ApiError = S['Error'];
 
 export type MatchPage = operations['listMyMatches']['responses']['200']['content']['application/json'];

@@ -8,6 +8,7 @@ import { Comunidad } from './pages/Comunidad';
 import { Escuadra } from './pages/Escuadra';
 import { Guias } from './pages/Guias';
 import { Inicio } from './pages/Inicio';
+import { Mapas } from './pages/Mapas';
 import { Noticias } from './pages/Noticias';
 import { Partida } from './pages/Partida';
 import { Servicio } from './pages/Servicio';
@@ -34,6 +35,7 @@ function Shell() {
       <Nav />
       <main id="main" key={route.join('/')} className="flex-1 animate-rise">
         {page === 'noticias' ? <Noticias id={route[1]} />
+          : page === 'guias' && route[1] === 'mapas' ? <Mapas id={route[2]} />
           : page === 'guias' ? <Guias id={route[1]} />
           : page === 'servicio' && route[1] === 'partidas' && route[2] ? <Partida id={route[2]} />
           : page === 'servicio' ? <Servicio sub={route[1]} />

@@ -63,6 +63,7 @@ export interface SeedData {
   creators: SeedCreator[];
   promos: SeedPromo[];
   achievements: SeedAchievement[];
+  versusMaps: SeedVersusMap[];
 }
 
 export interface SeedGuide {
@@ -97,3 +98,12 @@ export const CAMPAIGN_CHAPTERS: number;
 export const GIFT_AT: string;
 export function generate(options?: { seed?: number }): SeedData;
 export function rankFromPoints(points: number): SeedRank;
+
+export interface SeedZone {
+  id: string; name: string; kind: 'spawn' | 'lane' | 'open' | 'close' | 'high' | 'power'; team?: 'COG' | 'Enjambre';
+  x: number; y: number; w: number; h: number; heat: number; danger: number; tip: string;
+}
+export interface SeedVersusMap {
+  id: string; name: string; size: 'small' | 'medium' | 'large'; setting: string; summary: string; bestFor: string; guideId?: string;
+  zones: SeedZone[]; blocks: [number, number, number, number][]; pickups: { weaponId: string; zone: string; respawnSeconds: number }[];
+}

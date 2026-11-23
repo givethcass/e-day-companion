@@ -554,6 +554,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/maps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mapas de Versus, con tus partidas en cada uno */
+        get: operations["listMaps"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/maps/{mapId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Plano de un mapa con sus callouts, armas y dónde haces y recibes bajas */
+        get: operations["getMap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/season-recap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resumen de tu temporada hasta hoy, en tarjetas para compartir */
+        get: operations["getSeasonRecap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -823,6 +874,7 @@ export interface components {
                 killsByEnemy: components["schemas"]["Slice"][];
                 versusByMap: {
                     map: string;
+                    mapId: string;
                     matches: number;
                     wins: number;
                 }[];
@@ -831,6 +883,116 @@ export interface components {
                 /** @description Partidas por día de la semana local, de lunes a domingo */
                 activityByWeekday: number[];
             };
+        };
+        VersusMapSummary: {
+            /** @example map_mercado */
+            id: string;
+            /** @example Mercado Viejo */
+            name: string;
+            /** @enum {string} */
+            size: "small" | "medium" | "large";
+            /** @description Dónde ocurre el mapa */
+            setting: string;
+            summary: string;
+            /** @example Escopeta y granadas */
+            bestFor: string;
+            modes: components["schemas"]["Mode"][];
+            /** @description Tus partidas de Versus en el mapa */
+            me: {
+                matches: number;
+                wins: number;
+                kd: number;
+            };
+        };
+        /** @description Un callout del mapa, como rectángulo en un plano de 100 x 64 */
+        MapZone: {
+            id: string;
+            /** @example Puente rojo */
+            name: string;
+            /**
+             * @description spawn: reaparición; high: zona alta; power: arma de poder
+             * @enum {string}
+             */
+            kind: "spawn" | "lane" | "open" | "close" | "high" | "power";
+            /** @enum {string} */
+            team?: "COG" | "Enjambre";
+            x: number;
+            y: number;
+            w: number;
+            h: number;
+            tip: string;
+        };
+        VersusMap: components["schemas"]["VersusMapSummary"] & {
+            plan: {
+                width: number;
+                height: number;
+            };
+            zones: components["schemas"]["MapZone"][];
+            /** @description Muros y edificios, solo para orientarse */
+            blocks: {
+                x: number;
+                y: number;
+                w: number;
+                h: number;
+            }[];
+            pickups: {
+                /** @example longshot */
+                weaponId: string;
+                /** @example Longshot */
+                weapon: string;
+                zoneId: string;
+                respawnSeconds: number;
+            }[];
+            guideId?: string | null;
+            /** @description Dónde haces y recibes bajas en este mapa, por callout */
+            stats: {
+                kills: number;
+                deaths: number;
+                zones: {
+                    zoneId: string;
+                    kills: number;
+                    deaths: number;
+                }[];
+                /** @description Callout donde mejor te va */
+                strongest?: string | null;
+                /** @description Callout donde más caes */
+                weakest?: string | null;
+                /** @description Consejo para tu próxima partida en el mapa */
+                takeaway?: string | null;
+            };
+        };
+        /** @description Una tarjeta del resumen de temporada, ya redactada */
+        RecapCard: {
+            id: string;
+            /** @enum {string} */
+            kind: "intro" | "time" | "mode" | "weapon" | "map" | "match" | "rank" | "medals" | "outro";
+            overline: string;
+            /** @example 103 h */
+            value: string;
+            /** @example Más horas que el 97% de los jugadores */
+            title: string;
+            detail?: string;
+            /** @description Ruta de la app */
+            link?: string;
+        };
+        SeasonRecap: {
+            season: components["schemas"]["Season"];
+            gamertag: string;
+            title: string;
+            daysLeft: number;
+            stats: {
+                matches: number;
+                hours: number;
+                kills: number;
+                /** @description K/D en Versus */
+                kd: number;
+                /** @description Victorias en Versus */
+                wins: number;
+                medalTiers: number;
+                gamerscore: number;
+            };
+            cards: components["schemas"]["RecapCard"][];
+            shareText: string;
         };
         /** @description Una parte de un total, para gráficas */
         Slice: {
@@ -842,6 +1004,8 @@ export interface components {
             id: string;
             mode: components["schemas"]["Mode"];
             map: string;
+            /** @description Solo mapas de Versus */
+            mapId?: string | null;
             /** Format: date-time */
             endedAt: string;
             /** @enum {string} */
@@ -1985,6 +2149,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AchievementList"];
+                };
+            };
+        };
+    };
+    listMaps: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mapas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersusMapSummary"][];
+                };
+            };
+        };
+    };
+    getMap: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path: {
+                mapId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mapa */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersusMap"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getSeasonRecap: {
+        parameters: {
+            query?: {
+                /** @description Fecha simulada (reloj de demo). Si falta, se usa la fecha actual. */
+                asOf?: components["parameters"]["AsOf"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resumen */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeasonRecap"];
                 };
             };
         };

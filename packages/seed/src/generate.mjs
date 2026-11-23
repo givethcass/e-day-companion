@@ -6,6 +6,7 @@ import {
 } from './constants.mjs';
 import { NEWS, GIFT_AT } from './news.mjs';
 import { MEDAL_SERIES, MEDAL_REWARDS, CAMPAIGN_CHAPTERS } from './medals.mjs';
+import { VERSUS_MAP_INFO } from './maps.mjs';
 import { GUIDES, CREATORS } from './guides.mjs';
 import { PROMOS } from './promos.mjs';
 import { ACHIEVEMENTS } from './achievements.mjs';
@@ -483,5 +484,6 @@ export function generate({ seed = SEED } = {}) {
     creators: CREATORS,
     promos: PROMOS,
     achievements: ACHIEVEMENTS,
+    versusMaps: VERSUS_MAP_INFO,
   };
 }

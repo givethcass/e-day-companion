@@ -76,6 +76,7 @@ function ModeDetail({ r, f }: { r: ServiceRecord; f: Family }) {
         </Chart>
         <Chart title="Victorias por mapa" note="Ordenados por partidas jugadas">
           <RankBars max={100} format={(x) => `${x}%`} items={r.breakdown.versusByMap.map((x) => ({ label: x.map, value: winPct(x.wins, x.matches), note: `${x.wins} de ${x.matches}` }))} />
+          <Row icon="map" title="Tus mapas de Versus" subtitle="Callouts y dónde ganas o caes" onPress={() => router.push('/guias/mapas')} />
         </Chart>
       </Columns>
     );
@@ -187,6 +188,16 @@ export default function Servicio() {
         </Pressable>
       )}
 
+      <Pressable accessibilityRole="button" onPress={() => router.push('/servicio/temporada')} style={styles.recap}>
+        <Icon name="spark" size={22} color={color.primary} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text variant="overline" tone="primary">{`Temporada ${season.number} · ${season.name}`}</Text>
+          <Text variant="bodyStrong">Tu temporada hasta hoy</Text>
+          <Text variant="caption" tone="textSubtle">Tus números en tarjetas para compartir</Text>
+        </View>
+        <Icon name="chev" size={16} color={color.textSubtle} />
+      </Pressable>
+
       <Section title="Carrera">
         <Columns>
           <Chart title="Tu tiempo por modo" note={c.firstMatchAt ? `Desde el ${day(c.firstMatchAt, tz)}` : undefined}>
@@ -297,6 +308,7 @@ export default function Servicio() {
 }
 
 const styles = StyleSheet.create({
+  recap: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderWidth: 1, borderColor: color.border, borderLeftWidth: 3, borderLeftColor: color.primary, backgroundColor: color.surface },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: size.touchTarget + 8, paddingVertical: 10, borderTopWidth: 1, borderTopColor: color.border },
   callout: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, backgroundColor: color.surface, borderWidth: 1, borderColor: color.border, borderLeftWidth: size.heroRule, borderLeftColor: color.primary },
   card: { gap: 14, padding: 14, backgroundColor: color.surface, borderWidth: 1, borderColor: color.border, borderLeftWidth: size.heroRule, borderLeftColor: color.primary },

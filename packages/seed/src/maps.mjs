@@ -1,0 +1,93 @@
+// Versus maps for the demo: invented names and layouts, drawn as a top-down plan of 100 x 64 units.
+// Each zone is a callout the community uses on voice chat. `heat` says how much fighting a zone sees (1 to 5)
+// and `danger` how often players die crossing it; the simulated backend uses both to place a player's kills
+// and deaths. `blocks` are walls and buildings, drawn only for orientation. Pickups name a weapon by its
+// medal id (md_<weaponId>) so the arsenal can say where each one spawns.
+export const VERSUS_MAP_INFO = [
+  {
+    id: 'map_distrito', name: 'Distrito Norte', size: 'medium', setting: 'Calles de Jacinto evacuadas la noche del E-Day',
+    summary: 'Dos calles paralelas y una torre de agua en medio. Quien controla la torre ve todo el cruce.',
+    bestFor: 'Rifles a media distancia',
+    zones: [
+      { id: 'plaza_cog', name: 'Plaza COG', kind: 'spawn', team: 'COG', x: 2, y: 22, w: 12, h: 20, heat: 1, danger: 1, tip: 'Sal por la Gasolinera o la Lavandería; la calle ancha es la primera que se cubre.' },
+      { id: 'gasolinera', name: 'Gasolinera', kind: 'lane', x: 18, y: 4, w: 20, h: 14, heat: 3, danger: 3, tip: 'Los surtidores dan cobertura baja: avanza agachado y no te quedes en el techo.' },
+      { id: 'calle', name: 'Calle ancha', kind: 'open', x: 18, y: 26, w: 64, h: 12, heat: 4, danger: 5, tip: 'Es la línea de tiro del Longshot. Crúzala con humo o rodéala por el Paso subterráneo.' },
+      { id: 'torre', name: 'Torre de agua', kind: 'high', x: 42, y: 4, w: 16, h: 16, heat: 5, danger: 4, tip: 'El Longshot aparece arriba. Sube en pareja: uno vigila la escalera.' },
+      { id: 'lavanderia', name: 'Lavandería', kind: 'close', x: 18, y: 44, w: 20, h: 16, heat: 3, danger: 3, tip: 'Pasillos estrechos para la Gnasher. Entra después de una granada.' },
+      { id: 'subterraneo', name: 'Paso subterráneo', kind: 'close', x: 42, y: 44, w: 16, h: 16, heat: 4, danger: 3, tip: 'La ruta segura al otro lado. El Boomshot espera en medio.' },
+      { id: 'escaleras', name: 'Escaleras', kind: 'lane', x: 62, y: 4, w: 20, h: 14, heat: 3, danger: 3, tip: 'Conecta la torre con su spawn. Si la pierdes, el rival sube sin que lo veas.' },
+      { id: 'plaza_enjambre', name: 'Plaza Enjambre', kind: 'spawn', team: 'Enjambre', x: 86, y: 22, w: 12, h: 20, heat: 1, danger: 1, tip: 'Su lado del mapa. Llegar aquí es pelear contra el respawn.' },
+    ],
+    blocks: [[38, 4, 4, 14], [58, 4, 4, 14], [38, 44, 4, 16], [58, 44, 4, 16], [62, 44, 20, 16], [18, 20, 64, 4], [18, 40, 64, 2]],
+    pickups: [{ weaponId: 'longshot', zone: 'torre', respawnSeconds: 60 }, { weaponId: 'boomshot', zone: 'subterraneo', respawnSeconds: 90 }],
+  },
+  {
+    id: 'map_refineria', name: 'Refinería', size: 'large', setting: 'Una refinería costera tomada por el Enjambre',
+    summary: 'El mapa más grande. Una pasarela alta cruza los tanques y el centro se pelea alrededor de la chimenea.',
+    bestFor: 'Precisión y flanqueos largos',
+    zones: [
+      { id: 'muelle_cog', name: 'Muelle COG', kind: 'spawn', team: 'COG', x: 2, y: 20, w: 12, h: 24, heat: 1, danger: 1, tip: 'Desde aquí la pasarela está a tiro: cúbrela antes de que suban.' },
+      { id: 'tanques', name: 'Tanques', kind: 'lane', x: 18, y: 4, w: 22, h: 18, heat: 3, danger: 2, tip: 'Los tanques bloquean la vista desde la pasarela. Úsalos para avanzar.' },
+      { id: 'pasarela', name: 'Pasarela alta', kind: 'high', x: 18, y: 26, w: 64, h: 6, heat: 4, danger: 5, tip: 'Se ve todo, pero no hay cobertura. Dispara y baja.' },
+      { id: 'chimenea', name: 'Chimenea', kind: 'power', x: 42, y: 36, w: 16, h: 14, heat: 5, danger: 4, tip: 'El Boomshot reaparece aquí. Llega con dos y uno vigila la pasarela.' },
+      { id: 'bombas', name: 'Sala de bombas', kind: 'close', x: 18, y: 38, w: 20, h: 22, heat: 3, danger: 3, tip: 'Cuarto cerrado con dos puertas. Una granada aquí despeja.' },
+      { id: 'tuberias', name: 'Tuberías', kind: 'lane', x: 62, y: 4, w: 20, h: 18, heat: 3, danger: 2, tip: 'Ruta de flanqueo lenta pero silenciosa hacia su muelle.' },
+      { id: 'patio', name: 'Patio de carga', kind: 'open', x: 62, y: 38, w: 20, h: 22, heat: 3, danger: 4, tip: 'Contenedores sueltos. No te quedes quieto: el Longshot te alcanza desde la pasarela.' },
+      { id: 'muelle_enjambre', name: 'Muelle Enjambre', kind: 'spawn', team: 'Enjambre', x: 86, y: 20, w: 12, h: 24, heat: 1, danger: 1, tip: 'Su spawn. Si llegas, cuida tu espalda.' },
+    ],
+    blocks: [[40, 4, 22, 18], [38, 38, 4, 22], [58, 38, 4, 22], [42, 52, 16, 8]],
+    pickups: [{ weaponId: 'longshot', zone: 'pasarela', respawnSeconds: 60 }, { weaponId: 'boomshot', zone: 'chimenea', respawnSeconds: 90 }, { weaponId: 'incinerator', zone: 'bombas', respawnSeconds: 90 }],
+  },
+  {
+    id: 'map_puente', name: 'Puente Seco', size: 'small', setting: 'Un puente de autopista sobre un río seco',
+    summary: 'Pequeño y simétrico. Todo pasa en el puente o debajo, entre los pilares.',
+    bestFor: 'Escopeta y peleas rápidas',
+    zones: [
+      { id: 'rampa_cog', name: 'Rampa COG', kind: 'spawn', team: 'COG', x: 2, y: 22, w: 14, h: 20, heat: 1, danger: 1, tip: 'Baja a los pilares o sube a la cabina; quedarse en la rampa es regalar la vista.' },
+      { id: 'peaje', name: 'Cabina de peaje', kind: 'lane', x: 20, y: 6, w: 16, h: 16, heat: 3, danger: 3, tip: 'Buena cobertura para disparar al puente. Dos ventanas, vigila ambas.' },
+      { id: 'puente', name: 'Puente', kind: 'open', x: 20, y: 26, w: 60, h: 12, heat: 4, danger: 5, tip: 'Largo y sin dónde esconderse. Crúzalo solo cuando tu equipo cubra.' },
+      { id: 'camion', name: 'Camión volcado', kind: 'power', x: 42, y: 8, w: 16, h: 14, heat: 5, danger: 4, tip: 'El Boomshot está detrás del camión. Quien lo tome, controla el centro.' },
+      { id: 'pilares', name: 'Pilares', kind: 'close', x: 20, y: 42, w: 60, h: 18, heat: 5, danger: 3, tip: 'Debajo del puente: terreno de la Gnasher. Rompe de pilar en pilar.' },
+      { id: 'grua', name: 'Grúa', kind: 'high', x: 64, y: 6, w: 16, h: 16, heat: 3, danger: 3, tip: 'El Longshot está en la cabina de la grúa. Desde aquí ves los dos lados del puente.' },
+      { id: 'rampa_enjambre', name: 'Rampa Enjambre', kind: 'spawn', team: 'Enjambre', x: 84, y: 22, w: 14, h: 20, heat: 1, danger: 1, tip: 'Su lado. Aquí reaparecen.' },
+    ],
+    blocks: [[36, 6, 6, 16], [58, 6, 6, 16], [20, 22, 60, 3], [20, 39, 60, 2], [30, 48, 3, 6], [48, 48, 3, 6], [66, 48, 3, 6]],
+    pickups: [{ weaponId: 'boomshot', zone: 'camion', respawnSeconds: 90 }, { weaponId: 'longshot', zone: 'grua', respawnSeconds: 60 }, { weaponId: 'gutpuncher', zone: 'pilares', respawnSeconds: 60 }],
+  },
+  {
+    id: 'map_estacion', name: 'Estación Central', size: 'medium', setting: 'La estación de trenes de Ephyra, a medio derrumbar',
+    summary: 'Un vestíbulo enorme con un balcón del reloj. Se gana arriba o por el túnel.',
+    bestFor: 'Todo tipo de armas',
+    zones: [
+      { id: 'anden_cog', name: 'Andén COG', kind: 'spawn', team: 'COG', x: 2, y: 4, w: 14, h: 22, heat: 1, danger: 1, tip: 'Sal por Taquillas para llegar primero al reloj.' },
+      { id: 'taquillas', name: 'Taquillas', kind: 'lane', x: 20, y: 4, w: 18, h: 18, heat: 3, danger: 3, tip: 'Mostradores para cubrirte. Desde aquí presionas el vestíbulo.' },
+      { id: 'vestibulo', name: 'Vestíbulo', kind: 'power', x: 38, y: 22, w: 24, h: 20, heat: 5, danger: 5, tip: 'El Arco Torque está al centro y todos lo ven. Entra solo si el reloj es tuyo.' },
+      { id: 'reloj', name: 'Balcón del reloj', kind: 'high', x: 40, y: 4, w: 20, h: 12, heat: 4, danger: 4, tip: 'El Longshot está arriba. Desde el balcón dominas el vestíbulo entero.' },
+      { id: 'cafeteria', name: 'Cafetería', kind: 'close', x: 62, y: 4, w: 18, h: 18, heat: 3, danger: 3, tip: 'Mesas y barra, cerca y caótico. Gnasher o nada.' },
+      { id: 'vias', name: 'Vías', kind: 'lane', x: 20, y: 46, w: 60, h: 8, heat: 3, danger: 4, tip: 'La ruta larga entre spawns. Los vagones dan cobertura intermitente.' },
+      { id: 'tunel', name: 'Túnel', kind: 'close', x: 20, y: 26, w: 16, h: 16, heat: 3, danger: 2, tip: 'Atajo hacia las vías. Ideal para flanquear a quien defiende el vestíbulo.' },
+      { id: 'anden_enjambre', name: 'Andén Enjambre', kind: 'spawn', team: 'Enjambre', x: 84, y: 38, w: 14, h: 22, heat: 1, danger: 1, tip: 'Su andén. Llegar aquí es pelear contra su respawn.' },
+    ],
+    blocks: [[38, 4, 2, 18], [60, 4, 2, 18], [64, 26, 16, 16], [20, 56, 60, 4]],
+    pickups: [{ weaponId: 'torque', zone: 'vestibulo', respawnSeconds: 90 }, { weaponId: 'longshot', zone: 'reloj', respawnSeconds: 60 }],
+  },
+  {
+    id: 'map_mercado', name: 'Mercado Viejo', size: 'medium', setting: 'Un mercado cubierto de Jacinto con la fuente aún encendida',
+    summary: 'La fuente al centro y un puente rojo arriba. Los nombres que usa la comunidad salen de este mapa.',
+    bestFor: 'Escopeta y granadas',
+    guideId: 'g_map_mercado',
+    zones: [
+      { id: 'entrada', name: 'Entrada COG', kind: 'spawn', team: 'COG', x: 2, y: 22, w: 12, h: 20, heat: 1, danger: 1, tip: 'Sal por Puestos hacia la fuente; el puente rojo se toma desde la izquierda.' },
+      { id: 'puestos', name: 'Puestos', kind: 'close', x: 18, y: 18, w: 18, h: 16, heat: 3, danger: 3, tip: 'Puestos de fruta para avanzar de cobertura en cobertura.' },
+      { id: 'bodega', name: 'Bodega', kind: 'close', x: 18, y: 40, w: 18, h: 12, heat: 2, danger: 2, tip: 'Silenciosa. Úsala para llegar al Callejón sin que te vean.' },
+      { id: 'puente_rojo', name: 'Puente rojo', kind: 'high', x: 30, y: 3, w: 40, h: 9, heat: 4, danger: 5, tip: 'La pasarela alta del norte. El Longshot vive aquí y todos lo saben: sube con humo.' },
+      { id: 'fuente', name: 'Fuente', kind: 'power', x: 42, y: 22, w: 16, h: 18, heat: 5, danger: 4, tip: 'El centro del mapa y el Boomshot. Llega con granada antes que el rival.' },
+      { id: 'callejon', name: 'Callejón', kind: 'close', x: 38, y: 50, w: 26, h: 9, heat: 3, danger: 3, tip: 'Paso estrecho del sur. Una granada aquí vale una baja.' },
+      { id: 'carniceria', name: 'Carnicería', kind: 'close', x: 64, y: 42, w: 16, h: 14, heat: 4, danger: 3, tip: 'La tienda con dos puertas al este. Escucha las dos antes de entrar.' },
+      { id: 'arcos', name: 'Arcos', kind: 'lane', x: 64, y: 16, w: 16, h: 22, heat: 3, danger: 3, tip: 'Las columnas frente a la salida azul. Buen sitio para frenar su avance.' },
+      { id: 'salida', name: 'Salida azul', kind: 'spawn', team: 'Enjambre', x: 86, y: 22, w: 12, h: 20, heat: 1, danger: 1, tip: 'Su spawn. Si llegas aquí, pelea rápido.' },
+    ],
+    blocks: [[36, 16, 4, 28], [60, 16, 4, 24], [18, 54, 18, 6], [66, 58, 14, 4], [42, 42, 16, 6]],
+    pickups: [{ weaponId: 'longshot', zone: 'puente_rojo', respawnSeconds: 60 }, { weaponId: 'boomshot', zone: 'fuente', respawnSeconds: 90 }],
+  },
+];

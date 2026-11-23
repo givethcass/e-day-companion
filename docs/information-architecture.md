@@ -139,3 +139,14 @@ Giveth asked for Mi servicio to read as charts instead of label / value lines, w
 - A tall split bar for one whole in two or three parts (kills by mode, Versus wins / losses / draws, Horde finished or not).
 - Ranked bars when parts are compared (win rate by mode and map, best wave by map, special kills); columns for hours and weekdays, the busiest in the accent.
 - Colours: a categorical set checked with the dataviz validator against the dark surface (red, blue, yellow, aqua, violet, magenta), «Otras» always grey, and a fixed colour per mode and per class in the app and on the web.
+
+## Versus maps and the season recap (v0.11.0)
+
+| Where | What it adds | Contract |
+| --- | --- | --- |
+| Guías → Mapas de Versus | The five Versus maps as plans, with how the player does on each | `listMaps`, `getMap` |
+| A map | The plan with its callouts, power weapons and spawns; three views (plan, your kills, your deaths); the tip for each callout; where you fall most and what to do about it | `getMap` (`zones`, `pickups`, `stats`) |
+| Mi servicio → Tu temporada | The season so far as nine cards (time, mode, weapon, map, best match, Ranked, medals, what is next), one at a time; a share text, and on the web a share image | `getSeasonRecap` |
+| Match report, Mi servicio | Links to the map the match was played on | `MatchSummary.mapId`, `versusByMap[].mapId` |
+
+Where each kill and death happened is estimated from each match (by how much fighting and how much exposure each callout sees); the game would record it.

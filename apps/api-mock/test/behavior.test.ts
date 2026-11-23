@@ -1,7 +1,7 @@
 // The demo story and the six fixes from the synthetic test hold in the simulated backend.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import type { AchievementList, Creator, Guide, GuideSummary, Promo, CalendarEntry, Leaderboard, Medal, MedalUnlock, ServiceRecord, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
+import type { SeasonRecap, VersusMap, VersusMapSummary, AchievementList, Creator, Guide, GuideSummary, Promo, CalendarEntry, Leaderboard, Medal, MedalUnlock, ServiceRecord, MatchPage, MatchReport, NewsSummary, Notification, SquadSession, StoreRotation, WeeklyReport } from '@eday/api-types';
 import { generate } from '@eday/seed';
 import { createApi } from '../src/index.ts';
 
@@ -245,4 +245,36 @@ test('service record breakdowns add up for charts', () => {
     assert.ok(xs.slice(0, -1).every((x, i, all) => i === 0 || all[i - 1].value >= x.value), 'ranked before «Otras»');
   }
   assert.equal(b.killsByWeapon[0].label, 'Lancer MK1');
+});
+
+test('every Versus map has its callouts, and kills and deaths there add up to the matches played on it', () => {
+  const maps = call<VersusMapSummary[]>('GET', '/maps');
+  const r = call<ServiceRecord>('GET', '/me/service-record');
+  assert.equal(maps.length, 5);
+  assert.equal(maps.reduce((s, m) => s + m.me.matches, 0), r.versus.matches);
+  for (const summary of maps) {
+    const m = call<VersusMap>('GET', `/maps/${summary.id}`);
+    assert.equal(r.breakdown.versusByMap.find((x) => x.mapId === m.id)?.matches, m.me.matches);
+    assert.equal(m.stats.zones.reduce((s, z) => s + z.kills, 0), m.stats.kills);
+    assert.equal(m.stats.zones.reduce((s, z) => s + z.deaths, 0), m.stats.deaths);
+    assert.ok(m.zones.filter((z) => z.kind === 'spawn').length === 2, `${m.name} has one spawn per team`);
+    for (const z of m.zones) assert.ok(z.x >= 0 && z.y >= 0 && z.x + z.w <= m.plan.width && z.y + z.h <= m.plan.height, `${m.name}: ${z.name} fits the plan`);
+    for (const k of m.pickups) assert.ok(m.zones.some((z) => z.id === k.zoneId), `${m.name}: ${k.weapon} is in a callout`);
+    assert.notEqual(m.zones.find((z) => z.id === m.stats.weakest)?.kind, 'spawn');
+    assert.match(m.stats.takeaway ?? '', /^Caes más en /);
+  }
+  const mercado = call<VersusMap>('GET', '/maps/map_mercado');
+  assert.equal(mercado.guideId, 'g_map_mercado');
+  assert.equal(call<{ code: string }>('GET', '/maps/map_nope').code, 'not_found');
+});
+
+test('the season recap tells the season in order and links where to go next', () => {
+  const recap = call<SeasonRecap>('GET', '/me/season-recap');
+  assert.deepEqual(recap.cards.map((c) => c.kind), ['intro', 'time', 'mode', 'weapon', 'map', 'match', 'rank', 'medals', 'outro']);
+  assert.equal(recap.stats.kd, call<ServiceRecord>('GET', '/me/service-record').versus.kd);
+  assert.equal(recap.cards.find((c) => c.kind === 'rank')?.detail, '#10 global · #2 en tu país');
+  assert.match(recap.cards.find((c) => c.kind === 'time')!.title, /^Más horas que el \d{1,2}% de los jugadores$/);
+  assert.match(recap.shareText, /concepto no oficial/);
+  const early = call<SeasonRecap>('GET', '/me/season-recap', { query: { asOf: '2026-10-06T15:00:00.000Z' } });
+  assert.deepEqual(early.cards.map((c) => c.kind), ['intro', 'outro'], 'nothing played yet');
 });

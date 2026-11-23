@@ -9,7 +9,8 @@ import { useNow } from '@/lib/clock';
 import { roleLabel } from '@/lib/demo';
 import { GUIDE_SECTION, GUIDE_SECTIONS } from '@/lib/guides';
 import { GuideRow } from '@/ui/Guide';
-import { Chip, Loader, Screen, Text } from '@/ui/kit';
+import { router } from 'expo-router';
+import { Chip, Loader, Row, Screen, Text } from '@/ui/kit';
 import { PromoCard } from '@/ui/Promo';
 import { color, space } from '@/ui/theme';
 import { Columns } from '@/ui/layout';
@@ -33,6 +34,9 @@ export default function Guias() {
           <View style={styles.box}><Columns>{mine.map((g) => <GuideRow key={g.id} g={g} />)}</Columns></View>
         </View>
       )}
+      <View style={styles.box}>
+        <Row icon="map" title="Mapas de Versus" subtitle="Callouts, armas de poder y dónde ganas o caes" onPress={() => router.push('/guias/mapas')} />
+      </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
         <Chip label="Todas" selected={!section} onPress={() => setSection(null)} />
         {GUIDE_SECTIONS.map((s) => <Chip key={s} label={GUIDE_SECTION[s].short} selected={section === s} onPress={() => setSection(s)} />)}

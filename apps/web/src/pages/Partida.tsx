@@ -102,7 +102,7 @@ export function Partida({ id }: { id: string }) {
               })}
             </div>
           </div>
-          <div className="eyebrow text-white/70 mt-10 flex items-center gap-3 animate-rise"><span className="h-px w-10 bg-primary" />{m.mode === 'campaign' ? m.map : `${MODE[m.mode]} · ${m.map}`}</div>
+          <div className="eyebrow text-white/70 mt-10 flex items-center gap-3 animate-rise"><span className="h-px w-10 bg-primary" />{m.mode === 'campaign' ? m.map : <>{MODE[m.mode]} · {m.mapId ? <a href={`#/guias/mapas/${m.mapId}`} className="underline decoration-white/30 underline-offset-4 hover:text-ink hover:decoration-primary">{m.map}</a> : m.map}</>}</div>
           <h1 className={`display text-[clamp(48px,6vw,96px)] mt-3 animate-rise [animation-delay:80ms] ${win ? 'text-primary' : ''}`}>
             {headline(m)}{m.rankDelta ? <span className="text-white/60"> {m.rankDelta > 0 ? '+' : ''}{m.rankDelta} pts</span> : null}
           </h1>
