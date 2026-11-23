@@ -3,6 +3,12 @@ import type { Medal, MedalTier, Promo } from '@eday/api-types';
 import type { ReactNode } from 'react';
 import { TIER } from '../lib/format';
 import { spotlight, useToast } from './fx';
+import sceneColonnade from '../art/scene-colonnade.svg';
+import sceneCover from '../art/scene-cover.svg';
+import sceneFissure from '../art/scene-fissure.svg';
+import sceneSeal from '../art/scene-seal.svg';
+import sceneSkyline from '../art/scene-skyline.svg';
+import texCracks from '../art/tex-cracks.svg';
 
 /** Same drawing as the mobile badge: a faceted diamond in the tier colour, outlined when locked. */
 export function MedalBadge({ tier, size = 40, className = '' }: { tier: MedalTier | null; size?: number; className?: string }) {
@@ -64,11 +70,18 @@ export function Chip({ active, onClick, children }: { active: boolean; onClick: 
 }
 
 /** A solid block of colour with a diagonal stripe and a glow, standing in for key art. */
-export function Art({ glow, className = '', children }: { glow: string; className?: string; children?: ReactNode }) {
+const SCENES = { skyline: sceneSkyline, fissure: sceneFissure, colonnade: sceneColonnade, seal: sceneSeal, cover: sceneCover };
+export type Scene = keyof typeof SCENES;
+const SCENE_ORDER: Scene[] = ['fissure', 'skyline', 'seal', 'colonnade', 'cover'];
+
+/** A card's picture: the tint glow, a painted scene from the fallen city (picked from the tint and `seed` unless given), cracks and grain. */
+export function Art({ glow, scene, seed = 0, className = '', children }: { glow: string; scene?: Scene; seed?: number; className?: string; children?: ReactNode }) {
+  const pick = scene ?? SCENE_ORDER[([...glow].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 9973, 7) + seed) % SCENE_ORDER.length];
   return (
-    <div className={`relative overflow-hidden grain ${className}`} style={{ background: `radial-gradient(120% 90% at 85% 10%, ${glow}55, transparent 60%), linear-gradient(135deg, #141414, #050505)` }}>
-      <div className="absolute inset-0 opacity-30" style={{ background: `repeating-linear-gradient(115deg, transparent 0 22px, ${glow}22 22px 24px)` }} />
-      <div className="absolute -right-10 -bottom-16 size-56 rotate-45 border-[10px] opacity-40 transition-transform duration-700 group-hover:rotate-[60deg] group-hover:scale-110" style={{ borderColor: glow }} />
+    <div className={`relative overflow-hidden grain ${className}`} style={{ background: `radial-gradient(120% 90% at 85% 10%, ${glow}66, transparent 60%), linear-gradient(160deg, #1c1212, #050505)` }}>
+      <div className="absolute inset-0 opacity-25" style={{ background: `repeating-linear-gradient(115deg, transparent 0 22px, ${glow}22 22px 24px)` }} />
+      <img src={SCENES[pick]} alt="" aria-hidden className="absolute inset-0 size-full object-cover object-right-bottom transition-transform duration-700 group-hover:scale-105" />
+      <div className="absolute inset-0 opacity-[0.18] mix-blend-multiply" style={{ backgroundImage: `url(${texCracks})`, backgroundSize: '420px' }} />
       {children}
     </div>
   );

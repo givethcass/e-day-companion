@@ -40,7 +40,7 @@ export function StoreCard({ item, i, note, tall = false }: { item: StoreItem; i:
   return (
     <a href={`#/tienda/${item.id}`} ref={tilt.ref as never} onMouseMove={tilt.onMouseMove} onMouseLeave={tilt.onMouseLeave} style={tilt.style}
       className="spotlight group block border border-line bg-surface hover:border-white/30 focus-visible:outline-2 focus-visible:outline-primary">
-      <Art glow={STORE_GLOWS[i % STORE_GLOWS.length]} className={tall ? 'h-64' : 'h-48'}>
+      <Art glow={STORE_GLOWS[i % STORE_GLOWS.length]} seed={i} className={tall ? 'h-64' : 'h-48'}>
         <WishButton item={item} className="absolute right-3 top-3" />
       </Art>
       <div className="p-4">
