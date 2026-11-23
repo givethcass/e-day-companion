@@ -391,6 +391,29 @@
     </div>
   </section>
 
+  <section class="wrap" aria-labelledby="despues">
+    <div class="wide">
+      <div class="head" style="max-width: var(--text)">
+        <div class="eyebrow">Después de la semana 6</div>
+        <h2 id="despues">Cuatro herramientas que un jugador abriría cada semana</h2>
+      </div>
+      <div class="col stack" style="margin-inline: 0; margin-bottom: 30px">
+        <p>Con la base terminada, añadí lo que en Halo Waypoint y en las apps de estadísticas hace volver a la gente: saber dónde pierdes en cada mapa, qué arma te conviene, qué te falta de la campaña y cómo vas contra tus amigos. Cada una salió del mismo contrato, primero en el backend simulado con sus pruebas y después en la app y en la web.</p>
+      </div>
+      <div class="figures two">
+        <figure><img src="img/w-mapa.jpg" alt="Plano del mapa Mercado Viejo en la web: callouts como bloques rojos más o menos intensos según tus bajas, armas de poder como rombos dorados, y a la derecha el callout Puestos con 233 bajas y la lista de dónde haces bajas" width="2880" height="1800" loading="lazy"><figcaption><b>Mapas de Versus.</b> Cada callout con tus bajas o tus caídas, y la lección para la próxima partida en ese mapa.</figcaption></figure>
+        <figure><img src="img/w-arsenal.jpg" alt="Arsenal en la web: tier list con filas S, A, B y C, cada arma con su categoría, por qué está en ese nivel y tus bajas con una barra" width="2880" height="1800" loading="lazy"><figcaption><b>Arsenal.</b> La tier list de la comunidad para Versus y para Horde, con tus bajas al lado; cada arma enseña en qué mapas aparece.</figcaption></figure>
+        <figure><img src="img/w-cara-a-cara.jpg" alt="Cara a cara en la web: Delta_Rojo contra Capi_Hierro, marcador 9 a 4, veredicto, y filas con barras que se inclinan hacia quien gana cada una" width="2880" height="1800" loading="lazy"><figcaption><b>Cara a cara.</b> Catorce filas comparadas como se muestran; el veredicto nombra la mayor ventaja de cada uno.</figcaption></figure>
+        <figure><img src="img/w-temporada.jpg" alt="Tu temporada en la web: tarjeta grande con el gamertag y el título Veterano de Versus, y a la derecha la imagen para compartir con horas, partidas, K/D, rango, arma y mapa" width="2880" height="1800" loading="lazy"><figcaption><b>Tu temporada.</b> El resumen en nueve tarjetas y una imagen de 1080 × 1350 lista para compartir.</figcaption></figure>
+      </div>
+      <div class="figures phones" style="margin-top: 26px">
+        <figure><img src="img/m-mapa.jpg" alt="Mapa Mercado Viejo en el teléfono con las pestañas Plano, Tus bajas y Tus caídas" width="880" height="1912" loading="lazy"><figcaption><b>Mapa.</b> Tocar un callout explica cómo jugarlo.</figcaption></figure>
+        <figure><img src="img/m-arma.jpg" alt="Ficha de la Gnasher en el teléfono: tus bajas, puesto entre tus armas, precisión, nivel S en Versus y B en Horde, estadísticas" width="880" height="1912" loading="lazy"><figcaption><b>Arma.</b> Para qué sirve y cómo te va con ella.</figcaption></figure>
+        <figure><img src="img/m-campana.jpg" alt="Tu campaña en el teléfono: 12 de 12 capítulos, 34 de 36 coleccionables y el capítulo 8 abierto con el coleccionable que falta" width="880" height="1912" loading="lazy"><figcaption><b>Campaña.</b> Los coleccionables que faltan, con dónde están.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
   <section class="wrap" aria-labelledby="como">
     <div class="wide">
       <div class="head" style="max-width: var(--text)">
@@ -402,18 +425,18 @@
         <p>Un reloj de demo salta entre cuatro momentos de la temporada (un martes al mediodía, una hora antes de Horde, el viernes de la sesión del clan, el día que rota la tienda) y todo se recalcula: avisos, misión, escuadras y tienda.</p>
       </div>
       <div class="flow">
-        <div class="node"><span class="eyebrow grey">1</span><h3>Contrato OpenAPI</h3><p>35 operaciones: jugador, servicio, medallas, partidas, tienda, sesiones, clanes, noticias, guías.</p><code>contract/openapi.yaml</code></div>
+        <div class="node"><span class="eyebrow grey">1</span><h3>Contrato OpenAPI</h3><p>43 operaciones: jugador, servicio, medallas, partidas, tienda, sesiones, clanes, noticias, guías, mapas, armas, campaña y comparación.</p><code>contract/openapi.yaml</code></div>
         <div class="node"><span class="eyebrow grey">2</span><h3>Tipos generados</h3><p>TypeScript generado del contrato, compartido por todo el repositorio.</p><code>packages/api-types</code></div>
         <div class="node"><span class="eyebrow grey">3</span><h3>Backend simulado</h3><p>Implementa el contrato con datos deterministas; corre en el navegador o como servidor HTTP.</p><code>apps/api-mock</code></div>
         <div class="node end"><span class="eyebrow grey">4</span><h3>App y web</h3><p>Expo y Expo Router para teléfono y tablet; Vite, React, Tailwind y three.js para la web.</p><code>apps/mobile · apps/web</code></div>
       </div>
       <div class="facts">
-        <div><b>57</b><span>pruebas: contrato, datos y comportamiento, en cada push</span></div>
+        <div><b>70</b><span>pruebas: contrato, datos y comportamiento, en cada push</span></div>
         <div><b>6</b><span>decisiones de arquitectura escritas (ADR)</span></div>
         <div><b>0</b><span>violaciones de axe en las 14 vistas de la web</span></div>
-        <div><b>124 kB</b><span>de JavaScript inicial en la web, antes 262 kB (gzip)</span></div>
+        <div><b>134 kB</b><span>de JavaScript inicial en la web, antes 262 kB (gzip)</span></div>
       </div>
-      <p class="note" style="margin-top: 14px; max-width: var(--text)">Las dos últimas cifras salen de la semana de pulido: contraste y roles corregidos en gráficas y filtros, y three.js separado para que cargue después de la página.</p>
+      <p class="note" style="margin-top: 14px; max-width: var(--text)">Las dos últimas cifras salen de la semana de pulido: contraste y roles corregidos en gráficas y filtros, y three.js separado para que cargue después de la página. Las cuatro herramientas nuevas también cargan aparte, la primera vez que se abren.</p>
     </div>
   </section>
 
