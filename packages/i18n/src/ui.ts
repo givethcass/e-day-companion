@@ -746,4 +746,6 @@ export const UI: Record<string, string> = {
   'El más raro que tienes': 'Your rarest',
   'Próxima sesión del clan': 'Next clan session',
   'Hora favorita {a}, los {b}': 'Favorite time {a}, on {b}s',
+  'Señal de emergencia': 'Emergency signal',
+  'Distrito 7 · Día 0': 'District 7 · Day 0',
 };
