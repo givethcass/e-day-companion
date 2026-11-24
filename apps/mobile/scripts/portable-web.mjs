@@ -53,6 +53,10 @@ const boot = `<script>
     var base = document.createElement('base');
     base.href = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
     document.head.appendChild(base);
+    // The router is about to reset the address; keep the language it was opened in and where to reload it from.
+    var lang = /[?&]lang=(es|en)/.exec(location.search);
+    if (lang) window.__EDAY_LANG = lang[1];
+    window.__EDAY_HOME = location.href.replace(/#.*$/, '');
     try { history.replaceState(null, '', '/'); } catch (e) {}
   })();
 </script>`;

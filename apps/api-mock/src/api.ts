@@ -7,7 +7,8 @@ import type {
 } from '@eday/api-types';
 import { CAMPAIGN_CHAPTERS, GIFT_AT, HORDE_WAVE_GOAL, MEDAL_REWARDS, generate, rankFromPoints, type SeedData, type SeedVersusMap, type SeedWeapon, type SeedMatch, type SeedAchievement, type SeedMedalSeries, type SeedPlayer, type SeedSession } from '@eday/seed';
 import { DAY, clock, day, dayMonth, difficultyLabel, localDate, rankLabel, roleLabel, weekday } from './format.ts';
-import { createRouter, error, noContent, ok, type Query } from './router.ts';
+import { createRouter, error, noContent, ok, type ApiRequest, type Query } from './router.ts';
+import { localize, type Lang } from '@eday/i18n';
 
 export const DEFAULT_PREFS: Required<NotificationPrefs> = {
   squad: true, wishlist: true, events: false, rival: false, ranked: false, quietHours: { from: '23:00', to: '08:00' },
@@ -1055,7 +1056,11 @@ export function createApi({ data = generate() }: ApiOptions = {}) {
   });
 
   return {
-    handle: r.handle,
+    /** Answers one request. With lang 'en' every Spanish line in the answer comes back in English (ADR 0007). */
+    handle: (req: ApiRequest & { lang?: Lang }) => {
+      const res = r.handle(req);
+      return req.lang === 'en' && res.body !== undefined ? { ...res, body: localize(res.body, 'en') } : res;
+    },
     routes: r.routes.map(({ method, template }) => ({ method, template })),
     demoNow,
     /** Simulated "Sign in with Xbox": the demo token names the player. */

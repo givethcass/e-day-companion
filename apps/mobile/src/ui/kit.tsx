@@ -2,9 +2,10 @@
 // uppercase titles, a red band that fades to black, square corners and hairlines between rows.
 import { router } from 'expo-router';
 import { useId, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text as RNText, View, type StyleProp, type TextProps, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text as RNText, View, type StyleProp, type TextProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { getLang, switchLang } from '@eday/i18n';
 import { useSession } from '@/api/session';
 import { useClock } from '@/lib/clock';
 import { dayTime } from '@/lib/time';
@@ -263,6 +264,18 @@ export function Loader({ error, onRetry }: { error?: Error; onRetry?: () => void
   );
 }
 
+/** Switches the web build between Spanish and English (ADR 0007). Shows the language it switches to. */
+export function LangButton() {
+  if (Platform.OS !== 'web') return null;
+  const next = getLang() === 'es' ? 'en' : 'es';
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={next === 'en' ? 'Cambiar a inglés' : 'Cambiar a español'} onPress={() => switchLang(next)}
+      style={styles.lang}>
+      <Text variant="overline" style={{ fontSize: 12, letterSpacing: 1 }}>{next.toUpperCase()}</Text>
+    </Pressable>
+  );
+}
+
 export function IconButton({ icon, label, onPress, dot }: { icon: IconName; label: string; onPress: () => void; dot?: boolean }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.iconButton}>
@@ -273,6 +286,7 @@ export function IconButton({ icon, label, onPress, dot }: { icon: IconName; labe
 }
 
 const styles = StyleSheet.create({
+  lang: { height: 30, minWidth: 34, paddingHorizontal: 6, borderWidth: 1, borderColor: color.border, alignItems: 'center', justifyContent: 'center', marginRight: 2 },
   art: { padding: 8, justifyContent: 'flex-end', overflow: 'hidden', backgroundColor: color.surface },
   content: { paddingHorizontal: space.xl, paddingTop: space.lg, gap: 14 },
   header: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md, paddingBottom: space.md, borderBottomWidth: 1, borderBottomColor: color.border },

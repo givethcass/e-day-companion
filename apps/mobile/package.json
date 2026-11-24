@@ -5,6 +5,7 @@
   "dependencies": {
     "@eday/api-mock": "*",
     "@eday/api-types": "*",
+    "@eday/i18n": "*",
     "@eday/tokens": "*",
     "@expo-google-fonts/barlow": "^0.4.1",
     "@expo-google-fonts/barlow-condensed": "^0.4.1",

@@ -6,6 +6,7 @@ import type {
   NewsArticle, NewsSummary, NewsTag, Notification, NotificationPrefs, Player, Season, SessionFilters, SquadSession, StoreItem, StoreRotation, Wallet, WeeklyReport, VersusMap, VersusMapSummary, SeasonRecap, Weapon, WeaponSummary, Campaign, Friend, Comparison,
 } from '@eday/api-types';
 import { createApi, type Api } from '@eday/api-mock';
+import { getLang } from '@eday/i18n';
 
 type Query = Record<string, string | number | boolean | undefined>;
 interface Req { method: string; path: string; query?: Query; body?: unknown }
@@ -25,7 +26,7 @@ export const httpTransport = (baseUrl: string): Transport => async ({ method, pa
   const qs = new URLSearchParams(clean(query)).toString();
   const res = await fetch(`${baseUrl}${path}${qs ? `?${qs}` : ''}`, {
     method,
-    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    headers: { 'Accept-Language': getLang(), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   return { status: res.status, body: res.status === 204 ? undefined : await res.json() };
@@ -39,7 +40,7 @@ export const inAppTransport = (): Transport => async ({ method, path, query, bod
   const api = await localApi();
   const playerId = api.playerIdFromToken(token);
   if (!playerId) return { status: 401, body: { code: 'unauthorized', message: 'Inicia sesión de nuevo' } };
-  return api.handle({ method, path, query: clean(query), body: body === undefined ? undefined : structuredClone(body), playerId });
+  return api.handle({ method, path, query: clean(query), body: body === undefined ? undefined : structuredClone(body), playerId, lang: getLang() });
 };
 
 const baseUrl = process.env.EXPO_PUBLIC_API_URL;

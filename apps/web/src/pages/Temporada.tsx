@@ -7,6 +7,7 @@ import { useData } from '../lib/app';
 import { Arrow } from '../ui/bits';
 import { SERIES } from '../ui/charts';
 import { useToast } from '../ui/fx';
+import { t } from '@eday/i18n';
 
 const ACCENT: Record<RecapCard['kind'], string> = {
   intro: '#E50F11', time: SERIES[1], mode: SERIES[2], weapon: SERIES[0], map: SERIES[3], match: SERIES[4], rank: '#9AA3AD', medals: SERIES[2], outro: '#E50F11',
@@ -29,6 +30,7 @@ function Card({ c, size = 'big' }: { c: RecapCard; size?: 'big' | 'small' }) {
   );
 }
 
+// A canvas is not part of the page, so its words are translated here rather than by the page translator.
 /** Draws the share image: 1080 x 1350, the portrait size social feeds show whole. */
 function drawShare(canvas: HTMLCanvasElement, r: SeasonRecap) {
   const ctx = canvas.getContext('2d')!;
@@ -41,7 +43,7 @@ function drawShare(canvas: HTMLCanvasElement, r: SeasonRecap) {
   ctx.save(); ctx.translate(W - 120, 150); ctx.rotate(Math.PI / 4); ctx.strokeStyle = 'rgba(240,71,58,0.45)'; ctx.lineWidth = 18; ctx.strokeRect(-150, -150, 300, 300); ctx.restore();
   const font = (weight: number, size: number) => `${weight} ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`;
   ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = font(600, 34);
-  ctx.fillText(`TEMPORADA ${r.season.number} · ${r.season.name.toUpperCase()}`, 80, 120);
+  ctx.fillText(t(`TEMPORADA ${r.season.number} · ${r.season.name.toUpperCase()}`), 80, 120);
   ctx.fillStyle = '#fff'; ctx.font = font(700, 132);
   ctx.fillText(r.gamertag.toUpperCase(), 80, 260);
   ctx.fillStyle = '#F0473A'; ctx.font = font(700, 52);
@@ -54,11 +56,11 @@ function drawShare(canvas: HTMLCanvasElement, r: SeasonRecap) {
   cells.forEach(([label, value], i) => {
     const x = 80 + (i % 2) * 470, y = 470 + Math.floor(i / 2) * 230;
     ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.fillRect(x, y - 70, 430, 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = font(600, 30); ctx.fillText(label.toUpperCase(), x, y - 20);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = font(600, 30); ctx.fillText(t(label).toUpperCase(), x, y - 20);
     ctx.fillStyle = '#fff'; ctx.font = font(700, value.length > 10 ? 64 : 96); ctx.fillText(value.toUpperCase(), x, y + 80);
   });
   ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = font(500, 28);
-  ctx.fillText('E-DAY COMPANION · CONCEPTO NO OFICIAL CON DATOS SIMULADOS', 80, H - 80);
+  ctx.fillText(t('E-DAY COMPANION · CONCEPTO NO OFICIAL CON DATOS SIMULADOS'), 80, H - 80);
 }
 
 export function Temporada() {

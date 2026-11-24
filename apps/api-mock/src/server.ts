@@ -9,7 +9,7 @@ const BASE = '/v0';
 
 const server = createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept-Language');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return void res.writeHead(204).end();
 
@@ -32,6 +32,7 @@ const server = createServer(async (req, res) => {
   }
   const { status, body: out } = api.handle({
     method: req.method ?? 'GET', path: url.pathname.slice(BASE.length), query: Object.fromEntries(url.searchParams), body, playerId,
+    lang: /^en\b/i.test(req.headers['accept-language'] ?? '') ? 'en' : 'es',
   });
   send(status, out);
 });

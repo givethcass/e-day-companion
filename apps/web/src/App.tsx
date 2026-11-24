@@ -1,5 +1,6 @@
 // Desktop shell: sticky nav with a sliding underline, the demo clock, notifications, and the five sections.
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { getLang, switchLang } from '@eday/i18n';
 import { api } from './lib/api';
 import { AppProvider, PRESETS, useApp, useData } from './lib/app';
 import { dayTime, rankLabel } from './lib/format';
@@ -104,6 +105,7 @@ function Nav() {
               {PRESETS.map((p) => <option key={p.at} value={p.at}>{p.label}</option>)}
             </select>
           </label>
+          <LangSwitch />
           <div className="relative">
             <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`Notificaciones, ${unread} sin leer`}
               className="relative size-10 grid place-items-center border border-line hover:border-white/40 transition-colors active:scale-95">
@@ -133,6 +135,19 @@ function Nav() {
         </div>
       </div>
     </header>
+  );
+}
+
+// Español / English. The page reloads so every screen and every answer from the API comes back in that language.
+function LangSwitch() {
+  const lang = getLang();
+  return (
+    <div role="group" aria-label="Idioma" className="flex border border-line p-[3px]" data-no-translate>
+      {(['es', 'en'] as const).map((l) => (
+        <button key={l} lang={l} aria-pressed={l === lang} onClick={() => l !== lang && switchLang(l)} title={l === 'es' ? 'Español' : 'English'}
+          className={`h-8 min-w-10 px-2 eyebrow text-[12px] transition-colors ${l === lang ? 'bg-raised text-ink' : 'text-subtle hover:text-ink'}`}>{l.toUpperCase()}</button>
+      ))}
+    </div>
   );
 }
 
