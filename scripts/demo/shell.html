@@ -26,6 +26,11 @@
   .seg button svg { width: 16px; height: 16px; }
   .seg kbd { font: 11px/1 ui-monospace, monospace; color: var(--subtle); border: 1px solid #333; padding: 2px 4px; }
   .seg .pill { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; background: var(--action); transition: transform 0.45s cubic-bezier(.2,.7,.2,1), width 0.45s cubic-bezier(.2,.7,.2,1); }
+  .lang { display: flex; padding: 3px; border: 1px solid var(--line); background: #000; }
+  .lang button { height: 30px; min-width: 40px; padding: 0 10px; border: 0; background: none; color: var(--subtle); font: 700 12px/1 system-ui, sans-serif; letter-spacing: 0.12em; cursor: pointer; transition: color 0.2s, background 0.2s; }
+  .lang button:hover { color: var(--ink); }
+  .lang button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+  .lang button[aria-pressed='true'] { color: var(--ink); background: #2a2a2a; }
   .spec { font-size: 13px; color: var(--subtle); white-space: nowrap; min-width: 220px; text-align: right; }
   .spec b { color: var(--muted); font-weight: 600; }
   main { position: relative; flex: 1; min-height: 0; }
@@ -57,6 +62,10 @@
     <button data-d="tablet" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M11 18.5h2"/></svg>Tablet<kbd>2</kbd></button>
     <button data-d="web" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>Web<kbd>3</kbd></button>
   </div>
+  <div class="lang" role="group" aria-label="Idioma">
+    <button data-l="es" aria-pressed="true" lang="es" title="Español">ES</button>
+    <button data-l="en" aria-pressed="false" lang="en" title="English">EN</button>
+  </div>
   <div class="spec" aria-live="polite"></div>
 </header>
 <main>
@@ -69,11 +78,19 @@
 </main>
 <script>
   (function () {
-    var SPEC = {
-      movil: '<b>Teléfono</b> · 440 × 956 · la app Expo',
-      tablet: '<b>Tablet</b> · 820 × 1180 · la misma app, en columnas',
-      web: '<b>Web</b> · React, Tailwind y three.js'
+    // The shell's own words in both languages; the apps translate themselves (ADR 0007).
+    var COPY = {
+      es: { movil: '<b>Teléfono</b> · 440 × 956 · la app Expo', tablet: '<b>Tablet</b> · 820 × 1180 · la misma app, en columnas', web: '<b>Web</b> · React, Tailwind y three.js',
+        names: { movil: 'Móvil', tablet: 'Tablet', web: 'Web' }, device: 'Dispositivo', lang: 'Idioma',
+        frames: { movil: 'E-Day Companion en un teléfono', tablet: 'E-Day Companion en una tablet', web: 'E-Day Companion en la web' } },
+      en: { movil: '<b>Phone</b> · 440 × 956 · the Expo app', tablet: '<b>Tablet</b> · 820 × 1180 · the same app, in columns', web: '<b>Web</b> · React, Tailwind and three.js',
+        names: { movil: 'Phone', tablet: 'Tablet', web: 'Web' }, device: 'Device', lang: 'Language',
+        frames: { movil: 'E-Day Companion on a phone', tablet: 'E-Day Companion on a tablet', web: 'E-Day Companion on the web' } }
     };
+    var lang = 'es';
+    try { if (localStorage.getItem('eday-lang') === 'en') lang = 'en'; } catch (e) {}
+    var ql = /[?&]lang=(es|en)/.exec(location.search);
+    if (ql) lang = ql[1];
     var main = document.querySelector('main');
     var devices = {};
     document.querySelectorAll('.device').forEach(function (el) { devices[el.dataset.d] = el; });
@@ -82,10 +99,38 @@
     var spec = document.querySelector('.spec');
     var current = null;
 
+    function srcOf(f) { return f.dataset.src + (f.dataset.src.indexOf('?') < 0 ? '?' : '&') + 'lang=' + lang; }
     function load(el) {
       var f = el.querySelector('iframe');
-      if (!f.src) f.src = f.dataset.src;
+      if (!f.getAttribute('src')) f.src = srcOf(f);
     }
+    var langButtons = document.querySelectorAll('.lang button');
+    function applyLang() {
+      var c = COPY[lang];
+      document.documentElement.lang = lang;
+      langButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.l === lang)); });
+      buttons.forEach(function (b) { b.childNodes[1].nodeValue = c.names[b.dataset.d]; });
+      document.querySelector('.seg').setAttribute('aria-label', c.device);
+      document.querySelector('.lang').setAttribute('aria-label', c.lang);
+      Object.keys(devices).forEach(function (k) { devices[k].querySelector('iframe').title = c.frames[k]; });
+      if (current) { spec.innerHTML = c[current]; placePill(); }
+    }
+    function setLang(next, from) {
+      if (next === lang) return;
+      lang = next;
+      try { localStorage.setItem('eday-lang', next); } catch (e) {}
+      applyLang();
+      // Reload every app that is already open, so it comes back in the new language.
+      Object.keys(devices).forEach(function (k) {
+        var f = devices[k].querySelector('iframe');
+        if (f.getAttribute('src') && f.contentWindow !== from) f.src = srcOf(f);
+      });
+    }
+    langButtons.forEach(function (b) { b.addEventListener('click', function () { setLang(b.dataset.l, null); }); });
+    // An app switched language from inside: follow it, and bring the other two along.
+    window.addEventListener('message', function (e) {
+      if (e.data && e.data.type === 'eday-lang' && (e.data.lang === 'es' || e.data.lang === 'en')) setLang(e.data.lang, e.source);
+    });
     function layout() {
       var W = main.clientWidth - 32, H = main.clientHeight - 48;
       ['movil', 'tablet'].forEach(function (d) {
@@ -117,7 +162,7 @@
         b.setAttribute('aria-pressed', String(on));
       });
       placePill();
-      spec.innerHTML = SPEC[d];
+      spec.innerHTML = COPY[lang][d];
       layout();
       if (remember) { try { localStorage.setItem('eday-device', d); } catch (e) {} }
     }
@@ -131,6 +176,7 @@
     var saved = null;
     try { saved = localStorage.getItem('eday-device'); } catch (e) {}
     var q = /[?&]device=(\w+)/.exec(location.search);
+    applyLang();
     pick((q && q[1]) || saved || 'movil', false);
     // Warm up the other two once the first one is showing, so switching is instant.
     setTimeout(function () { Object.keys(devices).forEach(function (k) { load(devices[k]); }); }, 2500);

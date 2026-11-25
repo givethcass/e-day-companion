@@ -67,3 +67,4 @@ npm run api         # the simulated backend over HTTP on :8787
 - [ADR 0004: Portable simulated backend instead of Supabase](docs/adr/0004-portable-simulated-backend.md)
 - [ADR 0005: Visual direction B, Tactical HUD](docs/adr/0005-visual-direction-tactical-hud.md) (superseded)
 - [ADR 0006: Visual direction C, the official site's look](docs/adr/0006-visual-direction-official-site.md)
+- [ADR 0007: Spanish as the source, English from one catalog](docs/adr/0007-spanish-source-english-catalog.md)

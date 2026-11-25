@@ -6,10 +6,14 @@ import { BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed/700
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
+import { startDomTranslation } from '@eday/i18n/dom';
 import { SessionProvider } from '@/api/session';
 import { ClockProvider } from '@/lib/clock';
 import { color } from '@/ui/theme';
+
+// Screens are written in Spanish; on the web build they are translated as they render when the demo is in English (ADR 0007).
+if (Platform.OS === 'web') startDomTranslation();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({

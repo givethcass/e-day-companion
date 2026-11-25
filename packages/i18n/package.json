@@ -1,0 +1,14 @@
+{
+  "name": "@eday/i18n",
+  "private": true,
+  "type": "module",
+  "description": "Spanish and English for the demo. Copy is written in Spanish; English comes from a catalog keyed by the Spanish text.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./dom": "./src/dom.ts"
+  },
+  "scripts": {
+    "check": "node --test test/*.test.ts",
+    "typecheck": "tsc -p ."
+  }
+}

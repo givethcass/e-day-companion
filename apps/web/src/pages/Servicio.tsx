@@ -39,7 +39,7 @@ export function Servicio({ sub = '' }: { sub?: string }) {
             <div className="mt-3 flex items-center gap-6 text-white/80 animate-rise [animation-delay:160ms]">
               <span>Ranked <b className="text-ink">{rankLabel(record.versus.rank)}</b> · {num(record.versus.rank?.points ?? 0)} pts</span>
               {record.career.firstMatchAt && <span>Desde {day(record.career.firstMatchAt)}</span>}
-              <span>Hora favorita {record.career.favoriteHour}, los {record.career.favoriteWeekday}</span>
+              <span>{`Hora favorita ${record.career.favoriteHour}, los ${record.career.favoriteWeekday}`}</span>
             </div>
           </div>
           <div className="pb-4 flex gap-3 animate-rise [animation-delay:240ms]" aria-label="Medallas en tu tarjeta">

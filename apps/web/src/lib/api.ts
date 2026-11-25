@@ -5,6 +5,7 @@ import type {
   SeasonRecap, VersusMap, VersusMapSummary, Weapon, WeaponSummary, Campaign, Friend, Comparison,
 } from '@eday/api-types';
 import { createApi } from '@eday/api-mock';
+import { getLang } from '@eday/i18n';
 
 const core = createApi();
 const playerId = core.playerIdFromToken(core.signIn()!.token)!;
@@ -12,7 +13,7 @@ const playerId = core.playerIdFromToken(core.signIn()!.token)!;
 type Query = Record<string, string | number | boolean | undefined>;
 const call = <T,>(method: string, path: string, query: Query = {}, body?: unknown): T => {
   const clean = Object.fromEntries(Object.entries(query).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)]));
-  const res = core.handle({ method, path, playerId, query: clean, body });
+  const res = core.handle({ method, path, playerId, query: clean, body, lang: getLang() });
   if (res.status >= 400) throw new Error((res.body as { message?: string })?.message ?? `Error ${res.status}`);
   return res.body as T;
 };

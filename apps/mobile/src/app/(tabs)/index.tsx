@@ -14,7 +14,7 @@ import { number } from '@/lib/demo';
 import { FAMILIES, mainFamily, TIER } from '@/lib/service';
 import { matchTitle, outcome } from '@/lib/match';
 import { clock, day, dayTime } from '@/lib/time';
-import { Art, Band, Button, Glow, IconButton, Loader, Readouts, Row, Screen, Section, Tabs, Text } from '@/ui/kit';
+import { Art, Band, Button, Glow, IconButton, LangButton, Loader, Readouts, Row, Screen, Section, Tabs, Text } from '@/ui/kit';
 import { MedalBadge } from '@/ui/Medal';
 import { Emblem, StatGrid, modeCells } from '@/ui/Service';
 import { Featured, NewsRow } from '@/ui/News';
@@ -80,6 +80,7 @@ export default function Inicio() {
         <Text variant="headline" style={{ fontSize: 19, letterSpacing: 1 }}>E-Day <Text variant="headline" tone="primary" style={{ fontSize: 19, letterSpacing: 1 }}>Companion</Text></Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Text variant="overline" tone="textSubtle" style={{ fontSize: 13, letterSpacing: 0.8 }}>{`T${season.number} · Semana ${weekNo} de ${weeks}`}</Text>
+          <LangButton />
           <IconButton icon="bell" label={`Avisos, ${unread} sin leer`} dot={unread > 0} onPress={() => router.push('/avisos')} />
         </View>
       </View>

@@ -12,6 +12,7 @@
   "dependencies": {
     "@eday/api-mock": "*",
     "@eday/api-types": "*",
+    "@eday/i18n": "*",
     "@fontsource/barlow": "^5.3.0",
     "@fontsource/barlow-condensed": "^5.3.0",
     "react": "19.3.0",
