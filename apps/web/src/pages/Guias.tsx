@@ -19,7 +19,7 @@ function GuideCard({ g, i, big }: { g: GuideSummary; i: number; big?: boolean })
     <Reveal delay={(i % 4) * 60} className={big ? 'col-span-2' : ''}>
       <a href={`#/guias/${g.id}`} ref={tilt.ref as never} onMouseMove={tilt.onMouseMove} onMouseLeave={tilt.onMouseLeave} style={tilt.style}
         className="spotlight group h-full flex flex-col border border-line bg-surface hover:border-white/30">
-        <Art glow={s.glow} className={big ? 'h-56' : 'h-36'}>
+        <Art glow={s.glow} seed={i} className={big ? 'h-56' : 'h-36'}>
           <span className="absolute left-5 top-5 eyebrow text-[12px] bg-black/60 px-2 py-1">{s.label}{g.role ? ` · ${ROLE[g.role]}` : ''}{g.map ? ` · ${g.map}` : ''}</span>
         </Art>
         <div className="p-5 flex-1 flex flex-col">

@@ -6,6 +6,7 @@ import { PRESETS, useApp, useData } from '../lib/app';
 import { CAL_KIND, clock, countdown, day, DIFF, MODE, NEWS_TAG, num, pct, rankLabel, ROLE } from '../lib/format';
 import { Arrow, Art, MoreLink, PromoCard, SectionHead } from '../ui/bits';
 import { Bar, CountUp, Magnetic, Reveal, spotlight, useToast } from '../ui/fx';
+import { HeroBackdrop } from '../ui/Backdrop';
 import { HeroScene } from '../ui/HeroScene';
 import { StoreCard } from '../ui/StoreCard';
 
@@ -27,10 +28,13 @@ export function Inicio() {
   return (
     <>
       {/* Hero */}
-      <section className="relative -mt-[72px] pt-[72px] min-h-[min(92vh,900px)] overflow-hidden band grain flex flex-col">
-        <div className="absolute inset-0 bg-[radial-gradient(60%_70%_at_75%_40%,rgb(229_15_17/0.35),transparent_70%)]" />
+      <section className="relative -mt-[72px] pt-[72px] min-h-[min(94vh,940px)] overflow-hidden bg-black grain flex flex-col">
+        <HeroBackdrop />
         <HeroScene />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black to-transparent" />
+        {/* Keep the headline readable over the city, and fade into the page. */}
+        <div className="absolute inset-y-0 left-0 w-[62%] bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black via-black/70 to-transparent" />
+        <HeroHud />
         <div className="relative max-w-[1440px] w-full mx-auto px-10 pt-14 flex-1 flex flex-col">
           <div className="max-w-[640px]">
             <div className="eyebrow text-white/70 mb-5 flex items-center gap-3 animate-rise"><span className="h-px w-10 bg-primary" />Bienvenido de vuelta, {me.gamertag}</div>
@@ -57,8 +61,9 @@ export function Inicio() {
         </div>
       </section>
 
-      {/* Headlines ticker */}
-      <div className="bg-action overflow-hidden border-y border-black/40" aria-label="Últimas noticias">
+      {/* Headlines ticker, edged with hazard tape */}
+      <div className="hazard h-1.5" aria-hidden />
+      <div className="bg-action overflow-hidden border-b border-black/40" aria-label="Últimas noticias">
         <div className="flex w-max animate-marquee hover:[animation-play-state:paused]">
           {[...news, ...news].map((n, i) => (
             <a key={i} href={`#/noticias/${n.id}`} className="flex items-center gap-4 px-8 py-3 whitespace-nowrap hover:bg-black/20 transition-colors">
@@ -123,7 +128,7 @@ export function Inicio() {
             {news.slice(0, 5).map((n, i) => (
               <Reveal key={n.id} delay={i * 70} className={i === 0 ? 'col-span-2 row-span-2' : ''}>
                 <a href={`#/noticias/${n.id}`} {...spotlight} className="spotlight group h-full flex flex-col border border-line hover:border-white/30 transition-colors overflow-hidden">
-                  <Art glow={NEWS_TAG[n.tag].glow} className={`${i === 0 ? 'flex-1' : 'h-28'} transition-[filter] group-hover:brightness-125`}>
+                  <Art glow={NEWS_TAG[n.tag].glow} seed={i} className={`${i === 0 ? 'flex-1' : 'h-28'} transition-[filter] group-hover:brightness-125`}>
                     <span className="absolute left-5 top-5 eyebrow text-[12px] bg-black/60 px-2 py-1">{NEWS_TAG[n.tag].label}</span>
                   </Art>
                   <div className="p-5">
@@ -261,5 +266,20 @@ function Squads() {
         })}
       </div>
     </section>
+  );
+}
+
+/** Small field-readout marks on the hero's edges: a sector tag and a day counter, like a soldier's visor. */
+function HeroHud() {
+  return (
+    <div aria-hidden className="absolute inset-0 pointer-events-none hidden xl:block">
+      <div className="absolute right-10 top-[104px] text-right font-display uppercase tracking-[0.2em] text-[12px] text-white/55 leading-6 animate-rise [animation-delay:300ms]">
+        <div className="flex items-center justify-end gap-2"><span className="size-1.5 rounded-full bg-primary animate-pulse-dot" />Señal de emergencia</div>
+        <div>Distrito 7 · Día 0</div>
+        <div className="text-white/35">41°17′N · 02°04′E</div>
+      </div>
+      <div className="absolute left-4 top-[30%] bottom-[30%] w-px bg-gradient-to-b from-transparent via-white/25 to-transparent" />
+      <div className="absolute right-4 top-[30%] bottom-[30%] w-px bg-gradient-to-b from-transparent via-white/25 to-transparent" />
+    </div>
   );
 }

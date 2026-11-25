@@ -28,10 +28,14 @@
   --animate-rise: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   --animate-marquee: marquee 40s linear infinite;
   --animate-pulse-dot: pulse-dot 1.6s ease-out infinite;
+  --animate-drift: drift 60s linear infinite;
+  --animate-flicker: flicker 4s ease-in-out infinite;
 }
 
 @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes drift { from { background-position: 0 0; } to { background-position: 900px -300px; } }
+@keyframes flicker { 0%, 100% { opacity: 0.85; } 30% { opacity: 1; } 45% { opacity: 0.7; } 60% { opacity: 0.95; } 80% { opacity: 0.78; } }
 @keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgb(240 71 58 / 0.7); } 100% { box-shadow: 0 0 0 10px rgb(240 71 58 / 0); } }
 
 html { color-scheme: dark; background: #000; }
@@ -52,6 +56,7 @@ body { @apply bg-bg text-ink font-sans antialiased; }
 }
 .spotlight:hover::before { opacity: 1; }
 
+.hazard { background: repeating-linear-gradient(-45deg, #bf0a0a 0 14px, #0b0b0b 14px 28px); }
 .band { background: linear-gradient(180deg, #800000 0%, #2a0000 55%, #000 100%); }
 .display { @apply font-display font-bold uppercase tracking-wide leading-[0.95]; }
 .eyebrow { @apply font-display font-semibold uppercase tracking-[0.12em] text-[13px]; }

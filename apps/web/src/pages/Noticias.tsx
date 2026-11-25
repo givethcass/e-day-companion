@@ -29,7 +29,7 @@ function List() {
         {items.map((n, i) => (
           <Reveal key={n.id} delay={(i % 3) * 70} className={i === 0 ? 'col-span-2' : ''}>
             <a href={`#/noticias/${n.id}`} {...spotlight} className="spotlight group h-full flex flex-col border border-line hover:border-white/30 hover:-translate-y-1 transition-[transform,border-color] duration-300">
-              <Art glow={NEWS_TAG[n.tag].glow} className={i === 0 ? 'h-80' : 'h-44'}>
+              <Art glow={NEWS_TAG[n.tag].glow} seed={i} className={i === 0 ? 'h-80' : 'h-44'}>
                 <span className="absolute left-5 top-5 eyebrow text-[12px] bg-black/60 px-2 py-1">{NEWS_TAG[n.tag].label}</span>
               </Art>
               <div className="p-6 flex-1 flex flex-col">
